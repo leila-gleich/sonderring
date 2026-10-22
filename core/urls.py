@@ -6,10 +6,12 @@ app_name = 'core'
 urlpatterns = [
     # Auth & Profiles
     path('login/', views.login_view, name='login'),
+    path('signup/', views.signup_view, name='signup'),
     path('logout/', views.logout_view, name='logout'),
     path('switch-user/', views.switch_user_view, name='switch_user'),
     path('profile/', views.profile_view, name='profile'),
     path('profile/update/', views.update_profile_view, name='update_profile'),
+    path('profile/password/', views.change_password_view, name='change_password'),
 
     # Dashboard & Trip CRUD
     path('', views.dashboard_view, name='dashboard'),

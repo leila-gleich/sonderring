@@ -858,7 +858,12 @@
                         {% endif %}
                     </td>
                     <td><code>{{ att.file_type }}</code></td>
-                    <td>@{{ att.uploaded_by.handle|default:"unknown" }}</td>
+                    <td>
+                        <strong>@{{ att.uploaded_by.handle|default:"unknown" }}</strong>
+                        {% if att.updated_by and att.updated_by != att.uploaded_by %}
+                        <div class="text-muted small">Edited by @{{ att.updated_by.handle }}</div>
+                        {% endif %}
+                    </td>
                     <td>{{ att.created_at|date:"M d, Y" }}</td>
                     <td>
                         <div class="vault-action-row">
@@ -867,7 +872,7 @@
                             {% else %}
                             <span class="vault-secured-pill" title="Stored in secure encrypted cloud bucket">Encrypted Key</span>
                             {% endif %}
-                            {% if can_edit %}
+                            {% if can_edit or att.uploaded_by == current_user %}
                             <form method="POST" action="{% url 'core:delete_attachment' trip.id att.id %}" style="display: inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-danger-outline" onclick="return confirm('Remove this document from the vault?');" title="Delete Document">🗑️</button>

@@ -43,6 +43,8 @@ class UserProfile(models.Model):
 
     def has_usable_password(self):
         """Returns True if the user has a valid password hash set."""
+        if not self.password:
+            return False
         from django.contrib.auth.hashers import is_password_usable
         return is_password_usable(self.password)
 

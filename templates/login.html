@@ -8,17 +8,71 @@
         <div class="login-header">
             <span class="logo-mark" style="font-size: 2.5rem;">🪐</span>
             <h1 class="login-title">Sign in to Sonderring</h1>
-            <p class="login-subtitle">Choose a demo profile or sign in with your travel handle.</p>
+            <p class="login-subtitle">Collaborative trip workspaces for seamless group travel.</p>
         </div>
 
-        <!-- 1-Click Profile Selection -->
+        {% if ENABLE_GOOGLE_OAUTH %}
+        <!-- Feature-Flagged Google OAuth -->
+        <div class="oauth-section">
+            <a href="{% url 'oauth:google_login' %}" class="btn-google btn-block">
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                    <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.59.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+                </svg>
+                <span>Continue with Google</span>
+            </a>
+        </div>
+
+        <div class="login-divider">
+            <span>OR SIGN IN WITH EMAIL</span>
+        </div>
+        {% endif %}
+
+        <!-- Standard Email & Password Form -->
+        <form method="POST" action="{% url 'core:login' %}" class="login-form">
+            {% csrf_token %}
+            {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
+            <div class="form-group">
+                <label for="handleInput" class="form-label">Email or Travel Handle</label>
+                <input type="text" id="handleInput" name="handle_or_email" class="form-control" placeholder="e.g. leila@sonderring.com or @leila" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <div class="form-label-row">
+                    <label for="passwordInput" class="form-label">Password</label>
+                </div>
+                <input type="password" id="passwordInput" name="password" class="form-control" placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 1rem;">
+                Sign In
+            </button>
+        </form>
+
+        <div class="auth-footer-prompt">
+            <span>Don't have an account?</span>
+            <a href="{% url 'core:signup' %}{% if next %}?next={{ next }}{% endif %}" class="auth-link">Sign Up</a>
+        </div>
+
+        <!-- Demo Profiles Quick Switcher (Dev Mode) -->
+        {% if debug or all_users %}
+        <div class="login-divider" style="margin-top: 2rem;">
+            <span>DEV / DEMO 1-CLICK LOGIN</span>
+        </div>
         <div class="demo-profiles-section">
-            <h3 class="demo-section-title">Select a Demo Profile:</h3>
+            <p class="text-muted" style="font-size: 0.75rem; margin-bottom: 0.6rem; text-align: center;">
+                Click any canonical traveler to log in instantly (password for all: <code>Sonderring2026!</code>):
+            </p>
             <div class="demo-users-grid">
                 {% for u in all_users %}
                 <form method="POST" action="{% url 'core:login' %}">
                     {% csrf_token %}
-                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <input type="hidden" name="demo_user_id" value="{{ u.id }}">
                     <button type="submit" class="demo-user-card {% if current_user.id == u.id %}current-user-card{% endif %}">
                         {% if u.profile_image_url %}
                         <img src="{{ u.profile_image_url }}" alt="{{ u.handle }}" class="demo-user-avatar">
@@ -27,10 +81,7 @@
                         {% endif %}
                         <div class="demo-user-details">
                             <strong class="demo-user-name">{{ u.full_name }}</strong>
-                            <span class="demo-user-handle">@{{ u.handle }}</span>
-                            {% if current_user.id == u.id %}
-                            <span class="badge-active-user">Currently Active</span>
-                            {% endif %}
+                            <span class="demo-user-handle">@{{ u.handle }} · {{ u.email }}</span>
                         </div>
                         <span class="demo-user-arrow">➔</span>
                     </button>
@@ -38,20 +89,7 @@
                 {% endfor %}
             </div>
         </div>
-
-        <div class="login-divider">
-            <span>OR ENTER HANDLE / EMAIL</span>
-        </div>
-
-        <!-- Standard Login Form -->
-        <form method="POST" action="{% url 'core:login' %}" class="login-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="handleInput" class="form-label">Handle or Email</label>
-                <input type="text" id="handleInput" name="handle_or_email" class="form-control" placeholder="e.g. leila or leila@sonderring.com" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block btn-lg">Continue to Sonderring</button>
-        </form>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

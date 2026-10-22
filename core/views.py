@@ -1,15 +1,18 @@
 import json
 import datetime
+from functools import wraps
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.http import require_POST, require_GET
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime, parse_date
+from django.urls import reverse
+from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Trip, Stay, Nav, Do, Rec, UserProfile, TripMember, Attachment
+from .models import Trip, Stay, Nav, Do, Rec, UserProfile, TripMember, Attachment, OAuthIdentity
 
 
 # ==========================================
@@ -18,26 +21,27 @@ from .models import Trip, Stay, Nav, Do, Rec, UserProfile, TripMember, Attachmen
 
 def get_current_user(request):
     """
-    Returns the currently active user stored in session.
-    Defaults to Leila Gleich (@leila) if no session exists.
+    Returns the currently active user stored in session, or None if unauthenticated.
     """
     user_id = request.session.get('user_id')
-    user = None
     if user_id:
-        user = UserProfile.objects.filter(id=user_id).first()
-    
-    if not user:
-        # Default to Leila Gleich if available, or first profile
-        user = UserProfile.objects.filter(handle='leila').first() or UserProfile.objects.first()
+        return UserProfile.objects.filter(id=user_id, is_active=True).first()
+    return None
+
+
+def login_required_profile(view_func):
+    """
+    Decorator requiring a valid active UserProfile in session.
+    Redirects to login with a ?next= parameter if not logged in.
+    """
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        user = get_current_user(request)
         if not user:
-            user = UserProfile.objects.create(
-                email='leila@sonderring.com',
-                handle='leila',
-                full_name='Leila Gleich'
-            )
-        request.session['user_id'] = str(user.id)
-        
-    return user
+            login_url = reverse('core:login')
+            return redirect(f"{login_url}?next={request.get_full_path()}")
+        return view_func(request, *args, **kwargs)
+    return _wrapped
 
 
 def get_user_trip_role(user, trip):
@@ -82,46 +86,129 @@ def can_user_edit_item(user, trip, item):
 
 
 # ==========================================
-# Authentication & User Switching Views
+# Authentication & User Management Views
 # ==========================================
 
 def login_view(request):
     """
-    Allows logging in as any demo user or entering credentials.
+    Handles logging in via email/handle + password, or 1-click demo selection.
     """
-    all_users = UserProfile.objects.all().order_by('full_name')
     current_user = get_current_user(request)
+    if current_user and request.method == 'GET' and not request.GET.get('switch'):
+        return redirect('core:dashboard')
+
+    all_users = UserProfile.objects.filter(is_active=True).order_by('full_name')
 
     if request.method == 'POST':
-        user_id = request.POST.get('user_id')
+        # 1. 1-Click Demo Selection (useful for fast multi-user testing in dev/demo)
+        demo_user_id = request.POST.get('demo_user_id')
+        if demo_user_id:
+            target_user = UserProfile.objects.filter(id=demo_user_id, is_active=True).first()
+            if target_user:
+                request.session['user_id'] = str(target_user.id)
+                target_user.last_login = timezone.now()
+                target_user.save(update_fields=['last_login'])
+                messages.success(request, f"Welcome back, {target_user.full_name} (@{target_user.handle})!")
+                next_url = request.GET.get('next') or request.POST.get('next') or 'core:dashboard'
+                return redirect(next_url)
+
+        # 2. Standard Email/Handle + Password verification
         handle_or_email = request.POST.get('handle_or_email', '').strip()
+        password = request.POST.get('password', '')
 
-        target_user = None
-        if user_id:
-            target_user = UserProfile.objects.filter(id=user_id).first()
-        elif handle_or_email:
-            target_user = UserProfile.objects.filter(handle__iexact=handle_or_email.replace('@', '')).first() or \
-                          UserProfile.objects.filter(email__iexact=handle_or_email).first()
-            if not target_user:
-                # Create profile on the fly for MVP
-                clean_handle = handle_or_email.replace('@', '').split('@')[0].lower()
-                target_user = UserProfile.objects.create(
-                    handle=clean_handle,
-                    full_name=clean_handle.title(),
-                    email=f"{clean_handle}@sonderring.com"
-                )
+        if not handle_or_email:
+            messages.error(request, "Please enter your email or travel handle.")
+        elif not password:
+            messages.error(request, "Please enter your password.")
+        else:
+            clean_handle = handle_or_email.replace('@', '')
+            user = UserProfile.objects.filter(
+                Q(handle__iexact=clean_handle) | Q(email__iexact=handle_or_email),
+                is_active=True
+            ).first()
 
-        if target_user:
-            request.session['user_id'] = str(target_user.id)
-            messages.success(request, f"Welcome back, {target_user.full_name} (@{target_user.handle})!")
-            next_url = request.GET.get('next') or request.POST.get('next') or 'core:dashboard'
-            return redirect(next_url)
+            if user and user.check_password(password):
+                request.session['user_id'] = str(user.id)
+                user.last_login = timezone.now()
+                user.save(update_fields=['last_login'])
+                messages.success(request, f"Welcome back, {user.full_name}!")
+                next_url = request.GET.get('next') or request.POST.get('next') or 'core:dashboard'
+                return redirect(next_url)
+            else:
+                messages.error(request, "Invalid email/handle or password. Please try again.")
 
     context = {
         'all_users': all_users,
         'current_user': current_user,
+        'next': request.GET.get('next', ''),
     }
     return render(request, 'login.html', context)
+
+
+def signup_view(request):
+    """
+    Handles user registration with full name, handle, email, and password.
+    """
+    current_user = get_current_user(request)
+    if current_user and request.method == 'GET':
+        return redirect('core:dashboard')
+
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name', '').strip()
+        handle = request.POST.get('handle', '').strip().replace('@', '').lower()
+        email = request.POST.get('email', '').strip().lower()
+        password = request.POST.get('password', '')
+        password_confirm = request.POST.get('password_confirm', '')
+
+        errors = []
+        if not full_name:
+            errors.append("Full name is required.")
+        if not handle:
+            errors.append("A unique travel handle is required.")
+        elif len(handle) < 3 or len(handle) > 30:
+            errors.append("Handle must be between 3 and 30 characters.")
+        elif not handle.replace('_', '').isalnum():
+            errors.append("Handle can only contain letters, numbers, and underscores.")
+        elif UserProfile.objects.filter(handle__iexact=handle).exists():
+            errors.append(f"Handle @{handle} is already taken. Please choose another.")
+
+        if not email:
+            errors.append("Email address is required.")
+        elif '@' not in email or '.' not in email.split('@')[-1]:
+            errors.append("Please enter a valid email address.")
+        elif UserProfile.objects.filter(email__iexact=email).exists():
+            errors.append("An account with that email already exists. Please log in.")
+
+        if not password:
+            errors.append("Password is required.")
+        elif len(password) < 8:
+            errors.append("Password must be at least 8 characters long.")
+        elif password != password_confirm:
+            errors.append("Passwords do not match.")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+        else:
+            new_user = UserProfile(
+                full_name=full_name,
+                handle=handle,
+                email=email,
+                last_login=timezone.now(),
+                is_active=True
+            )
+            new_user.set_password(password)
+            new_user.save()
+
+            request.session['user_id'] = str(new_user.id)
+            messages.success(request, f"Welcome to Sonderring, {new_user.full_name}! Your account has been created.")
+            next_url = request.GET.get('next') or request.POST.get('next') or 'core:dashboard'
+            return redirect(next_url)
+
+    return render(request, 'signup.html', {
+        'next': request.GET.get('next', ''),
+        'current_user': current_user,
+    })
 
 
 def logout_view(request):
@@ -135,12 +222,44 @@ def logout_view(request):
 def switch_user_view(request):
     """Quick 1-click user switcher from the navigation bar."""
     user_id = request.POST.get('user_id')
-    target_user = get_object_or_404(UserProfile, id=user_id)
+    target_user = get_object_or_404(UserProfile, id=user_id, is_active=True)
     request.session['user_id'] = str(target_user.id)
+    target_user.last_login = timezone.now()
+    target_user.save(update_fields=['last_login'])
     messages.success(request, f"Switched active user to {target_user.full_name} (@{target_user.handle})")
     
     redirect_url = request.META.get('HTTP_REFERER') or '/'
     return redirect(redirect_url)
+
+
+@require_POST
+def change_password_view(request):
+    """Allows a user to set or change their password from the profile page."""
+    current_user = get_current_user(request)
+    if not current_user:
+        return redirect('core:login')
+
+    old_password = request.POST.get('old_password', '')
+    new_password = request.POST.get('new_password', '')
+    new_password_confirm = request.POST.get('new_password_confirm', '')
+
+    if current_user.has_usable_password():
+        if not current_user.check_password(old_password):
+            messages.error(request, "Current password is incorrect.")
+            return redirect('core:profile')
+
+    if len(new_password) < 8:
+        messages.error(request, "New password must be at least 8 characters long.")
+        return redirect('core:profile')
+
+    if new_password != new_password_confirm:
+        messages.error(request, "New passwords do not match.")
+        return redirect('core:profile')
+
+    current_user.set_password(new_password)
+    current_user.save(update_fields=['password'])
+    messages.success(request, "Your password has been successfully updated!")
+    return redirect('core:profile')
 
 
 # ==========================================
@@ -152,7 +271,10 @@ def profile_view(request):
     Renders user profile details, editable form, and associated trips.
     """
     current_user = get_current_user(request)
-    all_users = UserProfile.objects.all().order_by('full_name')
+    if not current_user:
+        return redirect('core:login')
+
+    all_users = UserProfile.objects.filter(is_active=True).order_by('full_name')
 
     # Trips owned by the user
     owned_trips = Trip.objects.filter(created_by=current_user).order_by('-year', '-start_date')
@@ -177,6 +299,8 @@ def profile_view(request):
 def update_profile_view(request):
     """Updates user profile information."""
     current_user = get_current_user(request)
+    if not current_user:
+        return redirect('core:login')
 
     full_name = request.POST.get('full_name', '').strip()
     handle = request.POST.get('handle', '').strip().replace('@', '').lower()
@@ -211,7 +335,11 @@ def dashboard_view(request):
     Renders the main TripSpace dashboard with upcoming, active, and past trips.
     """
     current_user = get_current_user(request)
-    all_users = UserProfile.objects.all().order_by('full_name')
+    if not current_user:
+        login_url = reverse('core:login')
+        return redirect(f"{login_url}?next={request.path}")
+
+    all_users = UserProfile.objects.filter(is_active=True).order_by('full_name')
     
     # Active & Upcoming Trips (Year >= 2024 or ongoing)
     upcoming_trips = Trip.objects.filter(year__gte=2024).order_by('-year', '-start_date')
@@ -236,7 +364,11 @@ def trip_workspace_view(request, trip_id):
     Includes full role-based permissions (Owner vs Editor vs Viewer).
     """
     current_user = get_current_user(request)
-    all_users = UserProfile.objects.all().order_by('full_name')
+    if not current_user:
+        login_url = reverse('core:login')
+        return redirect(f"{login_url}?next={request.path}")
+
+    all_users = UserProfile.objects.filter(is_active=True).order_by('full_name')
     trip = get_object_or_404(Trip, id=trip_id)
 
     # Determine user role on this specific trip

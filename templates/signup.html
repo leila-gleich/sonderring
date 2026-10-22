@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up — Sonderring{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <span class="logo-mark" style="font-size: 2.5rem;">🪐</span>
+            <h1 class="login-title">Join Sonderring</h1>
+            <p class="login-subtitle">Create your traveler profile and start collaborating on trips.</p>
+        </div>
+
+        {% if ENABLE_GOOGLE_OAUTH %}
+        <!-- Feature-Flagged Google OAuth -->
+        <div class="oauth-section">
+            <a href="{% url 'oauth:google_login' %}" class="btn-google btn-block">
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/>
+                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                    <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.59.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+                </svg>
+                <span>Sign up with Google</span>
+            </a>
+        </div>
+
+        <div class="login-divider">
+            <span>OR REGISTER WITH EMAIL</span>
+        </div>
+        {% endif %}
+
+        <!-- Registration Form -->
+        <form method="POST" action="{% url 'core:signup' %}" class="login-form">
+            {% csrf_token %}
+            {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
+            <div class="form-group">
+                <label for="nameInput" class="form-label">Full Name</label>
+                <input type="text" id="nameInput" name="full_name" class="form-control" placeholder="e.g. Leila Gleich" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="handleInput" class="form-label">Unique Travel Handle</label>
+                <div class="input-prefix-wrapper">
+                    <span class="input-prefix">@</span>
+                    <input type="text" id="handleInput" name="handle" class="form-control input-with-prefix" placeholder="e.g. leila" required>
+                </div>
+                <small class="form-hint">Used by companions to invite you to trips. Letters, numbers, and underscores.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="emailInput" class="form-label">Email Address</label>
+                <input type="email" id="emailInput" name="email" class="form-control" placeholder="e.g. traveler@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="passwordInput" class="form-label">Password</label>
+                <input type="password" id="passwordInput" name="password" class="form-control" placeholder="At least 8 characters" minlength="8" required>
+            </div>
+
+            <div class="form-group">
+                <label for="passwordConfirmInput" class="form-label">Confirm Password</label>
+                <input type="password" id="passwordConfirmInput" name="password_confirm" class="form-control" placeholder="Re-enter your password" minlength="8" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 1rem;">
+                Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer-prompt">
+            <span>Already have an account?</span>
+            <a href="{% url 'core:login' %}{% if next %}?next={{ next }}{% endif %}" class="auth-link">Sign In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,7 +14,17 @@
             {% endif %}
             <div class="profile-hero-info">
                 <div class="profile-badge-row">
-                    <span class="profile-verified-badge">✓ Google OAuth Verified</span>
+                    {% if current_user.has_usable_password %}
+                    <span class="profile-verified-badge">🔑 Password Protected</span>
+                    {% else %}
+                    <span class="profile-warning-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">⚠️ No Password Set</span>
+                    {% endif %}
+
+                    {% if ENABLE_GOOGLE_OAUTH %}
+                        {% if current_user.has_oauth_provider %}
+                        <span class="profile-verified-badge">✓ Google Account Linked</span>
+                        {% endif %}
+                    {% endif %}
                 </div>
                 <h1 class="profile-title">{{ current_user.full_name }}</h1>
                 <p class="profile-handle">@{{ current_user.handle }}</p>
@@ -30,6 +40,9 @@
         <div class="profile-hero-actions">
             <button type="button" class="btn btn-outline" onclick="openModal('editProfileModal')">
                 ✏️ Edit Profile
+            </button>
+            <button type="button" class="btn btn-outline" onclick="openModal('securityModal')">
+                🔐 Password & Security
             </button>
             <a href="{% url 'core:logout' %}" class="btn btn-danger-outline">Log Out</a>
         </div>
@@ -159,6 +172,91 @@
                 <button type="submit" class="btn btn-primary">Save Profile</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- PASSWORD & SECURITY MODAL -->
+<div id="securityModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Password & Security</h3>
+            <button type="button" class="modal-close" onclick="closeModal('securityModal')">×</button>
+        </div>
+        
+        <!-- Password Section -->
+        <form method="POST" action="{% url 'core:change_password' %}" class="modal-form" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+            {% csrf_token %}
+            <h4 style="margin-top: 0; font-size: 1rem; color: var(--text-main);">
+                {% if current_user.has_usable_password %}Change Account Password{% else %}Set a Password for Email Login{% endif %}
+            </h4>
+            <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">
+                {% if current_user.has_usable_password %}
+                Update your password to ensure secure email login.
+                {% else %}
+                Setting a password allows you to log in securely with your email even if OAuth is disabled or unlinked.
+                {% endif %}
+            </p>
+
+            {% if current_user.has_usable_password %}
+            <div class="form-group">
+                <label for="oldPassword" class="form-label">Current Password <span class="required">*</span></label>
+                <input type="password" id="oldPassword" name="old_password" class="form-control" required>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="newPassword" class="form-label">New Password (min 8 chars) <span class="required">*</span></label>
+                <input type="password" id="newPassword" name="new_password" class="form-control" minlength="8" required>
+            </div>
+
+            <div class="form-group">
+                <label for="newPasswordConfirm" class="form-label">Confirm New Password <span class="required">*</span></label>
+                <input type="password" id="newPasswordConfirm" name="new_password_confirm" class="form-control" minlength="8" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                {% if current_user.has_usable_password %}Update Password{% else %}Set Password{% endif %}
+            </button>
+        </form>
+
+        {% if ENABLE_GOOGLE_OAUTH %}
+        <!-- OAuth Connections Section -->
+        <div class="oauth-management-section">
+            <h4 style="margin-top: 0; font-size: 1rem; color: var(--text-main);">Third-Party Logins (OAuth)</h4>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.25rem;">🪐</span>
+                    <div>
+                        <strong style="display: block; font-size: 0.9rem;">Google Account</strong>
+                        <span class="text-muted" style="font-size: 0.8rem;">
+                            {% if current_user.has_oauth_provider %}
+                            Connected to Google
+                            {% else %}
+                            Not connected
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                {% if current_user.has_oauth_provider %}
+                <form method="POST" action="{% url 'oauth:google_unlink' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline text-danger" onclick="return confirm('Are you sure you want to unlink your Google account?')">
+                        Unlink
+                    </button>
+                </form>
+                {% else %}
+                <a href="{% url 'oauth:google_login' %}" class="btn btn-sm btn-outline">
+                    Connect Google
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="modal-footer" style="margin-top: 1.5rem;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('securityModal')">Close</button>
+        </div>
     </div>
 </div>
 {% endblock %}
