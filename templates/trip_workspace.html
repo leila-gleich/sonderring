@@ -34,6 +34,14 @@
             {% if trip.description %}
             <p class="workspace-desc">{{ trip.description }}</p>
             {% endif %}
+            <div class="workspace-attribution">
+                <span class="attr-tag">Created by <strong>@{{ trip.created_by.handle }}</strong> · {{ trip.created_at|date:"M d, Y" }}</span>
+                {% if trip.updated_by and trip.updated_by != trip.created_by %}
+                <span class="attr-tag attr-editor">· Last edited by <strong>@{{ trip.updated_by.handle }}</strong> ({{ trip.updated_at|timesince }} ago)</span>
+                {% elif trip.updated_by and trip.updated_at != trip.created_at %}
+                <span class="attr-tag attr-editor">· Edited {{ trip.updated_at|timesince }} ago</span>
+                {% endif %}
+            </div>
         </div>
 
         <div class="workspace-actions">
@@ -159,7 +167,7 @@
                         <span class="status-pill status-{{ item.status|lower }} status-badge-{{ item.type }}-{{ item.id }}">
                             {{ item.status|title }}
                         </span>
-                        {% if can_edit %}
+                        {% if can_edit or item.obj.created_by == current_user %}
                         <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('{{ item.type }}', '{{ item.id }}', this)" title="Toggle Confirmed / Idea">
                             ⇄
                         </button>
@@ -195,6 +203,15 @@
                     </div>
                 </div>
                 {% endif %}
+
+                <div class="card-attribution-bar">
+                    <span class="attr-author">Added by <strong>@{{ item.obj.created_by.handle|default:"traveler" }}</strong> · {{ item.obj.created_at|date:"M d, Y" }}</span>
+                    {% if item.obj.updated_by and item.obj.updated_by != item.obj.created_by %}
+                    <span class="attr-editor">· Last edited by <strong>@{{ item.obj.updated_by.handle }}</strong> ({{ item.obj.updated_at|timesince }} ago)</span>
+                    {% elif item.obj.updated_by and item.obj.updated_at != item.obj.created_at %}
+                    <span class="attr-editor">· Edited {{ item.obj.updated_at|timesince }} ago</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -237,7 +254,7 @@
                     <span class="status-pill status-{{ stay.status|lower }} status-badge-stay-{{ stay.id }}">
                         {{ stay.get_status_display }}
                     </span>
-                    {% if can_edit %}
+                    {% if can_edit or stay.created_by == current_user %}
                     <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('stay', '{{ stay.id }}', this)" title="Toggle Confirmed / Idea">
                         ⇄
                     </button>
@@ -299,10 +316,19 @@
                 <a href="{{ stay.booking_link }}" target="_blank" class="btn btn-sm btn-secondary">Booking Link ↗</a>
                 {% endif %}
             </div>
+
+            <div class="card-attribution-bar">
+                <span class="attr-author">Added by <strong>@{{ stay.created_by.handle|default:"traveler" }}</strong> · {{ stay.created_at|date:"M d, Y" }}</span>
+                {% if stay.updated_by and stay.updated_by != stay.created_by %}
+                <span class="attr-editor">· Last edited by <strong>@{{ stay.updated_by.handle }}</strong> ({{ stay.updated_at|timesince }} ago)</span>
+                {% elif stay.updated_by and stay.updated_at != stay.created_at %}
+                <span class="attr-editor">· Edited {{ stay.updated_at|timesince }} ago</span>
+                {% endif %}
+            </div>
         </div>
 
         <!-- EDIT STAY MODAL -->
-        {% if can_edit %}
+        {% if can_edit or stay.created_by == current_user %}
         <div id="editStayModal_{{ stay.id }}" class="modal-backdrop">
             <div class="modal-card">
                 <div class="modal-header">
@@ -447,7 +473,7 @@
         {% if navs_start_end %}
         <div class="items-grid">
             {% for nav in navs_start_end %}
-            {% include 'partials/nav_card.html' with nav=nav can_edit=can_edit trip=trip %}
+            {% include 'partials/nav_card.html' with nav=nav can_edit=can_edit trip=trip current_user=current_user %}
             {% endfor %}
         </div>
         {% else %}
@@ -461,7 +487,7 @@
         {% if navs_mid_trip %}
         <div class="items-grid">
             {% for nav in navs_mid_trip %}
-            {% include 'partials/nav_card.html' with nav=nav can_edit=can_edit trip=trip %}
+            {% include 'partials/nav_card.html' with nav=nav can_edit=can_edit trip=trip current_user=current_user %}
             {% endfor %}
         </div>
         {% else %}
@@ -507,7 +533,7 @@
                         <span class="status-pill status-{{ do_item.status|lower }} status-badge-do-{{ do_item.id }}">
                             {{ do_item.get_status_display }}
                         </span>
-                        {% if can_edit %}
+                        {% if can_edit or do_item.created_by == current_user %}
                         <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('do', '{{ do_item.id }}', this)">⇄</button>
                         <button type="button" class="btn-card-action" onclick="openModal('editDoModal_{{ do_item.id }}')">✏️</button>
                         <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteDoModal_{{ do_item.id }}')">🗑️</button>
@@ -557,10 +583,19 @@
                     </div>
                     {% endif %}
                 </div>
+
+                <div class="card-attribution-bar">
+                    <span class="attr-author">Added by <strong>@{{ do_item.created_by.handle|default:"traveler" }}</strong> · {{ do_item.created_at|date:"M d, Y" }}</span>
+                    {% if do_item.updated_by and do_item.updated_by != do_item.created_by %}
+                    <span class="attr-editor">· Last edited by <strong>@{{ do_item.updated_by.handle }}</strong> ({{ do_item.updated_at|timesince }} ago)</span>
+                    {% elif do_item.updated_by and do_item.updated_at != do_item.created_at %}
+                    <span class="attr-editor">· Edited {{ do_item.updated_at|timesince }} ago</span>
+                    {% endif %}
+                </div>
             </div>
 
             <!-- EDIT DO MODAL -->
-            {% if can_edit %}
+            {% if can_edit or do_item.created_by == current_user %}
             <div id="editDoModal_{{ do_item.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">
@@ -672,7 +707,7 @@
                     {% if rec.recommended_by %}
                     <span class="rec-recommender">by @{{ rec.recommended_by.handle }}</span>
                     {% endif %}
-                    {% if can_edit %}
+                    {% if can_edit or rec.recommended_by == current_user %}
                     <div class="rec-header-actions">
                         <button type="button" class="btn-card-action" onclick="openModal('editRecModal_{{ rec.id }}')" title="Edit Rec">✏️</button>
                         <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteRecModal_{{ rec.id }}')" title="Delete Rec">🗑️</button>
@@ -700,10 +735,19 @@
                     <a href="{{ rec.link }}" target="_blank" class="btn btn-sm btn-outline">Link ↗</a>
                     {% endif %}
                 </div>
+
+                <div class="card-attribution-bar">
+                    <span class="attr-author">Added by <strong>@{{ rec.recommended_by.handle|default:"friend" }}</strong> · {{ rec.created_at|date:"M d, Y" }}</span>
+                    {% if rec.updated_by and rec.updated_by != rec.recommended_by %}
+                    <span class="attr-editor">· Last edited by <strong>@{{ rec.updated_by.handle }}</strong> ({{ rec.updated_at|timesince }} ago)</span>
+                    {% elif rec.updated_by and rec.updated_at != rec.created_at %}
+                    <span class="attr-editor">· Edited {{ rec.updated_at|timesince }} ago</span>
+                    {% endif %}
+                </div>
             </div>
 
             <!-- EDIT REC MODAL -->
-            {% if can_edit %}
+            {% if can_edit or rec.recommended_by == current_user %}
             <div id="editRecModal_{{ rec.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">

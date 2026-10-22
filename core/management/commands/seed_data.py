@@ -19,6 +19,9 @@ class Command(BaseCommand):
                 'profile_image_url': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
             }
         )
+        leila.set_password('Sonderring2026!')
+        leila.save()
+
         sam, _ = UserProfile.objects.get_or_create(
             email='sam@sonderring.com',
             defaults={
@@ -28,6 +31,9 @@ class Command(BaseCommand):
                 'profile_image_url': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80'
             }
         )
+        sam.set_password('Sonderring2026!')
+        sam.save()
+
         alex, _ = UserProfile.objects.get_or_create(
             email='alex@sonderring.com',
             defaults={
@@ -37,6 +43,9 @@ class Command(BaseCommand):
                 'profile_image_url': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80'
             }
         )
+        alex.set_password('Sonderring2026!')
+        alex.save()
+
         jordan, _ = UserProfile.objects.get_or_create(
             email='jordan@sonderring.com',
             defaults={
@@ -46,6 +55,8 @@ class Command(BaseCommand):
                 'profile_image_url': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80'
             }
         )
+        jordan.set_password('Sonderring2026!')
+        jordan.save()
 
         # Clear existing trips to allow clean idempotent re-seeding
         Trip.objects.all().delete()

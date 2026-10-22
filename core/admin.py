@@ -1,11 +1,27 @@
 from django.contrib import admin
-from .models import UserProfile, Trip, TripMember, Stay, Nav, Do, Attachment
+from .models import UserProfile, Trip, TripMember, Stay, Nav, Do, Attachment, OAuthIdentity
+
+
+class OAuthIdentityInline(admin.TabularInline):
+    model = OAuthIdentity
+    extra = 0
+    readonly_fields = ('provider', 'uid', 'email', 'created_at')
+
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('handle', 'full_name', 'email', 'phone_number', 'created_at')
+    list_display = ('handle', 'full_name', 'email', 'is_active', 'last_login', 'created_at')
     search_fields = ('handle', 'full_name', 'email')
+    list_filter = ('is_active',)
     ordering = ('-created_at',)
+    inlines = [OAuthIdentityInline]
+
+
+@admin.register(OAuthIdentity)
+class OAuthIdentityAdmin(admin.ModelAdmin):
+    list_display = ('user', 'provider', 'uid', 'email', 'created_at')
+    list_filter = ('provider',)
+    search_fields = ('user__handle', 'user__email', 'uid', 'email')
 
 
 class TripMemberInline(admin.TabularInline):

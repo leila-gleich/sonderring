@@ -10,11 +10,33 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     handle VARCHAR(50) UNIQUE NOT NULL,
     full_name VARCHAR(100) NOT NULL,
+    password VARCHAR(128) DEFAULT '', -- Hashed password (standard Django PBKDF2/Argon2)
     phone_number VARCHAR(30),
     profile_image_url TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 1b. DECOUPLED OAUTH / SOCIAL IDENTITIES
+-- Maps external providers (Google, Apple, etc.) to internal user accounts.
+-- If OAuth is disabled or uninstalled, user accounts and trip data remain 100% intact.
+CREATE TABLE oauth_identities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(30) NOT NULL DEFAULT 'google',
+    uid VARCHAR(255) NOT NULL,     -- Provider user ID (e.g. Google sub)
+    email VARCHAR(255),            -- Verified email from provider
+    extra_data JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_oauth_provider_uid UNIQUE (provider, uid),
+    CONSTRAINT uq_oauth_user_provider UNIQUE (user_id, provider)
+);
+
+CREATE INDEX idx_oauth_provider_uid ON oauth_identities(provider, uid);
+CREATE INDEX idx_oauth_user_provider ON oauth_identities(user_id, provider);
 
 -- 2. TRIPS (With Hybrid Time Model & Conditional Integrity Constraints)
 CREATE TABLE trips (

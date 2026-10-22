@@ -8,8 +8,16 @@ class UserProfile(models.Model):
     email = models.EmailField(unique=True)
     handle = models.CharField(max_length=50, unique=True)
     full_name = models.CharField(max_length=100)
+    password = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        help_text="Hashed password (standard Django PBKDF2/Argon2)."
+    )
     phone_number = models.CharField(max_length=30, blank=True, null=True)
     profile_image_url = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    last_login = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -20,6 +28,104 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.full_name} (@{self.handle})"
+
+    def set_password(self, raw_password):
+        """Hashes and sets the user's password using Django's default hasher."""
+        from django.contrib.auth.hashers import make_password
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        """Verifies a raw password against the stored hash."""
+        from django.contrib.auth.hashers import check_password
+        if not self.password:
+            return False
+        return check_password(raw_password, self.password)
+
+    def has_usable_password(self):
+        """Returns True if the user has a valid password hash set."""
+        from django.contrib.auth.hashers import is_password_usable
+        return is_password_usable(self.password)
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def has_oauth_provider(self, provider='google'):
+        """Checks if the user has linked a specific OAuth provider."""
+        return self.oauth_identities.filter(provider=provider).exists()
+
+    def get_oauth_identity(self, provider='google'):
+        """Returns the OAuth identity record for a provider, or None."""
+        return self.oauth_identities.filter(provider=provider).first()
+
+
+class OAuthIdentity(models.Model):
+    """
+    Decoupled OAuth / Social identity record.
+    Maps an external provider account (e.g. Google, Apple) to an internal UserProfile.
+    If OAuth is disabled or uninstalled, UserProfile and all trips remain 100% intact.
+    """
+    PROVIDER_CHOICES = [
+        ('google', 'Google'),
+        ('apple', 'Apple'),
+        ('github', 'GitHub'),
+        ('microsoft', 'Microsoft'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        related_name='oauth_identities'
+    )
+    provider = models.CharField(
+        max_length=30,
+        choices=PROVIDER_CHOICES,
+        default='google',
+        help_text="OAuth provider identifier (e.g. google, apple)"
+    )
+    uid = models.CharField(
+        max_length=255,
+        help_text="Unique external subject/user ID provided by the OAuth service"
+    )
+    email = models.EmailField(
+        blank=True,
+        null=True,
+        help_text="Verified email returned by the provider during OAuth flow"
+    )
+    extra_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="JSON payload containing provider claims (avatar, name, locale)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'oauth_identities'
+        verbose_name = 'OAuth Identity'
+        verbose_name_plural = 'OAuth Identities'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['provider', 'uid'],
+                name='uq_oauth_provider_uid'
+            ),
+            models.UniqueConstraint(
+                fields=['user', 'provider'],
+                name='uq_oauth_user_provider'
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['provider', 'uid'], name='idx_oauth_provider_uid'),
+            models.Index(fields=['user', 'provider'], name='idx_oauth_user_provider'),
+        ]
+
+    def __str__(self):
+        return f"{self.user.handle} — {self.get_provider_display()} ({self.uid})"
 
 
 class Trip(models.Model):

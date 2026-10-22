@@ -18,7 +18,7 @@
             <span class="status-pill status-{{ nav.status|lower }} status-badge-nav-{{ nav.id }}">
                 {{ nav.get_status_display }}
             </span>
-            {% if can_edit %}
+            {% if can_edit or nav.created_by == current_user %}
             <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('nav', '{{ nav.id }}', this)" title="Toggle Confirmed / Idea">
                 ⇄
             </button>
@@ -102,10 +102,19 @@
         <a href="{{ nav.booking_link }}" target="_blank" class="btn btn-sm btn-secondary">Booking Link ↗</a>
         {% endif %}
     </div>
+
+    <div class="card-attribution-bar">
+        <span class="attr-author">Added by <strong>@{{ nav.created_by.handle|default:"traveler" }}</strong> · {{ nav.created_at|date:"M d, Y" }}</span>
+        {% if nav.updated_by and nav.updated_by != nav.created_by %}
+        <span class="attr-editor">· Last edited by <strong>@{{ nav.updated_by.handle }}</strong> ({{ nav.updated_at|timesince }} ago)</span>
+        {% elif nav.updated_by and nav.updated_at != nav.created_at %}
+        <span class="attr-editor">· Edited {{ nav.updated_at|timesince }} ago</span>
+        {% endif %}
+    </div>
 </div>
 
 <!-- EDIT NAV MODAL -->
-{% if can_edit %}
+{% if can_edit or nav.created_by == current_user %}
 <div id="editNavModal_{{ nav.id }}" class="modal-backdrop">
     <div class="modal-card">
         <div class="modal-header">

@@ -54,6 +54,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.auth_feature_flags',
             ],
         },
     },
@@ -136,3 +137,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
 }
+
+# ==========================================
+# Authentication & OAuth Feature Flags
+# ==========================================
+# Set ENABLE_GOOGLE_OAUTH to False for initial launch testing email/password.
+# Set to True locally or in staging to explore Google OAuth without affecting existing accounts.
+ENABLE_GOOGLE_OAUTH = os.environ.get('ENABLE_GOOGLE_OAUTH', 'False').lower() in ('true', '1')
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+GOOGLE_OAUTH_REDIRECT_URI = os.environ.get('GOOGLE_OAUTH_REDIRECT_URI', 'http://localhost:8000/oauth/google/callback/')
+
