@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile — {{ current_user.full_name }} (@{{ current_user.handle }}){% endblock %}
+
+{% block content %}
+<div class="profile-page-wrapper">
+    <!-- Top Profile Header -->
+    <div class="profile-hero">
+        <div class="profile-hero-left">
+            {% if current_user.profile_image_url %}
+            <img src="{{ current_user.profile_image_url }}" alt="{{ current_user.full_name }}" class="profile-avatar-lg">
+            {% else %}
+            <div class="profile-avatar-lg avatar-placeholder">{{ current_user.full_name|slice:":1" }}</div>
+            {% endif %}
+            <div class="profile-hero-info">
+                <div class="profile-badge-row">
+                    <span class="profile-verified-badge">✓ Google OAuth Verified</span>
+                </div>
+                <h1 class="profile-title">{{ current_user.full_name }}</h1>
+                <p class="profile-handle">@{{ current_user.handle }}</p>
+                <div class="profile-contact-row">
+                    <span class="contact-pill">📧 {{ current_user.email }}</span>
+                    {% if current_user.phone_number %}
+                    <span class="contact-pill">📱 {{ current_user.phone_number }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-hero-actions">
+            <button type="button" class="btn btn-outline" onclick="openModal('editProfileModal')">
+                ✏️ Edit Profile
+            </button>
+            <a href="{% url 'core:logout' %}" class="btn btn-danger-outline">Log Out</a>
+        </div>
+    </div>
+
+    <!-- Quick Switch Profile Banner -->
+    <div class="quick-switch-box">
+        <div class="switch-box-header">
+            <strong>Switch Active Profile:</strong>
+            <span class="text-muted">Test the app from different companion perspectives (Owner vs Editor vs Viewer).</span>
+        </div>
+        <div class="switch-buttons-row">
+            {% for u in all_users %}
+            <form method="POST" action="{% url 'core:switch_user' %}" class="inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="user_id" value="{{ u.id }}">
+                <button type="submit" class="btn btn-sm {% if current_user.id == u.id %}btn-primary{% else %}btn-outline{% endif %}">
+                    {% if current_user.id == u.id %}● {% endif %}{{ u.full_name }} (@{{ u.handle }})
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="profile-grid">
+        <!-- Column 1: Trips Owned -->
+        <div class="profile-trips-col">
+            <div class="col-header">
+                <h3>👑 Trips You Own (Organizer)</h3>
+                <span class="badge-count">{{ owned_trips.count }}</span>
+            </div>
+            {% if owned_trips %}
+            <div class="profile-trip-list">
+                {% for trip in owned_trips %}
+                <a href="{% url 'core:trip_workspace' trip.id %}" class="profile-trip-card">
+                    <div class="profile-trip-card-header">
+                        <h4>{{ trip.title }}</h4>
+                        <span class="chip-role chip-role-owner">Owner</span>
+                    </div>
+                    <div class="profile-trip-meta">
+                        <span>📍 {{ trip.location }}</span>
+                        <span>📅 {{ trip.formatted_dates }}</span>
+                    </div>
+                    <div class="profile-trip-footer">
+                        <span>{{ trip.members.count }} Trippers</span>
+                        <span>{{ trip.total_items_count }} Itinerary items</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state-sm">
+                <p>You haven't created any trips yet.</p>
+                <a href="{% url 'core:dashboard' %}" class="btn btn-sm btn-primary">+ Create a Trip</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Column 2: Trips Participating In -->
+        <div class="profile-trips-col">
+            <div class="col-header">
+                <h3>🎒 Trips You're In (Companion)</h3>
+                <span class="badge-count">{{ member_trips.count }}</span>
+            </div>
+            {% if member_trips %}
+            <div class="profile-trip-list">
+                {% for trip in member_trips %}
+                <a href="{% url 'core:trip_workspace' trip.id %}" class="profile-trip-card">
+                    <div class="profile-trip-card-header">
+                        <h4>{{ trip.title }}</h4>
+                        <span class="chip-role chip-role-editor">Collaborator</span>
+                    </div>
+                    <div class="profile-trip-meta">
+                        <span>📍 {{ trip.location }}</span>
+                        <span>📅 {{ trip.formatted_dates }}</span>
+                    </div>
+                    <div class="profile-trip-footer">
+                        <span>Organized by @{{ trip.created_by.handle }}</span>
+                        <span>{{ trip.total_items_count }} Items</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state-sm">
+                <p class="text-muted">You are not an invited tripper on any external trips.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- EDIT PROFILE MODAL -->
+<div id="editProfileModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Your Profile</h3>
+            <button type="button" class="modal-close" onclick="closeModal('editProfileModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:update_profile' %}" class="modal-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="profName" class="form-label">Full Name <span class="required">*</span></label>
+                <input type="text" id="profName" name="full_name" class="form-control" value="{{ current_user.full_name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="profHandle" class="form-label">Unique Handle (@) <span class="required">*</span></label>
+                <div class="handle-input-wrap">
+                    <span class="handle-prefix">@</span>
+                    <input type="text" id="profHandle" name="handle" class="form-control handle-field" value="{{ current_user.handle }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="profPhone" class="form-label">Phone Number</label>
+                <input type="text" id="profPhone" name="phone_number" class="form-control" value="{{ current_user.phone_number|default:'' }}" placeholder="+1-xxx-xxx-xxxx">
+            </div>
+
+            <div class="form-group">
+                <label for="profPhoto" class="form-label">Profile Image URL</label>
+                <input type="url" id="profPhoto" name="profile_image_url" class="form-control" value="{{ current_user.profile_image_url|default:'' }}" placeholder="https://...">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editProfileModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Profile</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

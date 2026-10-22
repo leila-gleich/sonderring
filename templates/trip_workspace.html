@@ -1,0 +1,1519 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ trip.title }} — Sonderring Workspace{% endblock %}
+
+{% block content %}
+<!-- ==========================================
+     WORKSPACE TOP BAR & SUMMARY HEADER
+     ========================================== -->
+<div class="workspace-header">
+    <div class="workspace-nav-back">
+        <a href="{% url 'core:dashboard' %}" class="back-link">‹ All TripSpaces</a>
+    </div>
+
+    {% if is_viewer %}
+    <div class="viewer-notice-banner">
+        <span class="notice-icon">👁️</span>
+        <div>
+            <strong>Read-Only Mode:</strong> You are viewing <strong>{{ trip.title }}</strong> as a <strong>Viewer</strong>. You can view all confirmed routes, stays, and tickets, but cannot edit items.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="workspace-hero">
+        <div class="workspace-hero-content">
+            <div class="workspace-badge-row">
+                <span class="trip-location-badge">📍 {{ trip.location }}</span>
+                <span class="calendar-pill">📅 {{ trip.formatted_dates }}</span>
+                <span class="status-pill status-confirmed">Live Workspace</span>
+                {% if user_role %}
+                <span class="chip-role chip-role-{{ user_role|lower }}">Your Role: {{ user_role }}</span>
+                {% endif %}
+            </div>
+            <h1 class="workspace-title">{{ trip.title }}</h1>
+            {% if trip.description %}
+            <p class="workspace-desc">{{ trip.description }}</p>
+            {% endif %}
+        </div>
+
+        <div class="workspace-actions">
+            {% if can_edit %}
+            <button type="button" class="btn btn-outline" onclick="openModal('editTripModal')">
+                <span class="btn-icon">✏️</span> Edit Trip
+            </button>
+            <button type="button" class="btn btn-outline" onclick="openModal('inviteMemberModal')">
+                <span class="btn-icon">👥</span> Invite Trippers
+            </button>
+            {% endif %}
+            
+            <button type="button" class="btn btn-outline" onclick="navigator.clipboard.writeText(window.location.href); this.textContent='Link Copied!';">
+                <span class="btn-icon">🔗</span> Share
+            </button>
+            
+            {% if is_owner %}
+            <button type="button" class="btn btn-danger-outline" onclick="openModal('deleteTripModal')">
+                Delete Trip
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Trippers Bar & Summary Metrics -->
+    <div class="workspace-meta-bar">
+        <div class="trippers-bar">
+            <span class="meta-label">Trippers:</span>
+            <div class="tripper-member-list">
+                {% for m in members %}
+                <div class="tripper-chip" title="{{ m.user.full_name }} (@{{ m.user.handle }})">
+                    {% if m.user.profile_image_url %}
+                    <img src="{{ m.user.profile_image_url }}" alt="{{ m.user.handle }}" class="chip-avatar">
+                    {% else %}
+                    <span class="chip-avatar-placeholder">{{ m.user.handle|slice:":1"|upper }}</span>
+                    {% endif %}
+                    <span class="chip-name">@{{ m.user.handle }}</span>
+                    <span class="chip-role chip-role-{{ m.role|lower }}">{{ m.role }}</span>
+                    {% if is_owner and m.user.id != trip.created_by.id %}
+                    <button type="button" class="btn-chip-action" onclick="openModal('manageMemberModal_{{ m.id }}')" title="Change Role or Remove">⚙️</button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="workspace-metrics">
+            <div class="metric-item">
+                <span class="metric-val">{{ trip.confirmed_items_count }}</span>
+                <span class="metric-label">Confirmed</span>
+            </div>
+            <div class="metric-separator">•</div>
+            <div class="metric-item">
+                <span class="metric-val">{{ trip.idea_items_count }}</span>
+                <span class="metric-label">Ideas</span>
+            </div>
+            <div class="metric-separator">•</div>
+            <div class="metric-item">
+                <span class="metric-val">${{ total_spend|floatformat:0 }}</span>
+                <span class="metric-label">Est. Spend</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     WORKSPACE TABS NAVIGATION
+     ========================================== -->
+<div class="workspace-tabs-container">
+    <div class="workspace-tabs" id="workspaceTabs">
+        <button class="tab-btn active" onclick="switchTab('timeline', this)">
+            ⏱️ Timeline / Itinerary <span class="tab-counter">{{ timeline_items|length }}</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('stays', this)">
+            🏨 Stays <span class="tab-counter">{{ stays.count }}</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('navs', this)">
+            ✈️ Navs <span class="tab-counter">{{ navs.count }}</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('dos', this)">
+            🎯 Dos & Recs <span class="tab-counter">{{ dos.count|add:recs.count }}</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('vault', this)">
+            🔒 Vault <span class="tab-counter">{{ attachments.count }}</span>
+        </button>
+    </div>
+</div>
+
+<!-- ==========================================
+     TAB 1: TIMELINE / ITINERARY
+     ========================================== -->
+<div id="tab-timeline" class="tab-content active">
+    <div class="tab-header">
+        <div>
+            <h2 class="tab-title">Chronological Trip Timeline</h2>
+            <p class="tab-desc">Unified chronological flow of confirmed bookings and tentative ideas.</p>
+        </div>
+        <div class="timeline-filter-bar">
+            <button class="filter-pill active" onclick="filterTimeline('all', this)">All Items ({{ timeline_items|length }})</button>
+            <button class="filter-pill" onclick="filterTimeline('CONFIRMED', this)">Confirmed Only</button>
+            <button class="filter-pill" onclick="filterTimeline('IDEA', this)">Ideas Only</button>
+        </div>
+    </div>
+
+    {% if timeline_items %}
+    <div class="timeline-feed">
+        {% for item in timeline_items %}
+        <div class="timeline-entry timeline-status-{{ item.status }}" data-status="{{ item.status }}">
+            <div class="timeline-icon-col">
+                <div class="timeline-node node-{{ item.type }}">
+                    {% if item.type == 'stay' %}🏨{% elif item.type == 'nav' %}✈️{% else %}🎯{% endif %}
+                </div>
+                <div class="timeline-connector"></div>
+            </div>
+
+            <div class="timeline-card">
+                <div class="timeline-card-header">
+                    <div class="timeline-card-title-wrap">
+                        <span class="item-type-badge item-type-{{ item.type }}">{{ item.subtitle }}</span>
+                        <h3 class="timeline-card-title">{{ item.title }}</h3>
+                    </div>
+                    <div class="timeline-card-actions">
+                        <span class="status-pill status-{{ item.status|lower }} status-badge-{{ item.type }}-{{ item.id }}">
+                            {{ item.status|title }}
+                        </span>
+                        {% if can_edit %}
+                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('{{ item.type }}', '{{ item.id }}', this)" title="Toggle Confirmed / Idea">
+                            ⇄
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="timeline-details-row">
+                    {% if item.timestamp %}
+                    <span class="detail-tag">
+                        🕒 {{ item.timestamp|date:"M j, Y — g:i A" }}
+                        {% if item.end_timestamp %} ➔ {{ item.end_timestamp|date:"M j, g:i A" }}{% endif %}
+                    </span>
+                    {% else %}
+                    <span class="detail-tag text-muted">🕒 Flexible timing</span>
+                    {% endif %}
+
+                    {% if item.location %}
+                    <span class="detail-tag">📍 {{ item.location }}</span>
+                    {% endif %}
+
+                    {% if item.price %}
+                    <span class="detail-tag tag-price">💵 {{ item.currency }} ${{ item.price|floatformat:2 }}</span>
+                    {% endif %}
+                </div>
+
+                {% if item.has_code %}
+                <div class="code-reveal-row">
+                    <span class="code-label">Encrypted Confirmation:</span>
+                    <div class="code-box-container">
+                        <span class="masked-code">••••••••</span>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="revealCode('{{ item.type }}', '{{ item.id }}', this.parentElement)">Reveal Code</button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <h3>No itinerary items yet</h3>
+        <p>Add your accommodations, flights, or planned activities to see them mapped here.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ==========================================
+     TAB 2: STAYS (LODGING)
+     ========================================== -->
+<div id="tab-stays" class="tab-content">
+    <div class="tab-header">
+        <div>
+            <h2 class="tab-title">Accommodations (Stays)</h2>
+            <p class="tab-desc">Track confirmed hotel rooms, Airbnb houses, and prospective lodgings.</p>
+        </div>
+        {% if can_edit %}
+        <button type="button" class="btn btn-primary" onclick="openModal('addStayModal')">
+            <span class="btn-icon">+</span> Add Stay
+        </button>
+        {% endif %}
+    </div>
+
+    {% if stays %}
+    <div class="items-grid">
+        {% for stay in stays %}
+        <div class="item-card stay-card">
+            <div class="item-card-header">
+                <div>
+                    <span class="item-type-badge">{{ stay.place_type|default:"Accommodation" }}</span>
+                    <h3 class="item-title">{{ stay.title }}</h3>
+                </div>
+                <div class="item-header-actions">
+                    <span class="status-pill status-{{ stay.status|lower }} status-badge-stay-{{ stay.id }}">
+                        {{ stay.get_status_display }}
+                    </span>
+                    {% if can_edit %}
+                    <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('stay', '{{ stay.id }}', this)" title="Toggle Confirmed / Idea">
+                        ⇄
+                    </button>
+                    <button type="button" class="btn-card-action" onclick="openModal('editStayModal_{{ stay.id }}')" title="Edit Stay">✏️</button>
+                    <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteStayModal_{{ stay.id }}')" title="Delete Stay">🗑️</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if stay.address %}
+            <div class="item-address-row">
+                <span class="icon">📍</span>
+                <span class="address-text">{{ stay.address }}</span>
+                <a href="https://maps.google.com/?q={{ stay.address|urlencode }}" target="_blank" class="maps-link">Map ↗</a>
+            </div>
+            {% endif %}
+
+            <!-- Capacity details -->
+            <div class="capacity-row">
+                {% if stay.num_beds %}<span class="capacity-pill">🛏️ {{ stay.num_beds }} Bed{{ stay.num_beds|pluralize }}</span>{% endif %}
+                {% if stay.num_rooms %}<span class="capacity-pill">🚪 {{ stay.num_rooms }} Room{{ stay.num_rooms|pluralize }}</span>{% endif %}
+                {% if stay.num_guests %}<span class="capacity-pill">👥 Up to {{ stay.num_guests }} Guest{{ stay.num_guests|pluralize }}</span>{% endif %}
+            </div>
+
+            <div class="item-time-row">
+                <div>
+                    <small class="time-label">Check-in</small>
+                    <div class="time-val">{{ stay.check_in|date:"M d, Y"|default:"TBD" }}{% if stay.check_in %} <span class="time-sub">{{ stay.check_in|date:"g:i A" }}</span>{% endif %}</div>
+                </div>
+                <div class="time-arrow">➔</div>
+                <div>
+                    <small class="time-label">Check-out</small>
+                    <div class="time-val">{{ stay.check_out|date:"M d, Y"|default:"TBD" }}{% if stay.check_out %} <span class="time-sub">{{ stay.check_out|date:"g:i A" }}</span>{% endif %}</div>
+                </div>
+            </div>
+
+            {% if stay.notes %}
+            <p class="item-notes"><strong>Notes:</strong> {{ stay.notes }}</p>
+            {% endif %}
+
+            <div class="item-footer">
+                <div class="price-box">
+                    {% if stay.total_price %}
+                    <span class="price-val">${{ stay.total_price|floatformat:2 }}</span>
+                    <span class="price-currency">{{ stay.currency }} Total</span>
+                    {% else %}
+                    <span class="price-free">Price TBD</span>
+                    {% endif %}
+                </div>
+
+                {% if stay.has_confirmation_code %}
+                <div class="code-box-container">
+                    <span class="masked-code">••••••••</span>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="revealCode('stay', '{{ stay.id }}', this.parentElement)">Reveal Code</button>
+                </div>
+                {% endif %}
+
+                {% if stay.booking_link %}
+                <a href="{{ stay.booking_link }}" target="_blank" class="btn btn-sm btn-secondary">Booking Link ↗</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- EDIT STAY MODAL -->
+        {% if can_edit %}
+        <div id="editStayModal_{{ stay.id }}" class="modal-backdrop">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3 class="modal-title">Edit Stay: {{ stay.title }}</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('editStayModal_{{ stay.id }}')">×</button>
+                </div>
+                <form method="POST" action="{% url 'core:edit_stay' trip.id stay.id %}" class="modal-form">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-col" style="flex: 2;">
+                            <label class="form-label">Property Name <span class="required">*</span></label>
+                            <input type="text" name="title" class="form-control" value="{{ stay.title }}" required>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-control">
+                                <option value="IDEA" {% if stay.status == 'IDEA' %}selected{% endif %}>Idea</option>
+                                <option value="CONFIRMED" {% if stay.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Type of Place</label>
+                            <select name="place_type" class="form-control">
+                                <option value="Hotel Room" {% if stay.place_type == 'Hotel Room' %}selected{% endif %}>Hotel Room</option>
+                                <option value="Entire Place" {% if stay.place_type == 'Entire Place' %}selected{% endif %}>Entire Place</option>
+                                <option value="Shared Room/Guest House" {% if stay.place_type == 'Shared Room/Guest House' %}selected{% endif %}>Shared Room / Guest House</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Beds</label>
+                            <input type="number" name="num_beds" class="form-control" value="{{ stay.num_beds|default:'' }}">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Rooms</label>
+                            <input type="number" name="num_rooms" class="form-control" value="{{ stay.num_rooms|default:'' }}">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Guests</label>
+                            <input type="number" name="num_guests" class="form-control" value="{{ stay.num_guests|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control" value="{{ stay.address|default:'' }}">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Check-in</label>
+                            <input type="datetime-local" name="check_in" class="form-control" value="{{ stay.check_in|date:'Y-m-d\TH:i' }}">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Check-out</label>
+                            <input type="datetime-local" name="check_out" class="form-control" value="{{ stay.check_out|date:'Y-m-d\TH:i' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Total Cost ($)</label>
+                            <input type="number" step="0.01" name="total_price" class="form-control" value="{{ stay.total_price|default:'' }}">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Confirmation Code (AES-256)</label>
+                            <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Booking Link</label>
+                        <input type="url" name="booking_link" class="form-control" value="{{ stay.booking_link|default:'' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Notes & Instructions</label>
+                        <textarea name="notes" class="form-control" rows="2">{{ stay.notes|default:'' }}</textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('editStayModal_{{ stay.id }}')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- DELETE STAY MODAL -->
+        <div id="deleteStayModal_{{ stay.id }}" class="modal-backdrop">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3 class="modal-title text-danger">Delete Stay?</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('deleteStayModal_{{ stay.id }}')">×</button>
+                </div>
+                <form method="POST" action="{% url 'core:delete_stay' trip.id stay.id %}" class="modal-form">
+                    {% csrf_token %}
+                    <p>Are you sure you want to remove <strong>"{{ stay.title }}"</strong> from this trip?</p>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('deleteStayModal_{{ stay.id }}')">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🏨</div>
+        <h3>No lodging options added</h3>
+        <p>Log a hotel reservation or pitch prospective villas to the group.</p>
+        {% if can_edit %}
+        <button class="btn btn-primary" onclick="openModal('addStayModal')">Add Lodging</button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ==========================================
+     TAB 3: NAVS (TRANSPORTATION)
+     ========================================== -->
+<div id="tab-navs" class="tab-content">
+    <div class="tab-header">
+        <div>
+            <h2 class="tab-title">Transportation (Navs)</h2>
+            <p class="tab-desc">Coordinate flights, carpools, ferries, and train legs.</p>
+        </div>
+        {% if can_edit %}
+        <button type="button" class="btn btn-primary" onclick="openModal('addNavModal')">
+            <span class="btn-icon">+</span> Add Transit Leg
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Section 1: Trip Start & End Legs -->
+    <div class="nav-section-wrap">
+        <h3 class="nav-subhead">🛫 Trip Start & End (Arrivals / Departures)</h3>
+        {% if navs_start_end %}
+        <div class="items-grid">
+            {% for nav in navs_start_end %}
+            {% include 'partials/nav_card.html' with nav=nav can_edit=can_edit trip=trip %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted subhead-empty">No arrival or departure flights logged yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Section 2: Mid-Trip Legs -->
+    <div class="nav-section-wrap">
+        <h3 class="nav-subhead">🚗 Mid-Trip Transit (Ferries, Trains, Road Trips)</h3>
+        {% if navs_mid_trip %}
+        <div class="items-grid">
+            {% for nav in navs_mid_trip %}
+            {% include 'partials/nav_card.html' with nav=nav can_edit=can_edit trip=trip %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted subhead-empty">No internal mid-trip transit recorded.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ==========================================
+     TAB 4: DOS & RECS (ACTIVITIES & POOL)
+     ========================================== -->
+<div id="tab-dos" class="tab-content">
+    <div class="tab-header">
+        <div>
+            <h2 class="tab-title">Activities & Ideas (Dos & Recs)</h2>
+            <p class="tab-desc">Scheduled activities plus a brainstorming pool that can be promoted to the itinerary.</p>
+        </div>
+        {% if can_edit %}
+        <div class="header-dual-actions">
+            <button type="button" class="btn btn-outline" onclick="openModal('addRecModal')">
+                <span class="btn-icon">💡</span> Propose a Rec
+            </button>
+            <button type="button" class="btn btn-primary" onclick="openModal('addDoModal')">
+                <span class="btn-icon">+</span> Add Scheduled Do
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sub-Section A: Concrete Scheduled Dos -->
+    <div class="dos-group-section">
+        <h3 class="group-title">🎯 Scheduled Activities (Dos)</h3>
+        {% if dos %}
+        <div class="items-grid">
+            {% for do_item in dos %}
+            <div class="item-card do-card">
+                <div class="item-card-header">
+                    <div>
+                        <span class="item-type-badge">{{ do_item.activity_type|default:"Activity" }}</span>
+                        <h4 class="item-title">{{ do_item.title }}</h4>
+                    </div>
+                    <div class="item-header-actions">
+                        <span class="status-pill status-{{ do_item.status|lower }} status-badge-do-{{ do_item.id }}">
+                            {{ do_item.get_status_display }}
+                        </span>
+                        {% if can_edit %}
+                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('do', '{{ do_item.id }}', this)">⇄</button>
+                        <button type="button" class="btn-card-action" onclick="openModal('editDoModal_{{ do_item.id }}')">✏️</button>
+                        <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteDoModal_{{ do_item.id }}')">🗑️</button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if do_item.address %}
+                <div class="item-address-row">
+                    <span class="icon">📍</span>
+                    <span class="address-text">{{ do_item.address }}</span>
+                </div>
+                {% endif %}
+
+                {% if do_item.start_time %}
+                <div class="item-time-row">
+                    <div>
+                        <small class="time-label">Starts</small>
+                        <div class="time-val">{{ do_item.start_time|date:"M d, g:i A" }}</div>
+                    </div>
+                    {% if do_item.end_time %}
+                    <div class="time-arrow">➔</div>
+                    <div>
+                        <small class="time-label">Ends</small>
+                        <div class="time-val">{{ do_item.end_time|date:"g:i A" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if do_item.description %}
+                <p class="item-notes">{{ do_item.description }}</p>
+                {% endif %}
+
+                <div class="item-footer">
+                    <div class="price-box">
+                        {% if do_item.price %}
+                        <span class="price-val">${{ do_item.price|floatformat:2 }}</span>
+                        {% else %}
+                        <span class="price-free">Free / Unticketed</span>
+                        {% endif %}
+                    </div>
+                    {% if do_item.has_confirmation_code %}
+                    <div class="code-box-container">
+                        <span class="masked-code">••••••••</span>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="revealCode('do', '{{ do_item.id }}', this.parentElement)">Reveal Code</button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- EDIT DO MODAL -->
+            {% if can_edit %}
+            <div id="editDoModal_{{ do_item.id }}" class="modal-backdrop">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Edit Activity: {{ do_item.title }}</h3>
+                        <button type="button" class="modal-close" onclick="closeModal('editDoModal_{{ do_item.id }}')">×</button>
+                    </div>
+                    <form method="POST" action="{% url 'core:edit_do' trip.id do_item.id %}" class="modal-form">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="form-col" style="flex: 2;">
+                                <label class="form-label">Activity Title <span class="required">*</span></label>
+                                <input type="text" name="title" class="form-control" value="{{ do_item.title }}" required>
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">Type</label>
+                                <select name="activity_type" class="form-control">
+                                    <option value="Sightseeing" {% if do_item.activity_type == 'Sightseeing' %}selected{% endif %}>Sightseeing</option>
+                                    <option value="Dining" {% if do_item.activity_type == 'Dining' %}selected{% endif %}>Dining</option>
+                                    <option value="Activity" {% if do_item.activity_type == 'Activity' %}selected{% endif %}>Activity</option>
+                                    <option value="Tour" {% if do_item.activity_type == 'Tour' %}selected{% endif %}>Tour</option>
+                                    <option value="Outdoor" {% if do_item.activity_type == 'Outdoor' %}selected{% endif %}>Outdoor</option>
+                                    <option value="Nightlife" {% if do_item.activity_type == 'Nightlife' %}selected{% endif %}>Nightlife</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Location / Address</label>
+                            <input type="text" name="address" class="form-control" value="{{ do_item.address|default:'' }}">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">Start Time</label>
+                                <input type="datetime-local" name="start_time" class="form-control" value="{{ do_item.start_time|date:'Y-m-d\TH:i' }}">
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">End Time</label>
+                                <input type="datetime-local" name="end_time" class="form-control" value="{{ do_item.end_time|date:'Y-m-d\TH:i' }}">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">Estimated Cost ($)</label>
+                                <input type="number" step="0.01" name="price" class="form-control" value="{{ do_item.price|default:'' }}">
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-control">
+                                    <option value="CONFIRMED" {% if do_item.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                                    <option value="IDEA" {% if do_item.status == 'IDEA' %}selected{% endif %}>Idea</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2">{{ do_item.description|default:'' }}</textarea>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('editDoModal_{{ do_item.id }}')">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Activity</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- DELETE DO MODAL -->
+            <div id="deleteDoModal_{{ do_item.id }}" class="modal-backdrop">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3 class="modal-title text-danger">Delete Activity?</h3>
+                        <button type="button" class="modal-close" onclick="closeModal('deleteDoModal_{{ do_item.id }}')">×</button>
+                    </div>
+                    <form method="POST" action="{% url 'core:delete_do' trip.id do_item.id %}" class="modal-form">
+                        {% csrf_token %}
+                        <p>Are you sure you want to delete <strong>"{{ do_item.title }}"</strong>?</p>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('deleteDoModal_{{ do_item.id }}')">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted subhead-empty">No scheduled activities yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Sub-Section B: Brainstorming Recommendations Pool -->
+    <div class="recs-group-section">
+        <div class="recs-header-wrap">
+            <h3 class="group-title">💡 Recommendations Pool (Recs)</h3>
+            <span class="recs-counter">{{ recs.count }} Ideas suggested</span>
+        </div>
+        <p class="recs-desc">Suggestions submitted by friends. Click <strong>"Promote to Itinerary"</strong> on any card to convert it into a scheduled Do.</p>
+
+        {% if recs %}
+        <div class="recs-grid">
+            {% for rec in recs %}
+            <div class="rec-card rec-cat-{{ rec.category|lower }}">
+                <div class="rec-card-header">
+                    <span class="rec-category-badge">{{ rec.get_category_display }}</span>
+                    {% if rec.recommended_by %}
+                    <span class="rec-recommender">by @{{ rec.recommended_by.handle }}</span>
+                    {% endif %}
+                    {% if can_edit %}
+                    <div class="rec-header-actions">
+                        <button type="button" class="btn-card-action" onclick="openModal('editRecModal_{{ rec.id }}')" title="Edit Rec">✏️</button>
+                        <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteRecModal_{{ rec.id }}')" title="Delete Rec">🗑️</button>
+                    </div>
+                    {% endif %}
+                </div>
+                <h4 class="rec-title">{{ rec.title }}</h4>
+                {% if rec.description %}
+                <p class="rec-desc">{{ rec.description }}</p>
+                {% endif %}
+                {% if rec.address %}
+                <div class="rec-address">📍 {{ rec.address }}</div>
+                {% endif %}
+
+                <div class="rec-actions">
+                    {% if can_edit %}
+                    <form method="POST" action="{% url 'core:promote_rec' trip.id rec.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-promote">
+                            <span>✨</span> Promote to Itinerary
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if rec.link %}
+                    <a href="{{ rec.link }}" target="_blank" class="btn btn-sm btn-outline">Link ↗</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- EDIT REC MODAL -->
+            {% if can_edit %}
+            <div id="editRecModal_{{ rec.id }}" class="modal-backdrop">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Edit Recommendation</h3>
+                        <button type="button" class="modal-close" onclick="closeModal('editRecModal_{{ rec.id }}')">×</button>
+                    </div>
+                    <form method="POST" action="{% url 'core:edit_rec' trip.id rec.id %}" class="modal-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label class="form-label">Title <span class="required">*</span></label>
+                            <input type="text" name="title" class="form-control" value="{{ rec.title }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-control">
+                                <option value="Food" {% if rec.category == 'Food' %}selected{% endif %}>Food & Dining</option>
+                                <option value="Spot" {% if rec.category == 'Spot' %}selected{% endif %}>Sight & Spot</option>
+                                <option value="Activity" {% if rec.category == 'Activity' %}selected{% endif %}>Activity</option>
+                                <option value="Tip" {% if rec.category == 'Tip' %}selected{% endif %}>Travel Tip</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Address</label>
+                            <input type="text" name="address" class="form-control" value="{{ rec.address|default:'' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3">{{ rec.description|default:'' }}</textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('editRecModal_{{ rec.id }}')">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- DELETE REC MODAL -->
+            <div id="deleteRecModal_{{ rec.id }}" class="modal-backdrop">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3 class="modal-title text-danger">Remove Recommendation?</h3>
+                        <button type="button" class="modal-close" onclick="closeModal('deleteRecModal_{{ rec.id }}')">×</button>
+                    </div>
+                    <form method="POST" action="{% url 'core:delete_rec' trip.id rec.id %}" class="modal-form">
+                        {% csrf_token %}
+                        <p>Remove <strong>"{{ rec.title }}"</strong> from the ideas pool?</p>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('deleteRecModal_{{ rec.id }}')">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Yes, Remove</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted subhead-empty">No recommendations in the pool yet. Click "Propose a Rec" to contribute!</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ==========================================
+     TAB 5: THE VAULT (ATTACHMENTS)
+     ========================================== -->
+<div id="tab-vault" class="tab-content">
+    <div class="tab-header">
+        <div>
+            <h2 class="tab-title">The Secure Vault (Documents & Tickets)</h2>
+            <p class="tab-desc">Encrypted cloud document vault storing PDFs, boarding passes, and receipts.</p>
+        </div>
+        {% if can_edit %}
+        <button type="button" class="btn btn-primary" onclick="openModal('uploadVaultModal')">
+            <span class="btn-icon">📁</span> Upload to Vault
+        </button>
+        {% endif %}
+    </div>
+
+    {% if attachments %}
+    <div class="vault-table-container">
+        <table class="vault-table">
+            <thead>
+                <tr>
+                    <th>Document Name</th>
+                    <th>Associated Item</th>
+                    <th>Format</th>
+                    <th>Uploaded By</th>
+                    <th>Uploaded At</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for att in attachments %}
+                <tr>
+                    <td class="vault-filename">
+                        <span class="file-icon">📄</span> <strong>{{ att.file_name }}</strong>
+                    </td>
+                    <td>
+                        {% if att.stay %}
+                        <span class="item-type-badge">Stay: {{ att.stay.title }}</span>
+                        {% elif att.nav %}
+                        <span class="item-type-badge">Nav: {{ att.nav.title }}</span>
+                        {% elif att.do %}
+                        <span class="item-type-badge">Do: {{ att.do.title }}</span>
+                        {% else %}
+                        <span class="text-muted">General Trip Doc</span>
+                        {% endif %}
+                    </td>
+                    <td><code>{{ att.file_type }}</code></td>
+                    <td>@{{ att.uploaded_by.handle|default:"unknown" }}</td>
+                    <td>{{ att.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <div class="vault-action-row">
+                            {% if att.file %}
+                            <a href="{{ att.file.url }}" target="_blank" class="btn btn-sm btn-outline">Download</a>
+                            {% else %}
+                            <span class="vault-secured-pill" title="Stored in secure encrypted cloud bucket">Encrypted Key</span>
+                            {% endif %}
+                            {% if can_edit %}
+                            <form method="POST" action="{% url 'core:delete_attachment' trip.id att.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger-outline" onclick="return confirm('Remove this document from the vault?');" title="Delete Document">🗑️</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🔒</div>
+        <h3>The Vault is empty</h3>
+        <p>Attach flight boarding passes, hotel confirmations, or rental car agreements for offline access.</p>
+        {% if can_edit %}
+        <button class="btn btn-primary" onclick="openModal('uploadVaultModal')">Upload First Document</button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ==========================================
+     MODALS
+     ========================================== -->
+
+<!-- 0. EDIT TRIP DETAILS MODAL -->
+{% if can_edit %}
+<div id="editTripModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h3 class="modal-title">Edit Trip Details</h3>
+                <p class="modal-subtitle">Update destination, overview, or date scheduling.</p>
+            </div>
+            <button type="button" class="modal-close" onclick="closeModal('editTripModal')">×</button>
+        </div>
+
+        <form method="POST" action="{% url 'core:edit_trip' trip.id %}" class="modal-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label">Trip Title <span class="required">*</span></label>
+                <input type="text" name="title" class="form-control" value="{{ trip.title }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Destination Location <span class="required">*</span></label>
+                <input type="text" name="location" class="form-control" value="{{ trip.location }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Overview & Notes</label>
+                <textarea name="description" class="form-control" rows="3">{{ trip.description|default:'' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Date Flexibility / Time Granularity</label>
+                <div class="granularity-toggle-bar">
+                    <label class="granularity-option">
+                        <input type="radio" name="time_granularity" value="EXACT_RANGE" {% if trip.time_granularity == 'EXACT_RANGE' %}checked{% endif %} onchange="updateEditDateInputs(this.value)">
+                        <span class="granularity-box">
+                            <strong>Exact Dates</strong>
+                            <small>Calendar range</small>
+                        </span>
+                    </label>
+
+                    <label class="granularity-option">
+                        <input type="radio" name="time_granularity" value="SEASON_YEAR" {% if trip.time_granularity == 'SEASON_YEAR' %}checked{% endif %} onchange="updateEditDateInputs(this.value)">
+                        <span class="granularity-box">
+                            <strong>Season & Year</strong>
+                            <small>e.g. Summer 2026</small>
+                        </span>
+                    </label>
+
+                    <label class="granularity-option">
+                        <input type="radio" name="time_granularity" value="MONTH" {% if trip.time_granularity == 'MONTH' %}checked{% endif %} onchange="updateEditDateInputs(this.value)">
+                        <span class="granularity-box">
+                            <strong>Month Span</strong>
+                            <small>e.g. July–August 2026</small>
+                        </span>
+                    </label>
+
+                    <label class="granularity-option">
+                        <input type="radio" name="time_granularity" value="YEAR" {% if trip.time_granularity == 'YEAR' %}checked{% endif %} onchange="updateEditDateInputs(this.value)">
+                        <span class="granularity-box">
+                            <strong>Year Only</strong>
+                            <small>Broad season</small>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Granularity Specific Input Panels -->
+            <div id="editGranularityExact" class="date-input-panel" {% if trip.time_granularity != 'EXACT_RANGE' %}style="display: none;"{% endif %}>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ trip.start_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ trip.end_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div id="editGranularitySeason" class="date-input-panel" {% if trip.time_granularity != 'SEASON_YEAR' %}style="display: none;"{% endif %}>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">Season</label>
+                        <select name="season" class="form-control">
+                            <option value="SPRING" {% if trip.season == 'SPRING' %}selected{% endif %}>Spring</option>
+                            <option value="SUMMER" {% if trip.season == 'SUMMER' %}selected{% endif %}>Summer</option>
+                            <option value="FALL" {% if trip.season == 'FALL' %}selected{% endif %}>Fall</option>
+                            <option value="WINTER" {% if trip.season == 'WINTER' %}selected{% endif %}>Winter</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Year</label>
+                        <input type="number" name="season_year" class="form-control" value="{{ trip.year }}">
+                    </div>
+                </div>
+            </div>
+
+            <div id="editGranularityMonth" class="date-input-panel" {% if trip.time_granularity != 'MONTH' %}style="display: none;"{% endif %}>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">Start Month</label>
+                        <select name="start_month" class="form-control">
+                            <option value="1" {% if trip.start_month == 1 %}selected{% endif %}>January</option>
+                            <option value="2" {% if trip.start_month == 2 %}selected{% endif %}>February</option>
+                            <option value="3" {% if trip.start_month == 3 %}selected{% endif %}>March</option>
+                            <option value="4" {% if trip.start_month == 4 %}selected{% endif %}>April</option>
+                            <option value="5" {% if trip.start_month == 5 %}selected{% endif %}>May</option>
+                            <option value="6" {% if trip.start_month == 6 %}selected{% endif %}>June</option>
+                            <option value="7" {% if trip.start_month == 7 %}selected{% endif %}>July</option>
+                            <option value="8" {% if trip.start_month == 8 %}selected{% endif %}>August</option>
+                            <option value="9" {% if trip.start_month == 9 %}selected{% endif %}>September</option>
+                            <option value="10" {% if trip.start_month == 10 %}selected{% endif %}>October</option>
+                            <option value="11" {% if trip.start_month == 11 %}selected{% endif %}>November</option>
+                            <option value="12" {% if trip.start_month == 12 %}selected{% endif %}>December</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">End Month</label>
+                        <select name="end_month" class="form-control">
+                            <option value="">Same Month</option>
+                            <option value="1" {% if trip.end_month == 1 %}selected{% endif %}>January</option>
+                            <option value="2" {% if trip.end_month == 2 %}selected{% endif %}>February</option>
+                            <option value="3" {% if trip.end_month == 3 %}selected{% endif %}>March</option>
+                            <option value="4" {% if trip.end_month == 4 %}selected{% endif %}>April</option>
+                            <option value="5" {% if trip.end_month == 5 %}selected{% endif %}>May</option>
+                            <option value="6" {% if trip.end_month == 6 %}selected{% endif %}>June</option>
+                            <option value="7" {% if trip.end_month == 7 %}selected{% endif %}>July</option>
+                            <option value="8" {% if trip.end_month == 8 %}selected{% endif %}>August</option>
+                            <option value="9" {% if trip.end_month == 9 %}selected{% endif %}>September</option>
+                            <option value="10" {% if trip.end_month == 10 %}selected{% endif %}>October</option>
+                            <option value="11" {% if trip.end_month == 11 %}selected{% endif %}>November</option>
+                            <option value="12" {% if trip.end_month == 12 %}selected{% endif %}>December</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Year</label>
+                        <input type="number" name="month_year" class="form-control" value="{{ trip.year }}">
+                    </div>
+                </div>
+            </div>
+
+            <div id="editGranularityYear" class="date-input-panel" {% if trip.time_granularity != 'YEAR' %}style="display: none;"{% endif %}>
+                <div class="form-group">
+                    <label class="form-label">Travel Year</label>
+                    <input type="number" name="year" class="form-control" value="{{ trip.year }}">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editTripModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- 1. ADD STAY MODAL -->
+{% if can_edit %}
+<div id="addStayModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Add Lodging (Stay)</h3>
+            <button type="button" class="modal-close" onclick="closeModal('addStayModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:add_stay' trip.id %}" class="modal-form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-col" style="flex: 2;">
+                    <label class="form-label">Property Name <span class="required">*</span></label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g., Saga Hotel Reykjavik, Villa Bellini" required>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="IDEA">Idea (Proposing)</option>
+                        <option value="CONFIRMED" selected>Confirmed (Booked)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Type of Place</label>
+                    <select name="place_type" class="form-control">
+                        <option value="Hotel Room">Hotel Room</option>
+                        <option value="Entire Place">Entire Place (House / Apt)</option>
+                        <option value="Shared Room/Guest House">Shared Room / Guest House</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Beds</label>
+                    <input type="number" name="num_beds" class="form-control" placeholder="e.g. 2">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Rooms</label>
+                    <input type="number" name="num_rooms" class="form-control" placeholder="e.g. 1">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Guests</label>
+                    <input type="number" name="num_guests" class="form-control" placeholder="e.g. 4">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Physical Address / Area</label>
+                <input type="text" name="address" class="form-control" placeholder="Street address, neighborhood or city">
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Check-in Date & Time</label>
+                    <input type="datetime-local" name="check_in" class="form-control">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Check-out Date & Time</label>
+                    <input type="datetime-local" name="check_out" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Total Cost ($)</label>
+                    <input type="number" step="0.01" name="total_price" class="form-control" placeholder="e.g. 890.00">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Confirmation Code (AES-256 Encrypted)</label>
+                    <input type="text" name="confirmation_code" class="form-control" placeholder="e.g. SAGA-44012-IS">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Booking Link</label>
+                <input type="url" name="booking_link" class="form-control" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Check-in Instructions & Door Codes</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, parking instructions, WiFi password..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addStayModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Stay</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. ADD NAV MODAL -->
+<div id="addNavModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Add Transportation Leg (Nav)</h3>
+            <button type="button" class="modal-close" onclick="closeModal('addNavModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:add_nav' trip.id %}" class="modal-form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-col" style="flex: 2;">
+                    <label class="form-label">Transport Identifier <span class="required">*</span></label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g., Delta Flight DL 128, KEF 4x4 Campervan" required>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Mode</label>
+                    <select name="mode" class="form-control">
+                        <option value="Flight">Flight</option>
+                        <option value="Train">Train</option>
+                        <option value="Car">Car / Rental</option>
+                        <option value="Ferry">Ferry / Cruise</option>
+                        <option value="Bus">Bus</option>
+                        <option value="Rideshare">Rideshare</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Trip Stage</label>
+                    <select name="trip_stage" class="form-control">
+                        <option value="START_END">Trip Start/End (Arrival / Departure)</option>
+                        <option value="MID_TRIP">Mid-Trip (During trip)</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Direction</label>
+                    <select name="direction" class="form-control">
+                        <option value="ARRIVING">Arriving to Trip</option>
+                        <option value="LEAVING">Leaving Trip</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="IDEA">Idea / Tentative</option>
+                        <option value="CONFIRMED" selected>Confirmed</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Origin</label>
+                    <input type="text" name="origin_address" class="form-control" placeholder="Airport code or address">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Destination</label>
+                    <input type="text" name="destination_address" class="form-control" placeholder="Airport code or address">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Departure Date & Time</label>
+                    <input type="datetime-local" name="departure_time" class="form-control">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Arrival Date & Time</label>
+                    <input type="datetime-local" name="arrival_time" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Passenger Handle(s)</label>
+                    <input type="text" name="passenger_name" class="form-control" placeholder="e.g. @leila, @sam">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Total Cost ($)</label>
+                    <input type="number" step="0.01" name="price" class="form-control" placeholder="e.g. 780.00">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Confirmation Code (AES-256)</label>
+                    <input type="text" name="confirmation_code" class="form-control" placeholder="e.g. DL-KEF-4820">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Flexibility Notes & Range Details</label>
+                <textarea name="flexibility_notes" class="form-control" rows="2" placeholder="Layover window, pickup instructions, buffer..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addNavModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Transit Leg</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. ADD DO MODAL -->
+<div id="addDoModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Add Scheduled Activity (Do)</h3>
+            <button type="button" class="modal-close" onclick="closeModal('addDoModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:add_do' trip.id %}" class="modal-form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-col" style="flex: 2;">
+                    <label class="form-label">Activity Title <span class="required">*</span></label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g., Golden Circle Tour, Dinner at Friðheimar" required>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Type</label>
+                    <select name="activity_type" class="form-control">
+                        <option value="Sightseeing">Sightseeing</option>
+                        <option value="Dining">Dining</option>
+                        <option value="Activity">Activity / Hot Springs</option>
+                        <option value="Tour">Guided Tour</option>
+                        <option value="Outdoor">Hiking / Outdoor</option>
+                        <option value="Nightlife">Nightlife</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Location / Address</label>
+                <input type="text" name="address" class="form-control" placeholder="Venue name or address">
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Start Date & Time</label>
+                    <input type="datetime-local" name="start_time" class="form-control">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">End Date & Time</label>
+                    <input type="datetime-local" name="end_time" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Estimated Cost ($)</label>
+                    <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="CONFIRMED" selected>Confirmed</option>
+                        <option value="IDEA">Idea</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Confirmation Code</label>
+                    <input type="text" name="confirmation_code" class="form-control" placeholder="Optional booking code">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description / Instructions</label>
+                <textarea name="description" class="form-control" rows="2" placeholder="Gear needed, booking notes, directions..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addDoModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Activity</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 4. ADD REC MODAL -->
+<div id="addRecModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Propose a Recommendation (Rec)</h3>
+            <button type="button" class="modal-close" onclick="closeModal('addRecModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:add_rec' trip.id %}" class="modal-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Recommendation Title <span class="required">*</span></label>
+                <input type="text" name="title" class="form-control" placeholder="e.g. Trattoria da Nino, Reynisfjara warning, Secret beach" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-control">
+                    <option value="Food">Food & Dining</option>
+                    <option value="Spot">Sight & Spot</option>
+                    <option value="Activity">Activity & Experience</option>
+                    <option value="Tip">Travel Tip & Advice</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Address / Location</label>
+                <input type="text" name="address" class="form-control" placeholder="Neighborhood or address">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Link / Guide URL</label>
+                <input type="url" name="link" class="form-control" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Why do you recommend this?</label>
+                <textarea name="description" class="form-control" rows="3" placeholder="What to order, when to go, tips for the group..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addRecModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add to Ideas Pool</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 5. INVITE TRIPPERS MODAL -->
+<div id="inviteMemberModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Invite Companions (Trippers)</h3>
+            <button type="button" class="modal-close" onclick="closeModal('inviteMemberModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:invite_member' trip.id %}" class="modal-form">
+            {% csrf_token %}
+            <p class="modal-subtitle">Choose a friend from your network to join this TripSpace.</p>
+
+            <div class="form-group">
+                <label class="form-label">Select User</label>
+                <select name="user_id" class="form-control" required>
+                    {% for u in available_users %}
+                    <option value="{{ u.id }}">{{ u.full_name }} (@{{ u.handle }}) — {{ u.email }}</option>
+                    {% empty %}
+                    <option disabled>All demo users are already members!</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Assigned Role</label>
+                <select name="role" class="form-control">
+                    <option value="EDITOR" selected>Editor (Can add, edit & delete stays, navs, dos, vault)</option>
+                    <option value="VIEWER">Viewer (Read-only access to view confirmed logistics)</option>
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('inviteMemberModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Tripper</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 6. UPLOAD VAULT MODAL -->
+<div id="uploadVaultModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Upload to Secure Vault</h3>
+            <button type="button" class="modal-close" onclick="closeModal('uploadVaultModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:upload_attachment' trip.id %}" enctype="multipart/form-data" class="modal-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Select File (PDF, PNG, JPG)</label>
+                <input type="file" name="file" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Document Name (Optional)</label>
+                <input type="text" name="file_name" class="form-control" placeholder="e.g. BoardingPass_DL128.pdf">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Attach to Specific Item (Optional)</label>
+                <select name="stay_id" class="form-control">
+                    <option value="">-- Or link to a Stay --</option>
+                    {% for s in stays %}
+                    <option value="{{ s.id }}">Stay: {{ s.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('uploadVaultModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Upload Document</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- 7. DELETE TRIP CONFIRMATION MODAL -->
+{% if is_owner %}
+<div id="deleteTripModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title text-danger">Delete TripSpace?</h3>
+            <button type="button" class="modal-close" onclick="closeModal('deleteTripModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:delete_trip' trip.id %}" class="modal-form">
+            {% csrf_token %}
+            <p>Are you sure you want to permanently delete <strong>"{{ trip.title }}"</strong>? This will remove all stays, navs, activities, and uploaded vault documents.</p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('deleteTripModal')">Cancel</button>
+                <button type="submit" class="btn btn-danger">Yes, Delete Trip</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- 8. MANAGE MEMBERS MODALS (FOR OWNER) -->
+{% if is_owner %}
+{% for m in members %}
+{% if m.user.id != trip.created_by.id %}
+<div id="manageMemberModal_{{ m.id }}" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Manage Tripper: @{{ m.user.handle }}</h3>
+            <button type="button" class="modal-close" onclick="closeModal('manageMemberModal_{{ m.id }}')">×</button>
+        </div>
+        <div class="modal-form">
+            <!-- Update Role Form -->
+            <form method="POST" action="{% url 'core:update_member_role' trip.id m.id %}" style="margin-bottom: 1.5rem;">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Change Role for {{ m.user.full_name }}</label>
+                    <select name="role" class="form-control">
+                        <option value="EDITOR" {% if m.role == 'EDITOR' %}selected{% endif %}>Editor (Can add, edit, and delete items)</option>
+                        <option value="VIEWER" {% if m.role == 'VIEWER' %}selected{% endif %}>Viewer (Read-only)</option>
+                        <option value="OWNER" {% if m.role == 'OWNER' %}selected{% endif %}>Co-Owner</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary">Update Role</button>
+            </form>
+
+            <div class="dropdown-divider" style="margin: 1.25rem 0;"></div>
+
+            <!-- Remove Member Form -->
+            <form method="POST" action="{% url 'core:remove_member' trip.id m.id %}">
+                {% csrf_token %}
+                <p class="text-danger" style="font-size: 0.85rem; margin-bottom: 0.75rem;">
+                    Remove this user from the trip? They will lose access to the itinerary.
+                </p>
+                <button type="submit" class="btn btn-sm btn-danger-outline" onclick="return confirm('Remove @{{ m.user.handle }} from trip?');">
+                    Remove Tripper
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Tab switching logic
+    function switchTab(tabName, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        const target = document.getElementById('tab-' + tabName);
+        if (target) {
+            target.classList.add('active');
+        }
+        if (btnElement) {
+            btnElement.classList.add('active');
+        }
+        window.location.hash = tabName;
+    }
+
+    // Auto-select tab if hash in URL
+    window.addEventListener('DOMContentLoaded', () => {
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+            const btn = document.querySelector(`.tab-btn[onclick*="${hash}"]`);
+            if (btn) {
+                switchTab(hash, btn);
+            }
+        }
+    });
+
+    // Timeline filtering
+    function filterTimeline(statusFilter, btnElement) {
+        document.querySelectorAll('.filter-pill').forEach(el => el.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        document.querySelectorAll('.timeline-entry').forEach(entry => {
+            if (statusFilter === 'all' || entry.getAttribute('data-status') === statusFilter) {
+                entry.style.display = 'flex';
+            } else {
+                entry.style.display = 'none';
+            }
+        });
+    }
+
+    function updateEditDateInputs(granularity) {
+        document.getElementById('editGranularityExact').style.display = granularity === 'EXACT_RANGE' ? 'block' : 'none';
+        document.getElementById('editGranularitySeason').style.display = granularity === 'SEASON_YEAR' ? 'block' : 'none';
+        document.getElementById('editGranularityMonth').style.display = granularity === 'MONTH' ? 'block' : 'none';
+        document.getElementById('editGranularityYear').style.display = granularity === 'YEAR' ? 'block' : 'none';
+    }
+</script>
+{% endblock %}

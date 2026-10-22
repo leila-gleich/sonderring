@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Log In — Sonderring{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <span class="logo-mark" style="font-size: 2.5rem;">🪐</span>
+            <h1 class="login-title">Sign in to Sonderring</h1>
+            <p class="login-subtitle">Choose a demo profile or sign in with your travel handle.</p>
+        </div>
+
+        <!-- 1-Click Profile Selection -->
+        <div class="demo-profiles-section">
+            <h3 class="demo-section-title">Select a Demo Profile:</h3>
+            <div class="demo-users-grid">
+                {% for u in all_users %}
+                <form method="POST" action="{% url 'core:login' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <button type="submit" class="demo-user-card {% if current_user.id == u.id %}current-user-card{% endif %}">
+                        {% if u.profile_image_url %}
+                        <img src="{{ u.profile_image_url }}" alt="{{ u.handle }}" class="demo-user-avatar">
+                        {% else %}
+                        <div class="demo-user-avatar placeholder">{{ u.handle|slice:":1"|upper }}</div>
+                        {% endif %}
+                        <div class="demo-user-details">
+                            <strong class="demo-user-name">{{ u.full_name }}</strong>
+                            <span class="demo-user-handle">@{{ u.handle }}</span>
+                            {% if current_user.id == u.id %}
+                            <span class="badge-active-user">Currently Active</span>
+                            {% endif %}
+                        </div>
+                        <span class="demo-user-arrow">➔</span>
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="login-divider">
+            <span>OR ENTER HANDLE / EMAIL</span>
+        </div>
+
+        <!-- Standard Login Form -->
+        <form method="POST" action="{% url 'core:login' %}" class="login-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="handleInput" class="form-label">Handle or Email</label>
+                <input type="text" id="handleInput" name="handle_or_email" class="form-control" placeholder="e.g. leila or leila@sonderring.com" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Continue to Sonderring</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

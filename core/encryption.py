@@ -1,4 +1,5 @@
 import base64
+import os
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from django.conf import settings
 
@@ -21,7 +22,7 @@ class ConfirmationEncryptor:
         if not plaintext:
             return plaintext
         aesgcm = AESGCM(cls._get_key())
-        nonce = AESGCM.generate_key(bit_length=96)[:12]
+        nonce = os.urandom(12)
         ciphertext = aesgcm.encrypt(nonce, plaintext.encode('utf-8'), None)
         return base64.b64encode(nonce + ciphertext).decode('utf-8')
 

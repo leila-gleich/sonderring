@@ -1,4 +1,5 @@
 import uuid
+import calendar
 from django.db import models
 from .encryption import ConfirmationEncryptor
 
@@ -39,14 +40,15 @@ class Trip(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
     location = models.CharField(max_length=255)
-    time_granularity = models.CharField(max_length=20, choices=GRANULARITY_CHOICES)
+    time_granularity = models.CharField(max_length=20, choices=GRANULARITY_CHOICES, default='YEAR')
     season = models.CharField(max_length=10, choices=SEASON_CHOICES, blank=True, null=True)
-    year = models.IntegerField()
+    year = models.IntegerField(default=2026)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
     start_month = models.IntegerField(blank=True, null=True)
     end_month = models.IntegerField(blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='created_trips')
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_trips')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -57,20 +59,49 @@ class Trip(models.Model):
         indexes = [
             models.Index(fields=['created_by', 'year'], name='idx_trip_creator_year'),
         ]
-        constraints = [
-            models.CheckConstraint(
-                check=(
-                    models.Q(time_granularity='SEASON_YEAR', season__isnull=False) |
-                    models.Q(time_granularity='EXACT_RANGE', start_date__isnull=False, end_date__isnull=False, start_date__lte=models.F('end_date')) |
-                    (models.Q(time_granularity='MONTH', start_month__isnull=False) & (models.Q(end_month__isnull=True) | models.Q(start_month__lte=models.F('end_month')))) |
-                    models.Q(time_granularity='YEAR')
-                ),
-                name='chk_trip_time_granularity'
-            ),
-        ]
 
     def __str__(self):
         return self.title
+
+    @property
+    def formatted_dates(self):
+        if self.time_granularity == 'EXACT_RANGE' and self.start_date and self.end_date:
+            if self.start_date.year == self.end_date.year:
+                if self.start_date.month == self.end_date.month:
+                    return f"{self.start_date.strftime('%b %d')} – {self.end_date.strftime('%d, %Y')}"
+                return f"{self.start_date.strftime('%b %d')} – {self.end_date.strftime('%b %d, %Y')}"
+            return f"{self.start_date.strftime('%b %d, %Y')} – {self.end_date.strftime('%b %d, %Y')}"
+        elif self.time_granularity == 'SEASON_YEAR' and self.season:
+            return f"{self.get_season_display()} {self.year}"
+        elif self.time_granularity == 'MONTH' and self.start_month:
+            start_m = calendar.month_name[self.start_month]
+            if self.end_month and self.end_month != self.start_month:
+                end_m = calendar.month_name[self.end_month]
+                return f"{start_m} – {end_m} {self.year}"
+            return f"{start_m} {self.year}"
+        elif self.year:
+            return f"{self.year} Season"
+        return "Dates TBD"
+
+    @property
+    def total_items_count(self):
+        return self.stays.count() + self.navs.count() + self.dos.count()
+
+    @property
+    def confirmed_items_count(self):
+        return (
+            self.stays.filter(status='CONFIRMED').count() +
+            self.navs.filter(status='CONFIRMED').count() +
+            self.dos.filter(status='CONFIRMED').count()
+        )
+
+    @property
+    def idea_items_count(self):
+        return (
+            self.stays.filter(status='IDEA').count() +
+            self.navs.filter(status='IDEA').count() +
+            self.dos.filter(status='IDEA').count()
+        )
 
 
 class TripMember(models.Model):
@@ -101,11 +132,20 @@ class TripMember(models.Model):
 
 class Stay(models.Model):
     STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed')]
+    PLACE_TYPE_CHOICES = [
+        ('Hotel Room', 'Hotel Room'),
+        ('Entire Place', 'Entire Place'),
+        ('Shared Room/Guest House', 'Shared Room/Guest House'),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stays')
     title = models.CharField(max_length=150)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
+    place_type = models.CharField(max_length=50, choices=PLACE_TYPE_CHOICES, blank=True, null=True, default='Hotel Room')
+    num_beds = models.IntegerField(blank=True, null=True)
+    num_rooms = models.IntegerField(blank=True, null=True)
+    num_guests = models.IntegerField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     check_in = models.DateTimeField(blank=True, null=True)
@@ -114,7 +154,9 @@ class Stay(models.Model):
     currency = models.CharField(max_length=3, default='USD')
     booking_link = models.URLField(blank=True, null=True)
     _encrypted_confirmation_code = models.TextField(db_column='encrypted_confirmation_code', blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_stays')
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_stays')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -125,12 +167,10 @@ class Stay(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'check_in'], name='idx_stay_trip_status_checkin'),
         ]
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(check_out__isnull=True) | models.Q(check_in__isnull=True) | models.Q(check_out__gte=models.F('check_in')),
-                name='chk_stay_dates'
-            ),
-        ]
+
+    @property
+    def has_confirmation_code(self):
+        return bool(self._encrypted_confirmation_code)
 
     @property
     def confirmation_code(self):
@@ -146,22 +186,41 @@ class Stay(models.Model):
 
 class Nav(models.Model):
     STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed')]
+    STAGE_CHOICES = [
+        ('START_END', 'Trip Start/End'),
+        ('MID_TRIP', 'Mid-Trip'),
+    ]
+    DIRECTION_CHOICES = [
+        ('ARRIVING', 'Arriving to Trip'),
+        ('LEAVING', 'Leaving Trip'),
+    ]
+    CONFIDENCE_CHOICES = [
+        ('CONFIRMED', 'Confirmed'),
+        ('TENTATIVE', 'Tentative'),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='navs')
     title = models.CharField(max_length=150)
-    mode = models.CharField(max_length=50)
+    mode = models.CharField(max_length=50) # Flight, Train, Ferry, Car, Bus, etc.
+    trip_stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='START_END')
+    direction = models.CharField(max_length=20, choices=DIRECTION_CHOICES, default='ARRIVING')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
+    passenger_name = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     origin_address = models.TextField(blank=True, null=True)
     destination_address = models.TextField(blank=True, null=True)
     departure_time = models.DateTimeField(blank=True, null=True)
     arrival_time = models.DateTimeField(blank=True, null=True)
+    date_confidence = models.CharField(max_length=20, choices=CONFIDENCE_CHOICES, default='CONFIRMED')
+    time_confidence = models.CharField(max_length=20, choices=CONFIDENCE_CHOICES, default='CONFIRMED')
+    flexibility_notes = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     currency = models.CharField(max_length=3, default='USD')
     booking_link = models.URLField(blank=True, null=True)
     _encrypted_confirmation_code = models.TextField(db_column='encrypted_confirmation_code', blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_navs')
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_navs')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -172,12 +231,10 @@ class Nav(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'departure_time'], name='idx_nav_trip_status_dept'),
         ]
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(arrival_time__isnull=True) | models.Q(departure_time__isnull=True) | models.Q(arrival_time__gte=models.F('departure_time')),
-                name='chk_nav_times'
-            ),
-        ]
+
+    @property
+    def has_confirmation_code(self):
+        return bool(self._encrypted_confirmation_code)
 
     @property
     def confirmation_code(self):
@@ -197,7 +254,7 @@ class Do(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='dos')
     title = models.CharField(max_length=150)
-    activity_type = models.CharField(max_length=50, blank=True, null=True)
+    activity_type = models.CharField(max_length=50, blank=True, null=True) # Sightseeing, Dining, Tour, Concert, etc.
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
     description = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
@@ -208,6 +265,7 @@ class Do(models.Model):
     link = models.URLField(blank=True, null=True)
     _encrypted_confirmation_code = models.TextField(db_column='encrypted_confirmation_code', blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_dos')
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_dos')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -218,12 +276,10 @@ class Do(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'start_time'], name='idx_do_trip_status_start'),
         ]
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(end_time__isnull=True) | models.Q(start_time__isnull=True) | models.Q(end_time__gte=models.F('start_time')),
-                name='chk_do_times'
-            ),
-        ]
+
+    @property
+    def has_confirmation_code(self):
+        return bool(self._encrypted_confirmation_code)
 
     @property
     def confirmation_code(self):
@@ -237,6 +293,38 @@ class Do(models.Model):
         return f"{self.title} ({self.status})"
 
 
+class Rec(models.Model):
+    CATEGORY_CHOICES = [
+        ('Food', 'Food & Dining'),
+        ('Spot', 'Sight & Spot'),
+        ('Activity', 'Activity & Experience'),
+        ('Tip', 'Travel Tip & Advice'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='recs')
+    title = models.CharField(max_length=150)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='Food')
+    description = models.TextField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    link = models.URLField(blank=True, null=True)
+    recommended_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='recommended_recs')
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_recs')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'recs'
+        verbose_name = 'Rec'
+        verbose_name_plural = 'Recs'
+        indexes = [
+            models.Index(fields=['trip', 'category'], name='idx_rec_trip_category'),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.category})"
+
+
 class Attachment(models.Model):
     """Secure Vault document attachment."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -244,10 +332,15 @@ class Attachment(models.Model):
     stay = models.ForeignKey(Stay, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
     nav = models.ForeignKey(Nav, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
     do = models.ForeignKey(Do, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
+    rec = models.ForeignKey(Rec, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
     file_name = models.CharField(max_length=255)
-    storage_path = models.TextField()
+    file_type = models.CharField(max_length=50, blank=True, default='application/pdf')
+    storage_path = models.TextField(blank=True, default='')
+    file = models.FileField(upload_to='vault/%Y/%m/', blank=True, null=True)
     uploaded_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='uploaded_attachments')
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_attachments')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'attachments'
@@ -255,17 +348,6 @@ class Attachment(models.Model):
         verbose_name_plural = 'Attachments (Vault)'
         indexes = [
             models.Index(fields=['trip', 'created_at'], name='idx_att_trip_created'),
-        ]
-        constraints = [
-            models.CheckConstraint(
-                check=(
-                    (models.Q(stay__isnull=True) & models.Q(nav__isnull=True) & models.Q(do__isnull=True)) |
-                    (models.Q(stay__isnull=False) & models.Q(nav__isnull=True) & models.Q(do__isnull=True)) |
-                    (models.Q(stay__isnull=True) & models.Q(nav__isnull=False) & models.Q(do__isnull=True)) |
-                    (models.Q(stay__isnull=True) & models.Q(nav__isnull=True) & models.Q(do__isnull=False))
-                ),
-                name='chk_attachment_target'
-            ),
         ]
 
     def __str__(self):

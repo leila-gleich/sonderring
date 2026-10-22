@@ -1,23 +1,285 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard - Sonderring{% endblock %}
+{% block title %}Dashboard — Sonderring TripSpaces{% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <h1>Your TripSpaces</h1>
-    <a href="#" class="btn-primary">Create a New Trip!</a>
+<div class="dashboard-hero">
+    <div class="hero-left">
+        <span class="hero-pill">✨ Travel Collaboration Hub</span>
+        <h1 class="hero-title">Welcome home, {{ current_user.full_name }}</h1>
+        <p class="hero-subtitle">Plan upcoming journeys, coordinate group transit and stays, and keep all booking confirmation codes encrypted.</p>
+    </div>
+    <div class="hero-actions">
+        <button type="button" class="btn btn-primary btn-lg" onclick="openModal('createTripModal')">
+            <span class="btn-icon">+</span> Create a New Trip!
+        </button>
+    </div>
 </div>
 
-<section class="trip-section">
-    <h2>Your Past Trips</h2>
-    <ul class="trip-list">
-        <li>Joshua Tree Jan '22</li>
-        <li>NYE 21-22</li>
-        <li>California Sept. '21</li>
-        <li>Utah/Vegas '21</li>
-        <li>Joshua Tree Oct '21</li>
-        <li>Colorado '21</li>
-        <li>Asheville Dec '21</li>
-    </ul>
+<!-- ==========================================
+     CURRENT & UPCOMING TRIPS
+     ========================================== -->
+<section class="trips-section">
+    <div class="section-header">
+        <div class="section-title-wrap">
+            <h2 class="section-title">Current & Upcoming Trips</h2>
+            <span class="section-counter">{{ upcoming_trips.count }} Active</span>
+        </div>
+        <p class="section-desc">Active itineraries with real-time stays, navs, and activities.</p>
+    </div>
+
+    {% if upcoming_trips %}
+    <div class="trips-grid">
+        {% for trip in upcoming_trips %}
+        <a href="{% url 'core:trip_workspace' trip.id %}" class="trip-card">
+            <div class="trip-card-header">
+                <span class="trip-location-badge">📍 {{ trip.location }}</span>
+                <span class="status-pill status-confirmed">Active</span>
+            </div>
+            
+            <h3 class="trip-card-title">{{ trip.title }}</h3>
+            <div class="trip-date-row">
+                <span class="calendar-icon">📅</span>
+                <span class="trip-dates">{{ trip.formatted_dates }}</span>
+            </div>
+
+            {% if trip.description %}
+            <p class="trip-card-desc">{{ trip.description|truncatechars:110 }}</p>
+            {% endif %}
+
+            <div class="trip-card-footer">
+                <div class="tripper-stack">
+                    {% for m in trip.members.all|slice:":4" %}
+                    <div class="tripper-avatar" title="@{{ m.user.handle }} ({{ m.role }})">
+                        {% if m.user.profile_image_url %}
+                        <img src="{{ m.user.profile_image_url }}" alt="{{ m.user.handle }}">
+                        {% else %}
+                        <span>{{ m.user.handle|slice:":1"|upper }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% if trip.members.count > 4 %}
+                    <div class="tripper-avatar avatar-overflow">+{{ trip.members.count|add:"-4" }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="trip-stats-badges">
+                    <span class="stat-pill" title="Accommodations">🏨 {{ trip.stays.count }}</span>
+                    <span class="stat-pill" title="Transportation">✈️ {{ trip.navs.count }}</span>
+                    <span class="stat-pill" title="Activities">🎯 {{ trip.dos.count }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🗺️</div>
+        <h3>No trips yet!</h3>
+        <p>Get started by creating your first TripSpace.</p>
+        <button class="btn btn-primary" onclick="openModal('createTripModal')">Create a New Trip</button>
+    </div>
+    {% endif %}
 </section>
+
+<!-- ==========================================
+     PAST TRIPS (HISTORICAL ARCHIVE)
+     ========================================== -->
+<section class="trips-section past-trips-section">
+    <div class="section-header">
+        <div class="section-title-wrap">
+            <h2 class="section-title">Your Past Trips</h2>
+            <span class="section-counter">{{ past_trips.count }} Archived</span>
+        </div>
+        <p class="section-desc">Historical travel memories and reference itineraries from your Sonderring archives.</p>
+    </div>
+
+    <div class="past-trips-grid">
+        {% for trip in past_trips %}
+        <a href="{% url 'core:trip_workspace' trip.id %}" class="past-trip-card">
+            <div class="past-trip-content">
+                <h4 class="past-trip-title">{{ trip.title }}</h4>
+                <div class="past-trip-meta">
+                    <span class="past-trip-location">📍 {{ trip.location }}</span>
+                    <span class="past-trip-date">{{ trip.formatted_dates }}</span>
+                </div>
+            </div>
+            <span class="past-trip-arrow">➔</span>
+        </a>
+        {% empty %}
+        <p class="text-muted">No historical trips archived.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- ==========================================
+     CREATE NEW TRIP MODAL
+     ========================================== -->
+<div id="createTripModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h3 class="modal-title">Create a New TripSpace</h3>
+                <p class="modal-subtitle">Start organizing a trip with friends with flexible or exact dates.</p>
+            </div>
+            <button type="button" class="modal-close" onclick="closeModal('createTripModal')">×</button>
+        </div>
+
+        <form method="POST" action="{% url 'core:create_trip' %}" class="modal-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="tripTitle" class="form-label">Trip Title <span class="required">*</span></label>
+                <input type="text" id="tripTitle" name="title" class="form-control" placeholder="e.g., Malticilia 26, Iceland Ring Road, Montreal Weekend" required>
+            </div>
+
+            <div class="form-group">
+                <label for="tripLocation" class="form-label">Destination Location <span class="required">*</span></label>
+                <input type="text" id="tripLocation" name="location" class="form-control" placeholder="e.g., Malta, Sicily & Gozo" required>
+            </div>
+
+            <div class="form-group">
+                <label for="tripDesc" class="form-label">Overview & Notes (Optional)</label>
+                <textarea id="tripDesc" name="description" class="form-control" rows="2" placeholder="Brief trip description or goals..."></textarea>
+            </div>
+
+            <!-- Hybrid Time Granularity Selector -->
+            <div class="form-group">
+                <label class="form-label">Date Flexibility / Time Granularity</label>
+                <div class="granularity-toggle-bar">
+                    <label class="granularity-option">
+                        <input type="radio" name="time_granularity" value="EXACT_RANGE" checked onchange="updateDateInputs(this.value)">
+                        <span class="granularity-box">
+                            <strong>Exact Dates</strong>
+                            <small>Specific calendar range</small>
+                        </span>
+                    </label>
+
+                    <label class="granularity-option">
+                        <input type="radio" name="time_granularity" value="SEASON_YEAR" onchange="updateDateInputs(this.value)">
+                        <span class="granularity-box">
+                            <strong>Season & Year</strong>
+                            <small>e.g. Summer 2026</small>
+                        </span>
+                    </label>
+
+                    <label class="granularity-option">
+                        <input type="radio" name="time_granularity" value="MONTH" onchange="updateDateInputs(this.value)">
+                        <span class="granularity-box">
+                            <strong>Month Span</strong>
+                            <small>e.g. July–August 2026</small>
+                        </span>
+                    </label>
+
+                    <label class="granularity-option">
+                        <input type="radio" name="time_granularity" value="YEAR" onchange="updateDateInputs(this.value)">
+                        <span class="granularity-box">
+                            <strong>Year Only</strong>
+                            <small>Broad 2027 season</small>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Granularity Specific Input Panels -->
+            <div id="granularityExact" class="date-input-panel">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" id="startDate" name="start_date" class="form-control">
+                    </div>
+                    <div class="form-col">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" id="endDate" name="end_date" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <div id="granularitySeason" class="date-input-panel" style="display: none;">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="seasonSelect" class="form-label">Season</label>
+                        <select id="seasonSelect" name="season" class="form-control">
+                            <option value="SPRING">Spring</option>
+                            <option value="SUMMER" selected>Summer</option>
+                            <option value="FALL">Fall</option>
+                            <option value="WINTER">Winter</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="seasonYear" class="form-label">Year</label>
+                        <input type="number" id="seasonYear" name="season_year" class="form-control" value="{{ now_year }}">
+                    </div>
+                </div>
+            </div>
+
+            <div id="granularityMonth" class="date-input-panel" style="display: none;">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="startMonth" class="form-label">Start Month</label>
+                        <select id="startMonth" name="start_month" class="form-control">
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7" selected>July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="endMonth" class="form-label">End Month (Optional)</label>
+                        <select id="endMonth" name="end_month" class="form-control">
+                            <option value="">Same Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8" selected>August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label for="monthYear" class="form-label">Year</label>
+                        <input type="number" id="monthYear" name="month_year" class="form-control" value="{{ now_year }}">
+                    </div>
+                </div>
+            </div>
+
+            <div id="granularityYear" class="date-input-panel" style="display: none;">
+                <div class="form-group">
+                    <label for="yearOnly" class="form-label">Travel Year</label>
+                    <input type="number" id="yearOnly" name="year" class="form-control" value="{{ now_year }}">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createTripModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create TripSpace</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateDateInputs(granularity) {
+        document.getElementById('granularityExact').style.display = granularity === 'EXACT_RANGE' ? 'block' : 'none';
+        document.getElementById('granularitySeason').style.display = granularity === 'SEASON_YEAR' ? 'block' : 'none';
+        document.getElementById('granularityMonth').style.display = granularity === 'MONTH' ? 'block' : 'none';
+        document.getElementById('granularityYear').style.display = granularity === 'YEAR' ? 'block' : 'none';
+    }
+</script>
 {% endblock %}

@@ -1,0 +1,226 @@
+<div class="item-card nav-card">
+    <div class="item-card-header">
+        <div>
+            <div class="nav-mode-row">
+                <span class="mode-icon">
+                    {% if nav.mode == 'Flight' %}✈️
+                    {% elif nav.mode == 'Train' %}🚆
+                    {% elif nav.mode == 'Ferry' %}⛴️
+                    {% elif nav.mode == 'Car' %}🚗
+                    {% elif nav.mode == 'Bus' %}🚌
+                    {% else %}🧭{% endif %}
+                </span>
+                <span class="item-type-badge">{{ nav.mode }} • {{ nav.get_direction_display }}</span>
+            </div>
+            <h4 class="item-title">{{ nav.title }}</h4>
+        </div>
+        <div class="item-header-actions">
+            <span class="status-pill status-{{ nav.status|lower }} status-badge-nav-{{ nav.id }}">
+                {{ nav.get_status_display }}
+            </span>
+            {% if can_edit %}
+            <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('nav', '{{ nav.id }}', this)" title="Toggle Confirmed / Idea">
+                ⇄
+            </button>
+            <button type="button" class="btn-card-action" onclick="openModal('editNavModal_{{ nav.id }}')" title="Edit Transit Leg">✏️</button>
+            <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteNavModal_{{ nav.id }}')" title="Delete Transit Leg">🗑️</button>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if nav.passenger_name %}
+    <div class="passenger-tag-row">
+        <span class="passenger-icon">👤</span>
+        <span class="passenger-label">Passengers:</span>
+        <span class="passenger-names">{{ nav.passenger_name }}</span>
+    </div>
+    {% endif %}
+
+    <div class="nav-route-box">
+        <div class="route-point">
+            <span class="route-dot origin-dot"></span>
+            <div class="route-info">
+                <small class="route-label">Departure</small>
+                <div class="route-place">{{ nav.origin_address|default:"Origin TBD" }}</div>
+                {% if nav.departure_time %}
+                <div class="route-time">{{ nav.departure_time|date:"M d, Y • g:i A" }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="route-connector-line">
+            <span class="connector-arrow">➔</span>
+        </div>
+
+        <div class="route-point">
+            <span class="route-dot dest-dot"></span>
+            <div class="route-info">
+                <small class="route-label">Arrival</small>
+                <div class="route-place">{{ nav.destination_address|default:"Destination TBD" }}</div>
+                {% if nav.arrival_time %}
+                <div class="route-time">{{ nav.arrival_time|date:"M d, Y • g:i A" }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Confidence Badges -->
+    <div class="confidence-row">
+        {% if nav.date_confidence == 'TENTATIVE' %}
+        <span class="confidence-pill pill-warning">⚠️ Date Tentative</span>
+        {% else %}
+        <span class="confidence-pill pill-success">✓ Date Confirmed</span>
+        {% endif %}
+
+        {% if nav.time_confidence == 'TENTATIVE' %}
+        <span class="confidence-pill pill-warning">⚠️ Time Tentative</span>
+        {% endif %}
+    </div>
+
+    {% if nav.flexibility_notes %}
+    <p class="item-notes"><strong>Logistics:</strong> {{ nav.flexibility_notes }}</p>
+    {% endif %}
+
+    <div class="item-footer">
+        <div class="price-box">
+            {% if nav.price %}
+            <span class="price-val">${{ nav.price|floatformat:2 }}</span>
+            <span class="price-currency">{{ nav.currency }}</span>
+            {% else %}
+            <span class="price-free">Price TBD</span>
+            {% endif %}
+        </div>
+
+        {% if nav.has_confirmation_code %}
+        <div class="code-box-container">
+            <span class="masked-code">••••••••</span>
+            <button type="button" class="btn btn-sm btn-outline" onclick="revealCode('nav', '{{ nav.id }}', this.parentElement)">Reveal Code</button>
+        </div>
+        {% endif %}
+
+        {% if nav.booking_link %}
+        <a href="{{ nav.booking_link }}" target="_blank" class="btn btn-sm btn-secondary">Booking Link ↗</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- EDIT NAV MODAL -->
+{% if can_edit %}
+<div id="editNavModal_{{ nav.id }}" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Transit: {{ nav.title }}</h3>
+            <button type="button" class="modal-close" onclick="closeModal('editNavModal_{{ nav.id }}')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:edit_nav' trip.id nav.id %}" class="modal-form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-col" style="flex: 2;">
+                    <label class="form-label">Transport Title <span class="required">*</span></label>
+                    <input type="text" name="title" class="form-control" value="{{ nav.title }}" required>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Mode</label>
+                    <select name="mode" class="form-control">
+                        <option value="Flight" {% if nav.mode == 'Flight' %}selected{% endif %}>Flight</option>
+                        <option value="Train" {% if nav.mode == 'Train' %}selected{% endif %}>Train</option>
+                        <option value="Car" {% if nav.mode == 'Car' %}selected{% endif %}>Car / Rental</option>
+                        <option value="Ferry" {% if nav.mode == 'Ferry' %}selected{% endif %}>Ferry / Cruise</option>
+                        <option value="Bus" {% if nav.mode == 'Bus' %}selected{% endif %}>Bus</option>
+                        <option value="Rideshare" {% if nav.mode == 'Rideshare' %}selected{% endif %}>Rideshare</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Trip Stage</label>
+                    <select name="trip_stage" class="form-control">
+                        <option value="START_END" {% if nav.trip_stage == 'START_END' %}selected{% endif %}>Trip Start/End</option>
+                        <option value="MID_TRIP" {% if nav.trip_stage == 'MID_TRIP' %}selected{% endif %}>Mid-Trip</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Direction</label>
+                    <select name="direction" class="form-control">
+                        <option value="ARRIVING" {% if nav.direction == 'ARRIVING' %}selected{% endif %}>Arriving to Trip</option>
+                        <option value="LEAVING" {% if nav.direction == 'LEAVING' %}selected{% endif %}>Leaving Trip</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="IDEA" {% if nav.status == 'IDEA' %}selected{% endif %}>Idea</option>
+                        <option value="CONFIRMED" {% if nav.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Origin</label>
+                    <input type="text" name="origin_address" class="form-control" value="{{ nav.origin_address|default:'' }}">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Destination</label>
+                    <input type="text" name="destination_address" class="form-control" value="{{ nav.destination_address|default:'' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Departure Time</label>
+                    <input type="datetime-local" name="departure_time" class="form-control" value="{{ nav.departure_time|date:'Y-m-d\TH:i' }}">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Arrival Time</label>
+                    <input type="datetime-local" name="arrival_time" class="form-control" value="{{ nav.arrival_time|date:'Y-m-d\TH:i' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Passengers</label>
+                    <input type="text" name="passenger_name" class="form-control" value="{{ nav.passenger_name|default:'' }}">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Price ($)</label>
+                    <input type="number" step="0.01" name="price" class="form-control" value="{{ nav.price|default:'' }}">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Confirmation Code</label>
+                    <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Flexibility & Route Notes</label>
+                <textarea name="flexibility_notes" class="form-control" rows="2">{{ nav.flexibility_notes|default:'' }}</textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editNavModal_{{ nav.id }}')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DELETE NAV MODAL -->
+<div id="deleteNavModal_{{ nav.id }}" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title text-danger">Delete Transit Leg?</h3>
+            <button type="button" class="modal-close" onclick="closeModal('deleteNavModal_{{ nav.id }}')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:delete_nav' trip.id nav.id %}" class="modal-form">
+            {% csrf_token %}
+            <p>Are you sure you want to remove <strong>"{{ nav.title }}"</strong> from this trip?</p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('deleteNavModal_{{ nav.id }}')">Cancel</button>
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}

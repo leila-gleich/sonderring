@@ -3,22 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Sonderring{% endblock %}</title>
+    <title>{% block title %}Sonderring — Collaborative Trip Planning{% endblock %}</title>
     {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
     <header class="navbar">
-        <div class="logo">Sonderring</div>
-        <nav>
-            <a href="/">My Trips</a>
-            <a href="/profile/">Profile</a>
+        <div class="nav-left">
+            <a href="{% url 'core:dashboard' %}" class="logo">
+                <span class="logo-mark">🪐</span> Sonderring
+            </a>
+            <span class="nav-tagline">Friend Group Travel Hub</span>
+        </div>
+        <nav class="nav-links">
+            <a href="{% url 'core:dashboard' %}" class="nav-link">TripSpaces</a>
+            <a href="{% url 'core:profile' %}" class="nav-link">Profile</a>
+            <a href="http://sonderring.com" target="_blank" class="nav-link">Prototype ↗</a>
         </nav>
+        <div class="nav-right">
+            {% if current_user %}
+            <div class="user-menu-wrapper">
+                <a href="{% url 'core:profile' %}" class="user-pill" title="View Profile">
+                    {% if current_user.profile_image_url %}
+                    <img src="{{ current_user.profile_image_url }}" alt="{{ current_user.full_name }}" class="user-avatar-sm">
+                    {% else %}
+                    <div class="user-avatar-sm avatar-placeholder">{{ current_user.full_name|slice:":1" }}</div>
+                    {% endif %}
+                    <div class="user-info">
+                        <span class="user-name">{{ current_user.full_name }}</span>
+                        <span class="user-handle">@{{ current_user.handle }}</span>
+                    </div>
+                </a>
+                <!-- Switcher Dropdown Trigger -->
+                <button type="button" class="btn-user-switch" onclick="toggleDropdown('userSwitchMenu')" title="Switch User / Logout">
+                    ▾
+                </button>
+                <div id="userSwitchMenu" class="user-dropdown-menu">
+                    <div class="dropdown-header">
+                        <span class="text-muted">Signed in as</span>
+                        <strong>{{ current_user.full_name }}</strong>
+                    </div>
+                    <a href="{% url 'core:profile' %}" class="dropdown-item">👤 View My Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-label">Switch Active User:</div>
+                    {% for u in all_users %}
+                    <form method="POST" action="{% url 'core:switch_user' %}" class="dropdown-switch-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                        <button type="submit" class="dropdown-item switch-item {% if current_user.id == u.id %}active-switch{% endif %}">
+                            <span>{% if current_user.id == u.id %}✓{% else %}○{% endif %}</span>
+                            <span>{{ u.full_name }} (@{{ u.handle }})</span>
+                        </button>
+                    </form>
+                    {% endfor %}
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'core:logout' %}" class="dropdown-item text-danger">🚪 Log Out</a>
+                </div>
+            </div>
+            {% else %}
+            <a href="{% url 'core:login' %}" class="btn btn-primary btn-sm">Log In</a>
+            {% endif %}
+        </div>
     </header>
 
-    <main class="container">
-        {% block content %}
-        {% endblock %}
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            <span class="alert-icon">{% if message.tags == 'error' %}⚠️{% else %}✨{% endif %}</span>
+            <span class="alert-text">{{ message }}</span>
+            <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
     </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p><strong>Sonderring v0</strong> — Collaborative Travel with End-to-End Field-Level Encryption & Hybrid Time Flexibility.</p>
+            <p class="footer-subtext">Designed for friend groups organizing Stays, Navs, Dos, and Recs.</p>
+        </div>
+    </footer>
+
+    <!-- Global JavaScript for Modals & Interactive Actions -->
+    <script>
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function toggleDropdown(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('active');
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.user-menu-wrapper')) {
+                document.querySelectorAll('.user-dropdown-menu').forEach(el => el.classList.remove('active'));
+            }
+        });
+
+        // Close on backdrop click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-backdrop')) {
+                event.target.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        };
+
+        // CSRF Token helper for fetch requests
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // AJAX Toggle Status (Idea <-> Confirmed)
+        async function toggleItemStatus(itemType, itemId, buttonElement) {
+            const csrftoken = getCookie('csrftoken');
+            try {
+                const response = await fetch(`/items/${itemType}/${itemId}/toggle-status/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const badge = document.querySelector(`.status-badge-${itemType}-${itemId}`);
+                    if (badge) {
+                        badge.className = `status-pill status-${data.new_status.toLowerCase()} status-badge-${itemType}-${itemId}`;
+                        badge.textContent = data.new_status === 'CONFIRMED' ? 'Confirmed' : 'Idea';
+                    }
+                    if (buttonElement) {
+                        buttonElement.classList.toggle('btn-confirmed', data.new_status === 'CONFIRMED');
+                        buttonElement.title = data.new_status === 'CONFIRMED' ? 'Click to change back to Idea' : 'Click to confirm item';
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to toggle status:", err);
+            }
+        }
+
+        // AJAX Reveal Encrypted Confirmation Code
+        async function revealCode(itemType, itemId, containerElement) {
+            try {
+                containerElement.innerHTML = '<span class="loading-spinner"></span> Decrypting...';
+                const response = await fetch(`/items/${itemType}/${itemId}/reveal-code/`);
+                const data = await response.json();
+                if (data.success) {
+                    containerElement.innerHTML = `
+                        <span class="revealed-code-box">
+                            <strong>${data.code}</strong>
+                            <button type="button" class="btn-copy" onclick="navigator.clipboard.writeText('${data.code}'); this.textContent='Copied!';">Copy</button>
+                        </span>
+                    `;
+                } else {
+                    containerElement.innerHTML = `<span class="text-muted">None Set</span>`;
+                }
+            } catch (err) {
+                containerElement.innerHTML = `<span class="text-danger">Decryption Error</span>`;
+            }
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
