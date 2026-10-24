@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Google OAuth Dev Simulator — Sonderring{% endblock %}
+
+{% block content %}
+<div class="login-wrapper" style="max-width: 600px;">
+    <div class="login-card">
+        <div class="login-header">
+            <span class="logo-mark" style="font-size: 2.5rem;">🧪</span>
+            <h1 class="login-title">Google OAuth Simulator</h1>
+            <p class="login-subtitle">Local Development & Testing Mode</p>
+        </div>
+
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #1e40af; line-height: 1.5;">
+            <strong>ℹ️ Why am I seeing this?</strong><br>
+            You have not configured <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> yet.
+            This simulator allows you to test the complete Google OAuth flow, account creation, and auto-linking logic immediately without having to set up Google Cloud Console right now.
+        </div>
+
+        <h3 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--text-main);">Choose a Simulated Google Account:</h3>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <!-- Option 1: Existing account linking -->
+            <form method="POST" action="{% url 'oauth:google_dev_callback' %}">
+                {% csrf_token %}
+                <input type="hidden" name="email" value="leila@sonderring.com">
+                <input type="hidden" name="name" value="Leila Gleich">
+                <button type="submit" class="demo-user-card" style="width: 100%;">
+                    <div class="demo-user-avatar placeholder">L</div>
+                    <div class="demo-user-details">
+                        <strong class="demo-user-name">Test Auto-Linking: Leila Gleich</strong>
+                        <span class="demo-user-handle">Simulates Google login with <code>leila@sonderring.com</code> (existing account)</span>
+                    </div>
+                    <span class="demo-user-arrow">➔</span>
+                </button>
+            </form>
+
+            <!-- Option 2: Brand new Google signup -->
+            <form method="POST" action="{% url 'oauth:google_dev_callback' %}">
+                {% csrf_token %}
+                <input type="hidden" name="email" value="new.wanderer@gmail.com">
+                <input type="hidden" name="name" value="Alex Wanderer">
+                <button type="submit" class="demo-user-card" style="width: 100%;">
+                    <div class="demo-user-avatar placeholder">A</div>
+                    <div class="demo-user-details">
+                        <strong class="demo-user-name">Test New User Creation: Alex Wanderer</strong>
+                        <span class="demo-user-handle">Simulates Google signup with <code>new.wanderer@gmail.com</code> (creates new profile)</span>
+                    </div>
+                    <span class="demo-user-arrow">➔</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="login-divider">
+            <span>OR TEST WITH CUSTOM EMAIL</span>
+        </div>
+
+        <form method="POST" action="{% url 'oauth:google_dev_callback' %}" class="login-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Simulated Google Full Name</label>
+                <input type="text" name="name" class="form-control" placeholder="e.g. Jane Doe" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Simulated Gmail Address</label>
+                <input type="email" name="email" class="form-control" placeholder="e.g. jane.doe@gmail.com" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Simulate Google Sign-In</button>
+        </form>
+
+        <div style="margin-top: 1.5rem; text-align: center;">
+            <a href="{% url 'core:login' %}" class="auth-link">← Return to Login</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

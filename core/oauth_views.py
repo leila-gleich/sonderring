@@ -1,4 +1,4 @@
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest, HttpResponseNotFound
 from django.contrib import messages
 from django.conf import settings
@@ -22,12 +22,15 @@ def get_current_user_or_none(request):
 def google_login_view(request):
     """
     Redirects user to Google OAuth consent page.
-    Safe: if OAuth is disabled, safely redirects to login with info message.
+    If credentials are not yet configured in development mode (DEBUG=True),
+    renders the developer simulator so the user can test the flow immediately.
     """
     if not is_google_oauth_enabled():
         return HttpResponseNotFound("OAuth is currently disabled.")
 
     if not is_google_oauth_configured():
+        if getattr(settings, 'DEBUG', False):
+            return render(request, 'oauth_dev_simulator.html')
         messages.warning(
             request,
             "Google OAuth is currently in internal exploration mode. "
@@ -37,6 +40,52 @@ def google_login_view(request):
 
     auth_url = get_google_auth_url(request)
     return redirect(auth_url)
+
+
+def google_dev_callback_view(request):
+    """
+    Simulates Google OAuth callback for local development testing without
+    requiring real Google Cloud Console credentials.
+    Only accessible when DEBUG is True and real credentials are not set.
+    """
+    if not getattr(settings, 'DEBUG', False) or is_google_oauth_configured():
+        return HttpResponseBadRequest("Dev simulator is only available in DEBUG mode when credentials are unset.")
+
+    if request.method != 'POST':
+        return redirect('oauth:google_login')
+
+    email = request.POST.get('email', '').strip().lower()
+    name = request.POST.get('name', '').strip() or email.split('@')[0].title()
+
+    if not email:
+        messages.error(request, "Email is required.")
+        return redirect('oauth:google_login')
+
+    claims = {
+        'sub': f"sim-google-{abs(hash(email))}",
+        'email': email,
+        'email_verified': True,
+        'name': name,
+        'picture': f"https://api.dicebear.com/7.x/initials/svg?seed={email}",
+    }
+
+    current_user = get_current_user_or_none(request)
+    try:
+        user, action = authenticate_or_link_google_user(claims, current_user=current_user)
+        request.session['user_id'] = str(user.id)
+
+        if action == 'linked':
+            messages.success(request, f"[Simulator] Successfully linked Google identity to @{user.handle} ({email})!")
+            return redirect('core:profile')
+        elif action == 'created':
+            messages.success(request, f"[Simulator] Created new traveler profile for {user.full_name} (@{user.handle}) from Google claims!")
+        else:
+            messages.success(request, f"[Simulator] Logged in as {user.full_name} (@{user.handle}) via Google identity!")
+
+        return redirect('core:dashboard')
+    except Exception as e:
+        messages.error(request, f"Error processing simulated profile: {str(e)}")
+        return redirect('core:login')
 
 
 def google_callback_view(request):

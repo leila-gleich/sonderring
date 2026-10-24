@@ -143,7 +143,11 @@ REST_FRAMEWORK = {
 # ==========================================
 # Set ENABLE_GOOGLE_OAUTH to False for initial launch testing email/password.
 # Set to True locally or in staging to explore Google OAuth without affecting existing accounts.
-ENABLE_GOOGLE_OAUTH = os.environ.get('ENABLE_GOOGLE_OAUTH', 'False').lower() in ('true', '1')
+# In DEBUG mode, defaults to True for local exploration; defaults to False in production.
+ENABLE_GOOGLE_OAUTH = os.environ.get(
+    'ENABLE_GOOGLE_OAUTH',
+    'True' if DEBUG else 'False'
+).lower() in ('true', '1')
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 GOOGLE_OAUTH_REDIRECT_URI = os.environ.get('GOOGLE_OAUTH_REDIRECT_URI', 'http://localhost:8000/oauth/google/callback/')
