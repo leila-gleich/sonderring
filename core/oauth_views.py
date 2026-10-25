@@ -106,7 +106,11 @@ def google_callback_view(request):
     expected_state = request.session.pop('google_oauth_state', None)
     received_state = request.GET.get('state')
     if not expected_state or expected_state != received_state:
-        return HttpResponseBadRequest("Invalid OAuth state token. Possible CSRF attempt.")
+        host = request.get_host()
+        return HttpResponseBadRequest(
+            f"Invalid OAuth state token. Possible CSRF attempt or domain mismatch (no session found on '{host}'). "
+            f"Tip: If you started on 127.0.0.1 and returned to localhost (or vice versa), stick to one address (e.g. http://localhost:8000/)."
+        )
 
     code = request.GET.get('code')
     if not code:

@@ -28,6 +28,7 @@ def get_google_auth_url(request):
     """
     state = secrets.token_urlsafe(32)
     request.session['google_oauth_state'] = state
+    request.session.save()  # Explicitly persist session so cookie is set
 
     redirect_uri = getattr(settings, 'GOOGLE_OAUTH_REDIRECT_URI', '')
     if not redirect_uri:

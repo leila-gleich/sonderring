@@ -150,5 +150,6 @@ ENABLE_GOOGLE_OAUTH = os.environ.get(
 ).lower() in ('true', '1')
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
-GOOGLE_OAUTH_REDIRECT_URI = os.environ.get('GOOGLE_OAUTH_REDIRECT_URI', 'http://localhost:8000/oauth/google/callback/')
+# Left empty by default so it dynamically matches whatever host you are on (localhost vs 127.0.0.1)
+GOOGLE_OAUTH_REDIRECT_URI = os.environ.get('GOOGLE_OAUTH_REDIRECT_URI', '')
 
