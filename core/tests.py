@@ -1,7 +1,7 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.template.context import BaseContext
-from core.models import UserProfile, OAuthIdentity
+from core.models import UserProfile, OAuthIdentity, Trip, TripMember
 
 # Patch BaseContext.__copy__ for Python 3.14 compatibility with Django 4.2 test runner
 def _patched_copy(self):
@@ -180,3 +180,60 @@ class OAuthFeatureFlagTests(TestCase):
         self.assertRedirects(response, reverse('core:profile'))
         # Identity still exists because unlink was blocked
         self.assertTrue(OAuthIdentity.objects.filter(user=user_no_pass, provider='google').exists())
+
+
+class TripAuthorizationTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user_a = UserProfile.objects.create(
+            email='user_a@example.com',
+            handle='usera',
+            full_name='User A',
+            is_active=True
+        )
+        self.user_b = UserProfile.objects.create(
+            email='user_b@example.com',
+            handle='userb',
+            full_name='User B',
+            is_active=True
+        )
+        self.trip_a = Trip.objects.create(
+            title='Secret Trip A',
+            location='Malta',
+            year=2026,
+            time_granularity='YEAR',
+            created_by=self.user_a
+        )
+        TripMember.objects.create(trip=self.trip_a, user=self.user_a, role='OWNER')
+
+    def test_dashboard_does_not_leak_unrelated_trips(self):
+        """User B should not see User A's trips on the dashboard."""
+        session = self.client.session
+        session['user_id'] = str(self.user_b.id)
+        session.save()
+
+        response = self.client.get(reverse('core:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Secret Trip A')
+
+    def test_dashboard_shows_invited_trip(self):
+        """User B should see User A's trip once added as a collaborator."""
+        TripMember.objects.create(trip=self.trip_a, user=self.user_b, role='EDITOR')
+
+        session = self.client.session
+        session['user_id'] = str(self.user_b.id)
+        session.save()
+
+        response = self.client.get(reverse('core:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Secret Trip A')
+
+    def test_unauthorized_user_blocked_from_workspace(self):
+        """User B cannot access trip_a workspace if not invited."""
+        session = self.client.session
+        session['user_id'] = str(self.user_b.id)
+        session.save()
+
+        response = self.client.get(reverse('core:trip_workspace', args=[self.trip_a.id]))
+        self.assertRedirects(response, reverse('core:dashboard'))
+

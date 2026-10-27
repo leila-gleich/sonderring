@@ -333,6 +333,7 @@ def update_profile_view(request):
 def dashboard_view(request):
     """
     Renders the main TripSpace dashboard with upcoming, active, and past trips.
+    Strictly scoped to trips created by the user or where the user is an invited member.
     """
     current_user = get_current_user(request)
     if not current_user:
@@ -341,11 +342,16 @@ def dashboard_view(request):
 
     all_users = UserProfile.objects.filter(is_active=True).order_by('full_name')
     
+    # Scoped strictly to trips the current user created or belongs to as a tripper
+    user_trips = Trip.objects.filter(
+        Q(created_by=current_user) | Q(members__user=current_user)
+    ).distinct()
+
     # Active & Upcoming Trips (Year >= 2024 or ongoing)
-    upcoming_trips = Trip.objects.filter(year__gte=2024).order_by('-year', '-start_date')
+    upcoming_trips = user_trips.filter(year__gte=2024).order_by('-year', '-start_date')
     
     # Historical / Past Trips
-    past_trips = Trip.objects.filter(year__lt=2024).order_by('-year', '-start_date')
+    past_trips = user_trips.filter(year__lt=2024).order_by('-year', '-start_date')
 
     context = {
         'current_user': current_user,
@@ -362,6 +368,7 @@ def trip_workspace_view(request, trip_id):
     Renders the dedicated workspace for a single trip with tabbed navigation:
     Timeline/Itinerary, Stays, Navs, Dos & Recs, and Vault.
     Includes full role-based permissions (Owner vs Editor vs Viewer).
+    Blocks unauthorized access if user is not creator or member.
     """
     current_user = get_current_user(request)
     if not current_user:
@@ -373,6 +380,10 @@ def trip_workspace_view(request, trip_id):
 
     # Determine user role on this specific trip
     user_role = get_user_trip_role(current_user, trip)
+    if not user_role:
+        messages.error(request, "You do not have permission to access this trip space.")
+        return redirect('core:dashboard')
+
     is_owner = (user_role == 'OWNER')
     is_editor = (user_role in ['OWNER', 'EDITOR'])
     is_viewer = (user_role == 'VIEWER')
