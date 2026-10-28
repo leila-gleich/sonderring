@@ -41,6 +41,7 @@ urlpatterns = [
     path('trips/<uuid:trip_id>/recs/<uuid:rec_id>/edit/', views.edit_rec_view, name='edit_rec'),
     path('trips/<uuid:trip_id>/recs/<uuid:rec_id>/delete/', views.delete_rec_view, name='delete_rec'),
     path('trips/<uuid:trip_id>/recs/<uuid:rec_id>/promote/', views.promote_rec_view, name='promote_rec'),
+    path('trips/recommend/<str:rec_token>/', views.public_recommend_view, name='public_recommend'),
 
     # Membership Management
     path('trips/<uuid:trip_id>/members/invite/', views.invite_member_view, name='invite_member'),

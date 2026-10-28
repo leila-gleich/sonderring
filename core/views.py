@@ -132,17 +132,11 @@ def is_user_trip_owner(user, trip):
 def can_user_edit_item(user, trip, item):
     """
     Evaluates whether a user can edit/delete this specific itinerary item:
-    1. Trip Owner or Editor can edit anything in the trip.
-    2. Author Sovereignty: Everyone can edit things they created (regardless of trip role).
+    Strictly restricted to Trip Owners and Editors. Viewers are read-only.
     """
     if not user or not trip:
         return False
-    if can_user_edit_trip(user, trip):
-        return True
-    author = getattr(item, 'created_by', None) or getattr(item, 'recommended_by', None) or getattr(item, 'uploaded_by', None)
-    if author and author.id == user.id:
-        return True
-    return False
+    return can_user_edit_trip(user, trip)
 
 
 def get_demo_users():
@@ -1186,6 +1180,7 @@ def promote_rec_view(request, trip_id, rec_id):
         'Tip': 'Tour'
     }
 
+    recommender_name = rec.guest_name or (f"@{rec.recommended_by.handle}" if rec.recommended_by else "friend")
     Do.objects.create(
         trip=trip,
         title=rec.title,
@@ -1193,11 +1188,67 @@ def promote_rec_view(request, trip_id, rec_id):
         status='CONFIRMED',
         address=rec.address,
         link=rec.link,
-        description=f"Promoted from Recs (recommended by @{rec.recommended_by.handle if rec.recommended_by else 'friend'}): {rec.description or ''}",
+        description=f"Promoted from Recs (recommended by {recommender_name}): {rec.description or ''}",
         created_by=current_user
     )
     messages.success(request, f"'{rec.title}' promoted to confirmed itinerary item!")
     return redirect(f"/trips/{trip_id}/#dos")
+
+
+def public_recommend_view(request, rec_token):
+    """
+    Public-facing recommendation intake portal for non-trippers / friends.
+    No login required. Allows anyone with the trip's unique recommendation link
+    to submit recommendations that instantly populate the Recs element of the TripSpace.
+    """
+    trip = get_object_or_404(Trip, rec_token=rec_token)
+    submitted = request.GET.get('submitted') == '1'
+    current_user = get_current_user(request)
+
+    if request.method == 'POST':
+        # Honeypot spam trap
+        if request.POST.get('website_url'):
+            return redirect(f"{reverse('core:public_recommend', args=[rec_token])}?submitted=1")
+
+        guest_name = request.POST.get('guest_name', '').strip()
+        title = request.POST.get('title', '').strip()
+        category = request.POST.get('category', 'Food')
+        description = request.POST.get('description', '').strip()
+        address = request.POST.get('address', '').strip()
+        link = request.POST.get('link', '').strip()
+
+        if not guest_name or not title:
+            messages.error(request, "Please provide your name and the place or activity title.")
+            return render(request, 'public_recommend.html', {
+                'trip': trip,
+                'submitted': False,
+                'form_data': request.POST,
+                'current_user': current_user,
+                'existing_recs': trip.recs.order_by('-created_at')[:10],
+            })
+
+        Rec.objects.create(
+            trip=trip,
+            title=title,
+            category=category,
+            status='IDEA',
+            description=description,
+            address=address,
+            link=link,
+            guest_name=guest_name,
+            recommended_by=current_user if current_user else None,
+            updated_by=current_user if current_user else None,
+        )
+
+        return redirect(f"{reverse('core:public_recommend', args=[rec_token])}?submitted=1")
+
+    existing_recs = trip.recs.order_by('-created_at')[:12]
+    return render(request, 'public_recommend.html', {
+        'trip': trip,
+        'submitted': submitted,
+        'current_user': current_user,
+        'existing_recs': existing_recs,
+    })
 
 
 # ==========================================

@@ -55,9 +55,27 @@
                 <span class="attr-tag attr-editor">· Edited {{ trip.updated_at|timesince }} ago</span>
                 {% endif %}
             </div>
+
+            <!-- Friend Recommendation Invite Link Bar -->
+            <div class="rec-invite-bar" title="Share this link with friends, family, or locals to collect spot recommendations">
+                <div class="rec-invite-label">
+                    <span class="rec-invite-icon">💌</span>
+                    <strong>Friend Rec Link:</strong>
+                    <span class="rec-invite-desc">Share with non-trippers to collect spot recommendations</span>
+                </div>
+                <div class="rec-invite-copy-group">
+                    <input type="text" readonly class="rec-invite-input" value="{{ request.scheme }}://{{ request.get_host }}{% url 'core:public_recommend' trip.rec_token %}" id="recLinkInput" onclick="this.select()" title="Click to select full URL">
+                    <button type="button" class="btn btn-sm btn-outline rec-copy-btn" onclick="copyRecLink(this)">
+                        📋 Copy Link
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="workspace-actions">
+            <button type="button" class="btn btn-primary-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and nontrippers">
+                <span class="btn-icon">💌</span> Copy Rec Link
+            </button>
             {% if can_edit %}
             <button type="button" class="btn btn-outline" onclick="openModal('editTripModal')">
                 <span class="btn-icon">✏️</span> Edit Trip
@@ -189,7 +207,7 @@
                         <span class="status-pill status-{{ item.status|lower }} status-badge-{{ item.type }}-{{ item.id }}">
                             {{ item.status|title }}
                         </span>
-                        {% if can_edit or item.obj.created_by == current_user %}
+                        {% if can_edit %}
                         <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('{{ item.type }}', '{{ item.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
                             ⇄
                         </button>
@@ -276,7 +294,7 @@
                     <span class="status-pill status-{{ stay.status|lower }} status-badge-stay-{{ stay.id }}">
                         {{ stay.get_status_display }}
                     </span>
-                    {% if can_edit or stay.created_by == current_user %}
+                    {% if can_edit %}
                     <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('stay', '{{ stay.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
                         ⇄
                     </button>
@@ -350,7 +368,7 @@
         </div>
 
         <!-- EDIT STAY MODAL -->
-        {% if can_edit or stay.created_by == current_user %}
+        {% if can_edit %}
         <div id="editStayModal_{{ stay.id }}" class="modal-backdrop">
             <div class="modal-card">
                 <div class="modal-header">
@@ -551,7 +569,7 @@
                         <span class="status-pill status-{{ do_item.status|lower }} status-badge-do-{{ do_item.id }}">
                             {{ do_item.get_status_display }}
                         </span>
-                        {% if can_edit or do_item.created_by == current_user %}
+                        {% if can_edit %}
                         <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('do', '{{ do_item.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
                         <button type="button" class="btn-card-action" onclick="openModal('editDoModal_{{ do_item.id }}')">✏️</button>
                         <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteDoModal_{{ do_item.id }}')">🗑️</button>
@@ -613,7 +631,7 @@
             </div>
 
             <!-- EDIT DO MODAL -->
-            {% if can_edit or do_item.created_by == current_user %}
+            {% if can_edit %}
             <div id="editDoModal_{{ do_item.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">
@@ -720,6 +738,9 @@
             <p class="tab-desc">Curated recommendations manually added by trippers or submitted via the shared recommendation link.</p>
         </div>
         <div class="header-dual-actions">
+            <button type="button" class="btn btn-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and nontrippers">
+                <span class="btn-icon">📋</span> Copy Rec Link
+            </button>
             {% if can_edit %}
             <button type="button" class="btn btn-primary" onclick="openModal('addRecModal')">
                 <span class="btn-icon">💡</span> Add Recommendation
@@ -748,10 +769,12 @@
                         </span>
                     </div>
                     <div class="rec-header-actions" style="display: flex; align-items: center; gap: 0.35rem;">
-                        {% if rec.recommended_by %}
+                        {% if rec.guest_name %}
+                        <span class="rec-guest-tag">💌 from {{ rec.guest_name }}</span>
+                        {% elif rec.recommended_by %}
                         <span class="rec-recommender">by @{{ rec.recommended_by.handle }}</span>
                         {% endif %}
-                        {% if can_edit or rec.recommended_by == current_user %}
+                        {% if can_edit %}
                         <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('rec', '{{ rec.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
                         <button type="button" class="btn-card-action" onclick="openModal('editRecModal_{{ rec.id }}')" title="Edit Rec">✏️</button>
                         <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteRecModal_{{ rec.id }}')" title="Delete Rec">🗑️</button>
@@ -781,17 +804,21 @@
                 </div>
 
                 <div class="card-attribution-bar">
+                    {% if rec.guest_name %}
+                    <span class="attr-author">💌 Recommended by <strong>{{ rec.guest_name }}</strong> (via Guest Link) · {{ rec.created_at|date:"M d, Y" }}</span>
+                    {% else %}
                     <span class="attr-author">Added by <strong>@{{ rec.recommended_by.handle|default:"friend" }}</strong> · {{ rec.created_at|date:"M d, Y" }}</span>
-                    {% if rec.updated_by and rec.updated_by != rec.recommended_by %}
+                    {% endif %}
+                    {% if rec.updated_by and rec.updated_by != rec.recommended_by and not rec.guest_name %}
                     <span class="attr-editor">· Last edited by <strong>@{{ rec.updated_by.handle }}</strong> ({{ rec.updated_at|timesince }} ago)</span>
-                    {% elif rec.updated_by and rec.updated_at != rec.created_at %}
+                    {% elif rec.updated_by and rec.updated_at != rec.created_at and not rec.guest_name %}
                     <span class="attr-editor">· Edited {{ rec.updated_at|timesince }} ago</span>
                     {% endif %}
                 </div>
             </div>
 
             <!-- EDIT REC MODAL -->
-            {% if can_edit or rec.recommended_by == current_user %}
+            {% if can_edit %}
             <div id="editRecModal_{{ rec.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">
@@ -860,7 +887,21 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-muted subhead-empty">No recommendations in the pool yet. Click "Propose a Rec" to contribute!</p>
+        <div class="empty-state recs-empty-state" style="padding: 2.5rem 1rem; text-align: center;">
+            <div class="empty-icon" style="font-size: 2.5rem; margin-bottom: 0.5rem;">💌</div>
+            <h3 style="margin-bottom: 0.35rem;">No recommendations in the pool yet</h3>
+            <p class="text-muted" style="max-width: 480px; margin: 0 auto 1.25rem;">Trippers can add spots directly, or copy the recommendation link to collect tips from friends, family, and locals.</p>
+            <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" onclick="copyRecLink(this)">
+                    📋 Copy Rec Link for Friends
+                </button>
+                {% if can_edit %}
+                <button type="button" class="btn btn-outline" onclick="openModal('addRecModal')">
+                    💡 Add a Recommendation
+                </button>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -926,7 +967,7 @@
                             {% else %}
                             <span class="vault-secured-pill" title="Stored in secure encrypted cloud bucket">Encrypted Key</span>
                             {% endif %}
-                            {% if can_edit or att.uploaded_by == current_user %}
+                            {% if can_edit %}
                             <form method="POST" action="{% url 'core:delete_attachment' trip.id att.id %}" style="display: inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-danger-outline" onclick="return confirm('Remove this document from the vault?');" title="Delete Document">🗑️</button>
@@ -1646,6 +1687,48 @@
         document.getElementById('editGranularitySeason').style.display = granularity === 'SEASON_YEAR' ? 'block' : 'none';
         document.getElementById('editGranularityMonth').style.display = granularity === 'MONTH' ? 'block' : 'none';
         document.getElementById('editGranularityYear').style.display = granularity === 'YEAR' ? 'block' : 'none';
+    }
+
+    // Recommendation Share Link Copy Helper
+    function copyRecLink(btnElement) {
+        const input = document.getElementById('recLinkInput');
+        const url = input ? input.value : "{{ request.scheme }}://{{ request.get_host }}{% url 'core:public_recommend' trip.rec_token %}";
+        
+        navigator.clipboard.writeText(url).then(() => {
+            if (btnElement) {
+                const prevHtml = btnElement.innerHTML;
+                btnElement.innerHTML = '✓ Link Copied!';
+                btnElement.classList.add('btn-copied-pulse');
+                setTimeout(() => {
+                    btnElement.innerHTML = prevHtml;
+                    btnElement.classList.remove('btn-copied-pulse');
+                }, 2500);
+            }
+            if (input) {
+                input.select();
+            }
+            showToastNotice('Recommendation link copied! Share it with friends or locals to collect spot ideas.');
+        }).catch(() => {
+            if (input) {
+                input.select();
+            }
+            prompt('Copy this recommendation link to share with friends:', url);
+        });
+    }
+
+    function showToastNotice(msg) {
+        let toast = document.getElementById('sonderringToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'sonderringToast';
+            toast.className = 'toast-floating';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.classList.add('visible');
+        setTimeout(() => {
+            toast.classList.remove('visible');
+        }, 3500);
     }
 </script>
 {% endblock %}

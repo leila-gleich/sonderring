@@ -520,7 +520,7 @@ class Command(BaseCommand):
             start_time=timezone.make_aware(datetime.datetime(2026, 10, 17, 10, 30)),
             price=0.00,
             description='7 km roundtrip river path hike leading to intense icy-azure cascading glacial falls.',
-            created_by=sam
+            created_by=jordan
         )
 
         Do.objects.create(
@@ -555,7 +555,7 @@ class Command(BaseCommand):
             address='Sólheimajökull Glacier & Grindavík, Iceland',
             price=145.00,
             description='Guided crampon glacier walk on black volcanic ash ice sheet, followed by post-hike spa soak.',
-            created_by=sam
+            created_by=leila
         )
 
         # Recs
@@ -585,7 +585,7 @@ class Command(BaseCommand):
             status='IDEA',
             address='Seljalandsfoss, Route 1, Iceland',
             description='Bring waterproof pants and jacket; the wind gusts cover you in glacial spray behind the cavern wall.',
-            recommended_by=sam
+            recommended_by=jordan
         )
         Rec.objects.create(
             trip=trip_iceland,

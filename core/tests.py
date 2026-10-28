@@ -437,6 +437,36 @@ class AccessControlAndRBACTests(TestCase):
         self.client.post(reverse('core:add_rec', args=[self.trip.id]), {'title': 'Unauthorized Rec'})
         self.assertFalse(Rec.objects.filter(trip=self.trip, title='Unauthorized Rec').exists())
 
+    def test_viewer_cannot_edit_delete_or_toggle_any_item(self):
+        """Viewers are strictly read-only and cannot edit, delete, or toggle status even on items attributed to them."""
+        stay_by_viewer = Stay.objects.create(
+            trip=self.trip,
+            title='Original Stay',
+            status='IDEA',
+            created_by=self.viewer
+        )
+        session = self.client.session
+        session['user_id'] = str(self.viewer.id)
+        session.save()
+
+        # Cannot edit
+        self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay_by_viewer.id]), {'title': 'Tampered Stay'})
+        stay_by_viewer.refresh_from_db()
+        self.assertEqual(stay_by_viewer.title, 'Original Stay')
+
+        # Cannot toggle status
+        resp_toggle = self.client.post(
+            reverse('core:toggle_status', args=['stay', stay_by_viewer.id]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(resp_toggle.status_code, 403)
+        stay_by_viewer.refresh_from_db()
+        self.assertEqual(stay_by_viewer.status, 'IDEA')
+
+        # Cannot delete
+        self.client.post(reverse('core:delete_stay', args=[self.trip.id, stay_by_viewer.id]))
+        self.assertTrue(Stay.objects.filter(id=stay_by_viewer.id).exists())
+
     @override_settings(ENABLE_DEMO_SWITCHER=False)
     def test_demo_switcher_disabled_blocks_impersonation(self):
         """When ENABLE_DEMO_SWITCHER is False, switch-user and demo_user_id login return 403."""
@@ -795,6 +825,94 @@ class VaultSecurityAndLifecycleTests(TestCase):
         self.client.post(reverse('core:delete_attachment', args=[self.trip.id, att.id]))
         self.assertFalse(Attachment.objects.filter(id=att.id).exists())
         self.assertFalse(os.path.exists(physical_path))
+
+
+class PublicRecommendationTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.owner = UserProfile.objects.create(
+            email='leila@example.com',
+            handle='leila',
+            full_name='Leila Gleich',
+            is_active=True
+        )
+        self.trip = Trip.objects.create(
+            title='Malticilia 26',
+            location='Malta & Sicily',
+            created_by=self.owner,
+            time_granularity='SEASON_YEAR',
+            season='SUMMER',
+            year=2026
+        )
+
+    def test_public_recommend_get_page(self):
+        """Verify non-trippers can access public recommendation page without login."""
+        url = reverse('core:public_recommend', args=[self.trip.rec_token])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Malticilia 26')
+        self.assertContains(resp, 'Malta &amp; Sicily')
+        self.assertContains(resp, 'Your Name or Nickname')
+
+    def test_public_recommend_invalid_token_returns_404(self):
+        """Verify invalid or non-existent tokens return 404."""
+        url = reverse('core:public_recommend', args=['invalid-token-12345'])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_public_recommend_submission_success(self):
+        """Verify non-tripper can submit a recommendation which populates Recs pool as IDEA."""
+        url = reverse('core:public_recommend', args=[self.trip.rec_token])
+        post_data = {
+            'guest_name': 'Marco (Sicily Local)',
+            'title': 'Trattoria da Nino',
+            'category': 'Food',
+            'description': 'Incredible swordfish pasta, ask for outdoor terrace seating!',
+            'address': 'Via Luigi Pirandello 37, Taormina',
+            'link': 'https://example.com/trattoria-nino',
+        }
+        resp = self.client.post(url, post_data)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('submitted=1', resp.url)
+
+        # Verify Rec created in DB
+        rec = Rec.objects.filter(trip=self.trip, title='Trattoria da Nino').first()
+        self.assertIsNotNone(rec)
+        self.assertEqual(rec.guest_name, 'Marco (Sicily Local)')
+        self.assertEqual(rec.status, 'IDEA')
+        self.assertEqual(rec.category, 'Food')
+        self.assertIsNone(rec.recommended_by)
+
+    def test_public_recommend_honeypot_rejects_bot(self):
+        """Verify bot filling out honeypot does not create a Rec."""
+        url = reverse('core:public_recommend', args=[self.trip.rec_token])
+        post_data = {
+            'guest_name': 'Spambot',
+            'title': 'Buy Cheap Watches',
+            'category': 'Food',
+            'website_url': 'http://spamsite.com',
+        }
+        resp = self.client.post(url, post_data)
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(Rec.objects.filter(title='Buy Cheap Watches').exists())
+
+    def test_workspace_displays_rec_invite_link_and_sndr_tabs(self):
+        """Verify workspace top section contains copyable recommendation invite link and SNDR tabs."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        # SNDR tab elements
+        self.assertContains(resp, 'title="Sonderring S Element: Stays">S</span>')
+        self.assertContains(resp, 'title="Sonderring N Element: Navs">N</span>')
+        self.assertContains(resp, 'title="Sonderring D Element: Dos">D</span>')
+        self.assertContains(resp, 'title="Sonderring R Element: Recs">R</span>')
+        # Copy link widget in top section
+        self.assertContains(resp, 'rec-invite-bar')
+        self.assertContains(resp, self.trip.rec_token)
+        self.assertContains(resp, 'Copy Rec Link')
 
 
 

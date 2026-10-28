@@ -1,6 +1,7 @@
 import uuid
 import calendar
 import hashlib
+import secrets
 from django.db import models
 from django.utils import timezone
 from .encryption import ConfirmationEncryptor, EncryptedCharField, EncryptedTextField
@@ -176,6 +177,13 @@ class Trip(models.Model):
     end_month = models.IntegerField(blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='created_trips')
     updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_trips')
+    rec_token = models.CharField(
+        max_length=64,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Public recommendation invite token for non-trippers"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -186,7 +194,13 @@ class Trip(models.Model):
         indexes = [
             models.Index(fields=['created_by', 'year'], name='idx_trip_creator_year'),
             models.Index(fields=['status'], name='idx_trip_status'),
+            models.Index(fields=['rec_token'], name='idx_trip_rec_token'),
         ]
+
+    def save(self, *args, **kwargs):
+        if not self.rec_token:
+            self.rec_token = secrets.token_urlsafe(16)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -474,6 +488,12 @@ class Rec(models.Model):
     description = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     link = models.URLField(blank=True, null=True)
+    guest_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Name or nickname of non-tripper contributor"
+    )
     recommended_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='recommended_recs')
     updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_recs')
     created_at = models.DateTimeField(auto_now_add=True)

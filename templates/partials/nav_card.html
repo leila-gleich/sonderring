@@ -18,7 +18,7 @@
             <span class="status-pill status-{{ nav.status|lower }} status-badge-nav-{{ nav.id }}">
                 {{ nav.get_status_display }}
             </span>
-            {% if can_edit or nav.created_by == current_user %}
+            {% if can_edit %}
             <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('nav', '{{ nav.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
                 ⇄
             </button>
@@ -114,7 +114,7 @@
 </div>
 
 <!-- EDIT NAV MODAL -->
-{% if can_edit or nav.created_by == current_user %}
+{% if can_edit %}
 <div id="editNavModal_{{ nav.id }}" class="modal-backdrop">
     <div class="modal-card">
         <div class="modal-header">

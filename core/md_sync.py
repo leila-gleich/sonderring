@@ -42,12 +42,20 @@ def get_trip_filename(trip) -> str:
 
 
 def format_attribution(item) -> str:
+    guest = getattr(item, 'guest_name', None)
     author = getattr(item, 'created_by', None) or getattr(item, 'recommended_by', None) or getattr(item, 'uploaded_by', None)
     editor = getattr(item, 'updated_by', None)
-    author_str = f"Added by `@{author.handle}`" if author else "Added by `@traveler`"
+    
+    if guest:
+        author_str = f"Recommended by **{guest}** (via Recommendation Link)"
+    elif author:
+        author_str = f"Added by `@{author.handle}`"
+    else:
+        author_str = "Added by `@traveler`"
+        
     if editor and author and editor.id != author.id:
         return f"{author_str} · Last edited by `@{editor.handle}`"
-    return f"{author_str} · Last edited by `@{author.handle}`" if author else author_str
+    return f"{author_str} · Last edited by `@{author.handle}`" if (author and not guest) else author_str
 
 
 def format_stay(stay) -> list[str]:
