@@ -432,8 +432,8 @@ def update_profile_view(request):
         messages.error(request, "Name and handle cannot be empty.")
         return redirect('core:profile')
 
-    # Check if handle is taken by another user
-    if UserProfile.objects.filter(handle=handle).exclude(id=current_user.id).exists():
+    # Check if handle is taken by another user (case-insensitive)
+    if UserProfile.objects.filter(handle__iexact=handle).exclude(id=current_user.id).exists():
         messages.error(request, f"Handle '@{handle}' is already in use by another traveler.")
         return redirect('core:profile')
 
