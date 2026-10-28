@@ -1,6 +1,8 @@
 import uuid
 import calendar
+import hashlib
 from django.db import models
+from django.utils import timezone
 from .encryption import ConfirmationEncryptor, EncryptedCharField, EncryptedTextField
 
 class UserProfile(models.Model):
@@ -509,3 +511,93 @@ class Attachment(models.Model):
 
     def __str__(self):
         return f"{self.file_name} ({self.trip.title})"
+
+
+class SecurityAuditLog(models.Model):
+    """
+    Tamper-evident security audit log with SHA-256 hash chaining.
+    Records all sensitive credential accesses, vault operations, and role modifications.
+    """
+    ACTION_CHOICES = [
+        ('CONFIRMATION_CODE_REVEALED', 'Confirmation Code Revealed'),
+        ('VAULT_DOCUMENT_UPLOADED', 'Vault Document Uploaded'),
+        ('VAULT_DOCUMENT_ACCESSED', 'Vault Document Accessed'),
+        ('VAULT_DOCUMENT_DELETED', 'Vault Document Deleted'),
+        ('MEMBER_INVITED', 'Tripper Invited'),
+        ('MEMBER_ROLE_CHANGED', 'Tripper Role Changed'),
+        ('MEMBER_REMOVED', 'Tripper Removed'),
+        ('AUTH_LOGIN_SUCCESS', 'Authentication Login Success'),
+        ('AUTH_LOGIN_FAILED', 'Authentication Login Failed'),
+        ('PASSWORD_CHANGED', 'Password Changed'),
+        ('TRIP_EXPORTED', 'Trip Exported'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    trip = models.ForeignKey(
+        Trip,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='security_audit_logs'
+    )
+    user = models.ForeignKey(
+        UserProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='security_audit_logs'
+    )
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    resource_type = models.CharField(max_length=50)
+    resource_id = models.UUIDField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, default='')
+    metadata = models.JSONField(default=dict, blank=True)
+    previous_hash = models.CharField(max_length=64, blank=True, default='0' * 64)
+    record_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    timestamp = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        db_table = 'security_audit_logs'
+        verbose_name = 'Security Audit Log'
+        verbose_name_plural = 'Security Audit Logs'
+        ordering = ['timestamp', 'id']
+        indexes = [
+            models.Index(fields=['trip', 'timestamp'], name='idx_audit_trip_ts'),
+            models.Index(fields=['user', 'timestamp'], name='idx_audit_user_ts'),
+            models.Index(fields=['action', 'timestamp'], name='idx_audit_action_ts'),
+        ]
+
+    def compute_hash(self) -> str:
+        ts_iso = self.timestamp.isoformat() if self.timestamp else ''
+        payload = (
+            f"{self.previous_hash}|{self.action}|{self.trip_id or ''}|"
+            f"{self.user_id or ''}|{self.resource_type}|{self.resource_id or ''}|{ts_iso}"
+        )
+        return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+
+    def save(self, *args, **kwargs):
+        if not self.timestamp:
+            self.timestamp = timezone.now()
+        if not self.record_hash:
+            last_log = SecurityAuditLog.objects.order_by('-timestamp', '-id').first()
+            self.previous_hash = last_log.record_hash if last_log and last_log.record_hash else ('0' * 64)
+            self.record_hash = self.compute_hash()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def verify_chain(cls) -> tuple[bool, str | None]:
+        """Verifies the cryptographic integrity of the entire audit log chain."""
+        expected_prev = '0' * 64
+        for log in cls.objects.order_by('timestamp', 'id'):
+            if log.previous_hash != expected_prev:
+                return False, f"Broken hash chain link at audit record {log.id}"
+            if log.compute_hash() != log.record_hash:
+                return False, f"Tampered record payload detected at audit record {log.id}"
+            expected_prev = log.record_hash
+        return True, None
+
+    def __str__(self):
+        actor = f"@{self.user.handle}" if self.user else "anonymous"
+        return f"[{self.timestamp:%Y-%m-%d %H:%M:%S}] {self.action} by {actor} on {self.resource_type}"
+

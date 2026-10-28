@@ -167,8 +167,24 @@ CREATE TABLE attachments (
     )
 );
 
+-- 8. SECURITY AUDIT LOGS (TAMPER-EVIDENT SHA-256 HASH CHAIN)
+CREATE TABLE security_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(50) NOT NULL,
+    resource_type VARCHAR(50) NOT NULL,
+    resource_id UUID,
+    ip_address INET,
+    user_agent TEXT DEFAULT '',
+    metadata JSONB DEFAULT '{}'::jsonb,
+    previous_hash VARCHAR(64) NOT NULL DEFAULT repeat('0', 64),
+    record_hash VARCHAR(64) NOT NULL,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ====================================================================
--- 8. INDEXES (HIGH-PRIORITY QUERY OPTIMIZATION)
+-- 9. INDEXES (HIGH-PRIORITY QUERY OPTIMIZATION)
 -- ====================================================================
 
 -- Foreign Key Indexes (Eliminate full table sequential scans on JOINs / CASCADE deletes)

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserProfile, Trip, TripMember, Stay, Nav, Do, Attachment, OAuthIdentity
+from .models import UserProfile, Trip, TripMember, Stay, Nav, Do, Attachment, OAuthIdentity, SecurityAuditLog
 
 
 class OAuthIdentityInline(admin.TabularInline):
@@ -84,3 +84,25 @@ class DoAdmin(admin.ModelAdmin):
 class AttachmentAdmin(admin.ModelAdmin):
     list_display = ('file_name', 'trip', 'uploaded_by', 'created_at')
     search_fields = ('file_name', 'trip__title')
+
+
+@admin.register(SecurityAuditLog)
+class SecurityAuditLogAdmin(admin.ModelAdmin):
+    list_display = ('timestamp', 'action', 'user', 'trip', 'resource_type', 'ip_address', 'record_hash')
+    list_filter = ('action', 'resource_type')
+    search_fields = ('user__handle', 'user__email', 'trip__title', 'record_hash', 'ip_address')
+    readonly_fields = (
+        'id', 'timestamp', 'trip', 'user', 'action', 'resource_type',
+        'resource_id', 'ip_address', 'user_agent', 'metadata',
+        'previous_hash', 'record_hash'
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+

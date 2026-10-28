@@ -13,7 +13,30 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Trip, Stay, Nav, Do, Rec, UserProfile, TripMember, Attachment, OAuthIdentity
+from .models import Trip, Stay, Nav, Do, Rec, UserProfile, TripMember, Attachment, OAuthIdentity, SecurityAuditLog
+
+
+def get_client_ip(request):
+    """Extracts client IP address from request headers."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR') or '127.0.0.1'
+
+
+def log_security_event(request, action, resource_type, resource_id=None, trip=None, user=None, metadata=None):
+    """Records a tamper-evident SecurityAuditLog entry with SHA-256 hash chaining."""
+    actor = user if user is not None else get_current_user(request)
+    return SecurityAuditLog.objects.create(
+        trip=trip,
+        user=actor,
+        action=action,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        ip_address=get_client_ip(request),
+        user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+        metadata=metadata or {}
+    )
 
 
 # ==========================================
@@ -141,10 +164,26 @@ def login_view(request):
                 request.session['user_id'] = str(user.id)
                 user.last_login = timezone.now()
                 user.save(update_fields=['last_login'])
+                log_security_event(
+                    request,
+                    action='AUTH_LOGIN_SUCCESS',
+                    resource_type='USER',
+                    resource_id=user.id,
+                    user=user,
+                    metadata={'method': 'password'}
+                )
                 messages.success(request, f"Welcome back, {user.full_name}!")
                 next_url = request.GET.get('next') or request.POST.get('next') or 'core:dashboard'
                 return redirect(next_url)
             else:
+                log_security_event(
+                    request,
+                    action='AUTH_LOGIN_FAILED',
+                    resource_type='USER',
+                    resource_id=user.id if user else None,
+                    user=user,
+                    metadata={'attempted_identifier': handle_or_email}
+                )
                 messages.error(request, "Invalid email/handle or password. Please try again.")
 
     context = {
@@ -271,6 +310,13 @@ def change_password_view(request):
 
     current_user.set_password(new_password)
     current_user.save(update_fields=['password'])
+    log_security_event(
+        request,
+        action='PASSWORD_CHANGED',
+        resource_type='USER',
+        resource_id=current_user.id,
+        user=current_user
+    )
     messages.success(request, "Your password has been successfully updated!")
     return redirect('core:profile')
 
@@ -1132,6 +1178,15 @@ def upload_attachment_view(request, trip_id):
         attachment.do = Do.objects.filter(id=do_id, trip=trip).first()
 
     attachment.save()
+    log_security_event(
+        request,
+        action='VAULT_DOCUMENT_UPLOADED',
+        resource_type='ATTACHMENT',
+        resource_id=attachment.id,
+        trip=trip,
+        user=current_user,
+        metadata={'file_name': attachment.file_name, 'file_type': attachment.file_type}
+    )
     messages.success(request, f"Uploaded '{attachment.file_name}' to the Vault!")
     return redirect(f"/trips/{trip_id}/#vault")
 
@@ -1147,7 +1202,17 @@ def delete_attachment_view(request, trip_id, attachment_id):
         return redirect(f"/trips/{trip_id}/#vault")
 
     file_name = attachment.file_name
+    att_id = attachment.id
     attachment.delete()
+    log_security_event(
+        request,
+        action='VAULT_DOCUMENT_DELETED',
+        resource_type='ATTACHMENT',
+        resource_id=att_id,
+        trip=trip,
+        user=current_user,
+        metadata={'file_name': file_name}
+    )
     messages.success(request, f"Document '{file_name}' removed from Vault.")
     return redirect(f"/trips/{trip_id}/#vault")
 
@@ -1197,6 +1262,15 @@ def invite_member_view(request, trip_id):
         membership.role = role
         membership.save()
 
+    log_security_event(
+        request,
+        action='MEMBER_INVITED' if created else 'MEMBER_ROLE_CHANGED',
+        resource_type='MEMBER',
+        resource_id=membership.id,
+        trip=trip,
+        user=current_user,
+        metadata={'target_user_handle': user.handle, 'role': role}
+    )
     messages.success(request, f"Added @{user.handle} as {role} to {trip.title}!")
     return redirect(f"/trips/{trip_id}/")
 
@@ -1212,12 +1286,22 @@ def update_member_role_view(request, trip_id, member_id):
         return redirect(f"/trips/{trip_id}/")
 
     member = get_object_or_404(TripMember, id=member_id, trip=trip)
+    old_role = member.role
     new_role = request.POST.get('role', 'EDITOR').strip().upper()
     if new_role not in ('OWNER', 'EDITOR', 'VIEWER'):
         new_role = 'EDITOR'
     member.role = new_role
     member.save()
 
+    log_security_event(
+        request,
+        action='MEMBER_ROLE_CHANGED',
+        resource_type='MEMBER',
+        resource_id=member.id,
+        trip=trip,
+        user=current_user,
+        metadata={'target_user_handle': member.user.handle, 'old_role': old_role, 'new_role': new_role}
+    )
     messages.success(request, f"Updated @{member.user.handle}'s role to {new_role}.")
     return redirect(f"/trips/{trip_id}/")
 
@@ -1234,8 +1318,18 @@ def remove_member_view(request, trip_id, member_id):
 
     member = get_object_or_404(TripMember, id=member_id, trip=trip)
     handle = member.user.handle
+    mem_id = member.id
     member.delete()
 
+    log_security_event(
+        request,
+        action='MEMBER_REMOVED',
+        resource_type='MEMBER',
+        resource_id=mem_id,
+        trip=trip,
+        user=current_user,
+        metadata={'removed_user_handle': handle}
+    )
     messages.success(request, f"Removed @{handle} from this trip.")
     return redirect(f"/trips/{trip_id}/")
 
@@ -1295,6 +1389,16 @@ def reveal_confirmation_code_view(request, item_type, item_id):
 
     if not code:
         return JsonResponse({'success': False, 'error': 'No confirmation code set on this item.'})
+
+    log_security_event(
+        request,
+        action='CONFIRMATION_CODE_REVEALED',
+        resource_type=item_type.upper(),
+        resource_id=item.id,
+        trip=item.trip,
+        user=current_user,
+        metadata={'item_title': item.title}
+    )
 
     return JsonResponse({
         'success': True,

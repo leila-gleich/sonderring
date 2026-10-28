@@ -1,7 +1,7 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.template.context import BaseContext
-from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Nav, Do, Rec
+from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Nav, Do, Rec, SecurityAuditLog
 
 # Patch BaseContext.__copy__ for Python 3.14 compatibility with Django 4.2 test runner
 def _patched_copy(self):
@@ -509,6 +509,81 @@ class CryptographicAndPIITests(TestCase):
         from core.encryption import ConfirmationEncryptor
         with self.assertRaises(ImproperlyConfigured):
             ConfirmationEncryptor.encrypt('TEST-CODE')
+
+
+class AuditLogAndHashChainTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.owner = UserProfile.objects.create(
+            email='audit_owner@example.com',
+            handle='auditowner',
+            full_name='Audit Owner',
+            is_active=True
+        )
+        self.owner.set_password('StrongPass2026!')
+        self.owner.save()
+
+        self.companion = UserProfile.objects.create(
+            email='audit_comp@example.com',
+            handle='auditcomp',
+            full_name='Audit Companion',
+            is_active=True
+        )
+        self.trip = Trip.objects.create(
+            title='Audited Trip',
+            location='Oslo',
+            year=2026,
+            time_granularity='YEAR',
+            created_by=self.owner
+        )
+        TripMember.objects.create(trip=self.trip, user=self.owner, role='OWNER')
+
+        self.stay = Stay(trip=self.trip, title='Fjord Hotel', created_by=self.owner)
+        self.stay.confirmation_code = 'OSLO-7711'
+        self.stay.save()
+
+    def tearDown(self):
+        from core.md_sync import delete_trip_markdown
+        for t in Trip.objects.all():
+            delete_trip_markdown(t)
+
+    def test_audit_events_logged_and_hash_chain_verified(self):
+        """Sensitive actions must write chained SecurityAuditLog entries and detect tampering."""
+        # 1. Login generates AUTH_LOGIN_SUCCESS
+        self.client.post(reverse('core:login'), {
+            'handle_or_email': 'auditowner',
+            'password': 'StrongPass2026!',
+        })
+        self.assertTrue(SecurityAuditLog.objects.filter(action='AUTH_LOGIN_SUCCESS', user=self.owner).exists())
+
+        # 2. Revealing confirmation code generates CONFIRMATION_CODE_REVEALED
+        resp = self.client.get(reverse('core:reveal_code', args=['stay', self.stay.id]))
+        self.assertEqual(resp.status_code, 200)
+        reveal_log = SecurityAuditLog.objects.filter(
+            action='CONFIRMATION_CODE_REVEALED',
+            trip=self.trip,
+            user=self.owner
+        ).first()
+        self.assertIsNotNone(reveal_log)
+        self.assertEqual(reveal_log.resource_id, self.stay.id)
+
+        # 3. Inviting a member generates MEMBER_INVITED
+        self.client.post(reverse('core:invite_member', args=[self.trip.id]), {
+            'handle_or_email': '@auditcomp',
+            'role': 'VIEWER'
+        })
+        self.assertTrue(SecurityAuditLog.objects.filter(action='MEMBER_INVITED', trip=self.trip).exists())
+
+        # 4. Verify cryptographic SHA-256 hash chain is intact
+        is_valid, err_msg = SecurityAuditLog.verify_chain()
+        self.assertTrue(is_valid, err_msg)
+
+        # 5. Simulate database tampering on an audit log row and verify detection
+        SecurityAuditLog.objects.filter(id=reveal_log.id).update(action='VAULT_DOCUMENT_ACCESSED')
+        is_valid_after_tamper, tamper_err = SecurityAuditLog.verify_chain()
+        self.assertFalse(is_valid_after_tamper)
+        self.assertIn(str(reveal_log.id), tamper_err)
+
 
 
 
