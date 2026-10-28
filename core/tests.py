@@ -915,6 +915,101 @@ class PublicRecommendationTests(TestCase):
         self.assertContains(resp, 'Copy Rec Link')
 
 
+class GlobalNavigationAndCreateTripModalTests(TestCase):
+    """Tests for the global Create Trip modal and the active TripSpaces navbar dropdown."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = UserProfile.objects.create(
+            email='navtester@example.com',
+            handle='navtester',
+            full_name='Nav Tester',
+            is_active=True
+        )
+        self.outsider = UserProfile.objects.create(
+            email='outsider@example.com',
+            handle='outsider',
+            full_name='Outsider User',
+            is_active=True
+        )
+        self.upcoming_trip = Trip.objects.create(
+            title='Upcoming Alps Expedition',
+            location='Chamonix, France',
+            status='UPCOMING',
+            created_by=self.user,
+            time_granularity='SEASON_YEAR',
+            season='WINTER',
+            year=2027
+        )
+        TripMember.objects.create(trip=self.upcoming_trip, user=self.user, role='OWNER')
+
+        self.current_trip = Trip.objects.create(
+            title='Current Lisbon Escape',
+            location='Lisbon, Portugal',
+            status='CURRENT',
+            created_by=self.user,
+            time_granularity='YEAR',
+            year=2026
+        )
+        TripMember.objects.create(trip=self.current_trip, user=self.user, role='OWNER')
+
+        self.past_trip = Trip.objects.create(
+            title='Archived Kyoto Trip',
+            location='Kyoto, Japan',
+            status='PAST',
+            created_by=self.user,
+            time_granularity='YEAR',
+            year=2024
+        )
+        TripMember.objects.create(trip=self.past_trip, user=self.user, role='OWNER')
+
+        self.outsider_trip = Trip.objects.create(
+            title='Secret Outsider Trip',
+            location='Reykjavik, Iceland',
+            status='UPCOMING',
+            created_by=self.outsider,
+            time_granularity='YEAR',
+            year=2026
+        )
+        TripMember.objects.create(trip=self.outsider_trip, user=self.outsider, role='OWNER')
+
+        session = self.client.session
+        session['user_id'] = str(self.user.id)
+        session.save()
+
+    def test_tripspaces_dropdown_lists_only_user_active_trips_across_pages(self):
+        """Navbar TripSpaces dropdown lists CURRENT and UPCOMING trips for the user and excludes PAST or outsider trips."""
+        for url in [
+            reverse('core:dashboard'),
+            reverse('core:profile'),
+            reverse('core:trip_workspace', args=[self.upcoming_trip.id]),
+        ]:
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 200)
+            self.assertContains(resp, 'id="tripspacesDropdownMenu"')
+            self.assertContains(resp, reverse('core:trip_workspace', args=[self.upcoming_trip.id]))
+            self.assertContains(resp, reverse('core:trip_workspace', args=[self.current_trip.id]))
+            # Verify outsider trip is never in the dropdown
+            self.assertNotContains(resp, 'Secret Outsider Trip')
+            # Verify active count badge shows 2 active trips (UPCOMING + CURRENT, excluding PAST)
+            self.assertContains(resp, '2 Active')
+
+    def test_create_trip_modal_is_present_globally_and_profile_opens_modal_directly(self):
+        """Profile and Trip Workspace pages include #createTripModal and trigger openModal('createTripModal') without redirecting."""
+        profile_resp = self.client.get(reverse('core:profile'))
+        self.assertEqual(profile_resp.status_code, 200)
+        self.assertContains(profile_resp, 'id="createTripModal"')
+        self.assertContains(profile_resp, "openModal('createTripModal')")
+        # Ensure Profile no longer uses a link to dashboard for "+ Create a Trip"
+        self.assertNotContains(profile_resp, f'<a href="{reverse("core:dashboard")}" class="btn btn-sm btn-primary">+ Create a Trip</a>')
+
+        workspace_resp = self.client.get(reverse('core:trip_workspace', args=[self.upcoming_trip.id]))
+        self.assertEqual(workspace_resp.status_code, 200)
+        self.assertContains(workspace_resp, 'id="createTripModal"')
+        self.assertContains(workspace_resp, "openModal('createTripModal')")
+
+
+
 
 
 
