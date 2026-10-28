@@ -237,3 +237,79 @@ class TripAuthorizationTests(TestCase):
         response = self.client.get(reverse('core:trip_workspace', args=[self.trip_a.id]))
         self.assertRedirects(response, reverse('core:dashboard'))
 
+    def tearDown(self):
+        from core.md_sync import delete_trip_markdown
+        for t in Trip.objects.all():
+            delete_trip_markdown(t)
+
+
+class TripStatusTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.owner = UserProfile.objects.create(
+            email='owner@example.com',
+            handle='tripowner',
+            full_name='Trip Owner',
+            is_active=True
+        )
+        self.viewer = UserProfile.objects.create(
+            email='viewer@example.com',
+            handle='tripviewer',
+            full_name='Trip Viewer',
+            is_active=True
+        )
+        self.trip = Trip.objects.create(
+            title='Status Lifecycle Trip',
+            location='Sicily',
+            status='IDEA',
+            year=2026,
+            time_granularity='YEAR',
+            created_by=self.owner
+        )
+        TripMember.objects.create(trip=self.trip, user=self.owner, role='OWNER')
+        TripMember.objects.create(trip=self.trip, user=self.viewer, role='VIEWER')
+
+    def tearDown(self):
+        from core.md_sync import delete_trip_markdown
+        for t in Trip.objects.all():
+            delete_trip_markdown(t)
+
+    def test_trip_status_transitions_idea_confirmed_complete(self):
+        """Verify owner can transition trip between IDEA, CONFIRMED, and COMPLETE."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        # Initially IDEA
+        self.assertEqual(self.trip.status, 'IDEA')
+
+        # Transition to CONFIRMED
+        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'CONFIRMED'})
+        self.assertEqual(resp.status_code, 302)
+        self.trip.refresh_from_db()
+        self.assertEqual(self.trip.status, 'CONFIRMED')
+
+        # Transition to COMPLETE
+        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'COMPLETE'})
+        self.assertEqual(resp.status_code, 302)
+        self.trip.refresh_from_db()
+        self.assertEqual(self.trip.status, 'COMPLETE')
+
+        # Transition back to IDEA (Tentative)
+        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'IDEA'})
+        self.assertEqual(resp.status_code, 302)
+        self.trip.refresh_from_db()
+        self.assertEqual(self.trip.status, 'IDEA')
+
+    def test_viewer_cannot_change_trip_status(self):
+        """Verify viewers cannot change trip status."""
+        session = self.client.session
+        session['user_id'] = str(self.viewer.id)
+        session.save()
+
+        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'COMPLETE'})
+        self.assertEqual(resp.status_code, 302)
+        self.trip.refresh_from_db()
+        self.assertEqual(self.trip.status, 'IDEA')
+
+

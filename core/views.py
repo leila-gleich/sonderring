@@ -347,15 +347,21 @@ def dashboard_view(request):
         Q(created_by=current_user) | Q(members__user=current_user)
     ).distinct()
 
-    # Active & Upcoming Trips (Year >= 2024 or ongoing)
-    upcoming_trips = user_trips.filter(year__gte=2024).order_by('-year', '-start_date')
-    
-    # Historical / Past Trips
-    past_trips = user_trips.filter(year__lt=2024).order_by('-year', '-start_date')
+    # Lifecycle status-driven categorization: Confirmed, Idea (Tentative), Complete
+    confirmed_trips = user_trips.filter(status='CONFIRMED').order_by('-year', '-start_date')
+    idea_trips = user_trips.filter(status='IDEA').order_by('-year', '-start_date')
+    complete_trips = user_trips.filter(status='COMPLETE').order_by('-year', '-start_date')
+
+    # Combined active/planning trips & alias for backwards compatibility
+    upcoming_trips = user_trips.filter(status__in=['CONFIRMED', 'IDEA']).order_by('-year', '-start_date')
+    past_trips = complete_trips
 
     context = {
         'current_user': current_user,
         'all_users': all_users,
+        'confirmed_trips': confirmed_trips,
+        'idea_trips': idea_trips,
+        'complete_trips': complete_trips,
         'upcoming_trips': upcoming_trips,
         'past_trips': past_trips,
         'now_year': timezone.now().year,
@@ -502,6 +508,9 @@ def create_trip_view(request):
     location = request.POST.get('location', '').strip()
     description = request.POST.get('description', '').strip()
     time_granularity = request.POST.get('time_granularity', 'YEAR')
+    trip_status = request.POST.get('status', 'IDEA').strip().upper()
+    if trip_status not in ['IDEA', 'CONFIRMED', 'COMPLETE']:
+        trip_status = 'IDEA'
     
     if not title or not location:
         messages.error(request, "Trip title and location are required.")
@@ -511,6 +520,7 @@ def create_trip_view(request):
         'title': title,
         'location': location,
         'description': description,
+        'status': trip_status,
         'time_granularity': time_granularity,
         'created_by': current_user,
     }
@@ -557,6 +567,7 @@ def edit_trip_view(request, trip_id):
     location = request.POST.get('location', '').strip()
     description = request.POST.get('description', '').strip()
     time_granularity = request.POST.get('time_granularity', trip.time_granularity)
+    new_status = request.POST.get('status', trip.status).strip().upper()
 
     if not title or not location:
         messages.error(request, "Trip title and location cannot be blank.")
@@ -566,6 +577,8 @@ def edit_trip_view(request, trip_id):
     trip.location = location
     trip.description = description
     trip.time_granularity = time_granularity
+    if new_status in ['IDEA', 'CONFIRMED', 'COMPLETE']:
+        trip.status = new_status
 
     if time_granularity == 'EXACT_RANGE':
         s_date = request.POST.get('start_date')
@@ -589,6 +602,49 @@ def edit_trip_view(request, trip_id):
     trip.save()
     messages.success(request, f"Trip '{trip.title}' details updated successfully!")
     return redirect('core:trip_workspace', trip_id=trip.id)
+
+
+@require_POST
+def update_trip_status_view(request, trip_id):
+    """Updates a trip's lifecycle status (IDEA, CONFIRMED, COMPLETE) directly."""
+    current_user = get_current_user(request)
+    trip = get_object_or_404(Trip, id=trip_id)
+
+    if not can_user_edit_trip(current_user, trip):
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return HttpResponseForbidden("Only Trip Owners and Editors can change trip status.")
+        messages.error(request, "Permission denied: Only Owners and Editors can change trip status.")
+        return redirect('core:trip_workspace', trip_id=trip.id)
+
+    new_status = request.POST.get('status', '').strip().upper()
+    if new_status not in ['IDEA', 'CONFIRMED', 'COMPLETE']:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return HttpResponseBadRequest("Invalid trip status. Must be IDEA, CONFIRMED, or COMPLETE.")
+        messages.error(request, "Invalid trip status selected.")
+        return redirect('core:trip_workspace', trip_id=trip.id)
+
+    trip.status = new_status
+    trip.updated_by = current_user
+    trip.save()
+
+    status_labels = {
+        'IDEA': 'Idea (Tentative)',
+        'CONFIRMED': 'Confirmed',
+        'COMPLETE': 'Complete',
+    }
+    label = status_labels.get(new_status, trip.get_status_display())
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'trip_id': str(trip.id),
+            'new_status': trip.status,
+            'status_display': label,
+        })
+
+    messages.success(request, f"Trip '{trip.title}' status updated to {label}!")
+    redirect_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or reverse('core:trip_workspace', args=[trip.id])
+    return redirect(redirect_url)
 
 
 @require_POST
@@ -935,6 +991,7 @@ def add_rec_view(request, trip_id):
         trip=trip,
         title=title,
         category=request.POST.get('category', 'Food'),
+        status=request.POST.get('status', 'IDEA'),
         address=request.POST.get('address', '').strip(),
         link=request.POST.get('link', '').strip(),
         description=request.POST.get('description', '').strip(),
@@ -957,6 +1014,7 @@ def edit_rec_view(request, trip_id, rec_id):
 
     rec.title = request.POST.get('title', rec.title).strip()
     rec.category = request.POST.get('category', rec.category)
+    rec.status = request.POST.get('status', rec.status)
     rec.address = request.POST.get('address', '').strip()
     rec.link = request.POST.get('link', '').strip()
     rec.description = request.POST.get('description', '').strip()
@@ -1151,7 +1209,7 @@ def remove_member_view(request, trip_id, member_id):
 def toggle_item_status_view(request, item_type, item_id):
     """Instant binary status toggle (Idea <-> Confirmed) via AJAX."""
     current_user = get_current_user(request)
-    model_map = {'stay': Stay, 'nav': Nav, 'do': Do}
+    model_map = {'stay': Stay, 'nav': Nav, 'do': Do, 'rec': Rec}
     model = model_map.get(item_type.lower())
     if not model:
         return HttpResponseBadRequest("Invalid item type.")
@@ -1175,7 +1233,7 @@ def toggle_item_status_view(request, item_type, item_id):
 @require_GET
 def reveal_confirmation_code_view(request, item_type, item_id):
     """Secure on-demand decryption endpoint for authorized trippers."""
-    model_map = {'stay': Stay, 'nav': Nav, 'do': Do}
+    model_map = {'stay': Stay, 'nav': Nav, 'do': Do, 'rec': Rec}
     model = model_map.get(item_type.lower())
     if not model:
         return HttpResponseBadRequest("Invalid item type.")

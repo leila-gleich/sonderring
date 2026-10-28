@@ -18,6 +18,7 @@ urlpatterns = [
     path('trips/create/', views.create_trip_view, name='create_trip'),
     path('trips/<uuid:trip_id>/', views.trip_workspace_view, name='trip_workspace'),
     path('trips/<uuid:trip_id>/edit/', views.edit_trip_view, name='edit_trip'),
+    path('trips/<uuid:trip_id>/status/', views.update_trip_status_view, name='update_trip_status'),
     path('trips/<uuid:trip_id>/delete/', views.delete_trip_view, name='delete_trip'),
 
     # Stays CRUD

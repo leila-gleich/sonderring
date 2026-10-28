@@ -497,6 +497,24 @@ body {
     border: 1px solid var(--amber-border);
 }
 
+.status-complete {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.trip-status-select {
+    cursor: pointer;
+    font-family: var(--font-body);
+    outline: none;
+    padding-right: 0.5rem;
+    transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.trip-status-select:hover {
+    box-shadow: var(--shadow-sm);
+}
+
 .item-type-badge {
     font-size: 0.7rem;
     font-weight: 700;

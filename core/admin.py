@@ -46,8 +46,8 @@ class DoInline(admin.StackedInline):
 
 @admin.register(Trip)
 class TripAdmin(admin.ModelAdmin):
-    list_display = ('title', 'location', 'time_granularity', 'season', 'year', 'created_by', 'created_at')
-    list_filter = ('time_granularity', 'season', 'year')
+    list_display = ('title', 'location', 'status', 'time_granularity', 'season', 'year', 'created_by', 'created_at')
+    list_filter = ('status', 'time_granularity', 'season', 'year')
     search_fields = ('title', 'location', 'description')
     inlines = [TripMemberInline, StayInline, NavInline, DoInline]
 

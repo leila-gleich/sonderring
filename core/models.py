@@ -143,11 +143,22 @@ class Trip(models.Model):
         ('FALL', 'Fall'),
         ('WINTER', 'Winter'),
     ]
+    STATUS_CHOICES = [
+        ('IDEA', 'Idea'),
+        ('CONFIRMED', 'Confirmed'),
+        ('COMPLETE', 'Complete'),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=150)
     description = models.TextField(blank=True, null=True)
     location = models.CharField(max_length=255)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='IDEA',
+        help_text="Lifecycle state of the trip: Idea (Tentative), Confirmed, or Complete"
+    )
     time_granularity = models.CharField(max_length=20, choices=GRANULARITY_CHOICES, default='YEAR')
     season = models.CharField(max_length=10, choices=SEASON_CHOICES, blank=True, null=True)
     year = models.IntegerField(default=2026)
@@ -166,6 +177,7 @@ class Trip(models.Model):
         verbose_name_plural = 'Trips'
         indexes = [
             models.Index(fields=['created_by', 'year'], name='idx_trip_creator_year'),
+            models.Index(fields=['status'], name='idx_trip_status'),
         ]
 
     def __str__(self):
@@ -402,6 +414,7 @@ class Do(models.Model):
 
 
 class Rec(models.Model):
+    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed')]
     CATEGORY_CHOICES = [
         ('Food', 'Food & Dining'),
         ('Spot', 'Sight & Spot'),
@@ -413,6 +426,7 @@ class Rec(models.Model):
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='recs')
     title = models.CharField(max_length=150)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='Food')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
     description = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     link = models.URLField(blank=True, null=True)
@@ -427,10 +441,11 @@ class Rec(models.Model):
         verbose_name_plural = 'Recs'
         indexes = [
             models.Index(fields=['trip', 'category'], name='idx_rec_trip_category'),
+            models.Index(fields=['trip', 'status'], name='idx_rec_trip_status'),
         ]
 
     def __str__(self):
-        return f"{self.title} ({self.category})"
+        return f"{self.title} ({self.category} - {self.status})"
 
 
 class Attachment(models.Model):
