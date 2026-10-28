@@ -243,7 +243,7 @@ class TripAuthorizationTests(TestCase):
             delete_trip_markdown(t)
 
 
-class TripStatusTests(TestCase):
+class TripAndElementStatusTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.owner = UserProfile.objects.create(
@@ -261,7 +261,7 @@ class TripStatusTests(TestCase):
         self.trip = Trip.objects.create(
             title='Status Lifecycle Trip',
             location='Sicily',
-            status='IDEA',
+            status='UPCOMING',
             year=2026,
             time_granularity='YEAR',
             created_by=self.owner
@@ -274,43 +274,80 @@ class TripStatusTests(TestCase):
         for t in Trip.objects.all():
             delete_trip_markdown(t)
 
-    def test_trip_status_transitions_idea_confirmed_complete(self):
-        """Verify owner can transition trip between IDEA, CONFIRMED, and COMPLETE."""
+    def test_tripspace_status_transitions_upcoming_current_past(self):
+        """Verify owner can transition TripSpace between UPCOMING, CURRENT, and PAST."""
         session = self.client.session
         session['user_id'] = str(self.owner.id)
         session.save()
 
-        # Initially IDEA
-        self.assertEqual(self.trip.status, 'IDEA')
+        self.assertEqual(self.trip.status, 'UPCOMING')
 
-        # Transition to CONFIRMED
-        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'CONFIRMED'})
+        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'CURRENT'})
         self.assertEqual(resp.status_code, 302)
         self.trip.refresh_from_db()
-        self.assertEqual(self.trip.status, 'CONFIRMED')
+        self.assertEqual(self.trip.status, 'CURRENT')
 
-        # Transition to COMPLETE
-        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'COMPLETE'})
+        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'PAST'})
         self.assertEqual(resp.status_code, 302)
         self.trip.refresh_from_db()
-        self.assertEqual(self.trip.status, 'COMPLETE')
+        self.assertEqual(self.trip.status, 'PAST')
 
-        # Transition back to IDEA (Tentative)
-        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'IDEA'})
+        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'UPCOMING'})
         self.assertEqual(resp.status_code, 302)
         self.trip.refresh_from_db()
-        self.assertEqual(self.trip.status, 'IDEA')
+        self.assertEqual(self.trip.status, 'UPCOMING')
 
-    def test_viewer_cannot_change_trip_status(self):
-        """Verify viewers cannot change trip status."""
+    def test_viewer_cannot_change_tripspace_status(self):
+        """Verify viewers cannot change TripSpace status."""
         session = self.client.session
         session['user_id'] = str(self.viewer.id)
         session.save()
 
-        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'COMPLETE'})
+        resp = self.client.post(reverse('core:update_trip_status', args=[self.trip.id]), {'status': 'PAST'})
         self.assertEqual(resp.status_code, 302)
         self.trip.refresh_from_db()
-        self.assertEqual(self.trip.status, 'IDEA')
+        self.assertEqual(self.trip.status, 'UPCOMING')
+
+    def test_trip_element_status_cycle_idea_confirmed_complete(self):
+        """Verify Stay, Nav, Do, and Rec elements cycle through IDEA -> CONFIRMED -> COMPLETE -> IDEA."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        stay = Stay.objects.create(trip=self.trip, title='Villa Etna', status='IDEA', total_price=500, created_by=self.owner)
+        nav = Nav.objects.create(trip=self.trip, title='Catania Ferry', mode='Ferry', status='IDEA', price=80, created_by=self.owner)
+        do_item = Do.objects.create(trip=self.trip, title='Mt Etna Hike', status='IDEA', price=120, created_by=self.owner)
+        rec = Rec.objects.create(trip=self.trip, title='Cannoli Spot', category='Food', status='IDEA', recommended_by=self.owner)
+
+        for item_type, item in [('stay', stay), ('nav', nav), ('do', do_item), ('rec', rec)]:
+            url = reverse('core:toggle_status', args=[item_type, item.id])
+
+            # 1. IDEA -> CONFIRMED
+            r1 = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+            self.assertEqual(r1.status_code, 200)
+            self.assertEqual(r1.json()['new_status'], 'CONFIRMED')
+            item.refresh_from_db()
+            self.assertEqual(item.status, 'CONFIRMED')
+
+            # 2. CONFIRMED -> COMPLETE
+            r2 = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+            self.assertEqual(r2.status_code, 200)
+            self.assertEqual(r2.json()['new_status'], 'COMPLETE')
+            item.refresh_from_db()
+            self.assertEqual(item.status, 'COMPLETE')
+
+            # 3. COMPLETE -> IDEA
+            r3 = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+            self.assertEqual(r3.status_code, 200)
+            self.assertEqual(r3.json()['new_status'], 'IDEA')
+            item.refresh_from_db()
+            self.assertEqual(item.status, 'IDEA')
+
+        # Verify explicit status setting to COMPLETE on Stay and Do
+        self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay.id]), {'title': 'Villa Etna', 'status': 'COMPLETE', 'total_price': '500'})
+        stay.refresh_from_db()
+        self.assertEqual(stay.status, 'COMPLETE')
+        self.assertEqual(self.trip.complete_items_count, 1)
 
 
 class AccessControlAndRBACTests(TestCase):

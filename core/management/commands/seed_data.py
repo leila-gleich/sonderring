@@ -68,7 +68,7 @@ class Command(BaseCommand):
             title='Malticilia 26',
             description='Flagship Mediterranean journey exploring the ancient forts of Valletta, coastal swimming at Gozo Blue Lagoon, and Sicilian wine & dining in Taormina and Syracuse. Features complex multi-country logistics with flights, inter-island ferries, and coastal rail.',
             location='Malta, Sicily (Taormina, Syracuse), Gozo',
-            status='CONFIRMED',
+            status='UPCOMING',
             time_granularity='SEASON_YEAR',
             season='SUMMER',
             year=2026,
@@ -317,7 +317,7 @@ class Command(BaseCommand):
             title='Iceland Ring Road Expedition',
             description='8-day road trip across the Golden Circle, South Coast waterfalls, and geothermal hot springs in a 4x4 campervan. Highlights include tectonic rift hiking, glacier viewing, and chasing the Aurora Borealis.',
             location='Ring Road, Reykjavik, South Coast, Selfoss, Iceland',
-            status='CONFIRMED',
+            status='UPCOMING',
             time_granularity='EXACT_RANGE',
             start_date=datetime.date(2026, 10, 14),
             end_date=datetime.date(2026, 10, 22),
@@ -614,7 +614,7 @@ class Command(BaseCommand):
             title='Norway Fjords Coastal Voyage',
             description='Arctic coastal voyage and fjord navigation from Kirkenes (near the Russian border) south to Bergen aboard the historic Hurtigruten Coastal Express. Features scenic fjord excursions, coastal bus transfers, and historical maritime explorations.',
             location='Kirkenes, Tromsø, Sommarøy, Trondheim, Ålesund, Geiranger, Bergen, Norway',
-            status='CONFIRMED',
+            status='UPCOMING',
             time_granularity='MONTH',
             start_month=9,
             end_month=10,
@@ -872,7 +872,7 @@ class Command(BaseCommand):
         # ==========================================
         trip_jt22 = Trip.objects.create(
             title="Joshua Tree Jan '22",
-            status='COMPLETE',
+            status='PAST',
             description='High-desert off-grid cabin retreat featuring nighttime astrophotography, campfire cooking, and boulder scrambling through Joshua Tree iconic rock labyrinths.',
             location='Joshua Tree National Park & Twentynine Palms, California',
             time_granularity='EXACT_RANGE',
@@ -1061,7 +1061,7 @@ class Command(BaseCommand):
         # ==========================================
         trip_jt21 = Trip.objects.create(
             title="Joshua Tree Oct '21",
-            status='COMPLETE',
+            status='PAST',
             description='Autumn desert weekend getaway focused on mild daytime bouldering temperatures, sunset viewing, campfire cooking, and gear testing.',
             location='Joshua Tree National Park, California',
             time_granularity='MONTH',
@@ -1230,7 +1230,7 @@ class Command(BaseCommand):
         # ==========================================
         trip_nye = Trip.objects.create(
             title="NYE 21-22",
-            status='COMPLETE',
+            status='PAST',
             description='New York City holiday winter celebration featuring the Times Square New Year Eve countdown, ice skating at Central Park, boutique Soho dining, and comprehensive subway transit.',
             location='Manhattan & Brooklyn, New York City, New York',
             time_granularity='EXACT_RANGE',
@@ -1435,7 +1435,7 @@ class Command(BaseCommand):
         # ==========================================
         trip_cal = Trip.objects.create(
             title="California Sept. '21",
-            status='COMPLETE',
+            status='PAST',
             description='Pacific Coast Highway road trip connecting San Francisco coastal headlands, cliffside Big Sur ocean overlooks, and estate winery tastings across Napa and Sonoma valleys.',
             location='Big Sur, San Francisco, Napa Valley, California',
             time_granularity='MONTH',
@@ -1650,7 +1650,7 @@ class Command(BaseCommand):
         # ==========================================
         trip_utah = Trip.objects.create(
             title="Utah/Vegas '21",
-            status='COMPLETE',
+            status='PAST',
             description='Fly-drive national park loop through southwestern red rock country, featuring the towering canyon walls of Zion, the hoodoo natural amphitheaters of Bryce Canyon, and neon nightlife on the Las Vegas Strip.',
             location='Las Vegas, Zion National Park, Bryce Canyon, Nevada / Utah',
             time_granularity='YEAR',
@@ -1874,7 +1874,7 @@ class Command(BaseCommand):
         # ==========================================
         trip_co = Trip.objects.create(
             title="Colorado '21",
-            status='COMPLETE',
+            status='PAST',
             description='Alpine mountain road trip across the Front Range and Continental Divide, featuring gold aspen leaf-peeping, high-altitude hiking along Trail Ridge Road, and craft brewery hopping in Denver and Boulder.',
             location='Denver, Boulder, Rocky Mountain National Park, Colorado',
             time_granularity='YEAR',
@@ -2087,7 +2087,7 @@ class Command(BaseCommand):
         # ==========================================
         trip_ash = Trip.objects.create(
             title="Asheville Dec '21",
-            status='COMPLETE',
+            status='PAST',
             description='Winter holiday weekend getaway nestled in the Blue Ridge Mountains, centered around the Biltmore Estate Christmas candlelight tour, craft dining in downtown Asheville, and crisp mountain lookout drives.',
             location='Asheville, Blue Ridge Mountains, North Carolina',
             time_granularity='EXACT_RANGE',
@@ -2291,7 +2291,7 @@ class Command(BaseCommand):
         # ==========================================
         trip_hawaii = Trip.objects.create(
             title='Hawaii',
-            status='IDEA',
+            status='UPCOMING',
             description='Multi-island tropical journey exploring volcanic lava fields, marine life sanctuaries, rainforest lodges, and coastal road trips across the Big Island and Maui.',
             location='Kona (Big Island), Volcano Village, Maui, Hawaii',
             time_granularity='MONTH',
@@ -2515,5 +2515,14 @@ class Command(BaseCommand):
             description='Pioneering restaurant by Chef Peter Merriman featuring local grass-fed Big Island beef, macadamia nut crusted mahi-mahi, and organic Upcountry produce.',
             recommended_by=leila
         )
+
+        # Mark confirmed elements on historical past trips as COMPLETE
+        from core.md_sync import sync_trip_to_markdown
+        for past_trip in Trip.objects.filter(status='PAST'):
+            past_trip.stays.filter(status='CONFIRMED').update(status='COMPLETE')
+            past_trip.navs.filter(status='CONFIRMED').update(status='COMPLETE')
+            past_trip.dos.filter(status='CONFIRMED').update(status='COMPLETE')
+            past_trip.recs.filter(status='CONFIRMED').update(status='COMPLETE')
+            sync_trip_to_markdown(past_trip)
 
         self.stdout.write(self.style.SUCCESS(f"Successfully seeded database with all {Trip.objects.count()} trips and {UserProfile.objects.count()} users!"))
