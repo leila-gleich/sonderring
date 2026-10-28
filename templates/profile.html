@@ -81,7 +81,7 @@
                     <div class="profile-trip-card-header">
                         <h4>{{ trip.title }}</h4>
                         <div style="display: flex; gap: 0.4rem; align-items: center;">
-                            <span class="status-pill status-{{ trip.status|lower }}">{% if trip.status == 'IDEA' %}Idea{% else %}{{ trip.get_status_display }}{% endif %}</span>
+                            <span class="status-pill status-{{ trip.status|lower }}">{{ trip.get_status_display }}</span>
                             <span class="chip-role chip-role-owner">Owner</span>
                         </div>
                     </div>
@@ -117,7 +117,7 @@
                     <div class="profile-trip-card-header">
                         <h4>{{ trip.title }}</h4>
                         <div style="display: flex; gap: 0.4rem; align-items: center;">
-                            <span class="status-pill status-{{ trip.status|lower }}">{% if trip.status == 'IDEA' %}Idea{% else %}{{ trip.get_status_display }}{% endif %}</span>
+                            <span class="status-pill status-{{ trip.status|lower }}">{{ trip.get_status_display }}</span>
                             <span class="chip-role chip-role-editor">Collaborator</span>
                         </div>
                     </div>

@@ -28,15 +28,15 @@
                 {% if can_edit %}
                 <form method="POST" action="{% url 'core:update_trip_status' trip.id %}" class="inline-status-form" style="display: inline-flex; align-items: center;">
                     {% csrf_token %}
-                    <select name="status" onchange="this.form.submit()" class="status-pill status-{{ trip.status|lower }} trip-status-select" title="Change Trip Status (Idea, Confirmed, Complete)">
-                        <option value="IDEA" {% if trip.status == 'IDEA' %}selected{% endif %}>💡 Idea (Tentative)</option>
-                        <option value="CONFIRMED" {% if trip.status == 'CONFIRMED' %}selected{% endif %}>✓ Confirmed</option>
-                        <option value="COMPLETE" {% if trip.status == 'COMPLETE' %}selected{% endif %}>🏁 Complete</option>
+                    <select name="status" onchange="this.form.submit()" class="status-pill status-{{ trip.status|lower }} trip-status-select" title="Change TripSpace Status (Upcoming, Current, Past)">
+                        <option value="UPCOMING" {% if trip.status == 'UPCOMING' %}selected{% endif %}>📅 Upcoming</option>
+                        <option value="CURRENT" {% if trip.status == 'CURRENT' %}selected{% endif %}>🔥 Current</option>
+                        <option value="PAST" {% if trip.status == 'PAST' %}selected{% endif %}>🏛️ Past</option>
                     </select>
                 </form>
                 {% else %}
                 <span class="status-pill status-{{ trip.status|lower }}">
-                    {% if trip.status == 'IDEA' %}Idea · Tentative{% else %}{{ trip.get_status_display }}{% endif %}
+                    {{ trip.get_status_display }}
                 </span>
                 {% endif %}
                 {% if user_role %}
@@ -103,13 +103,18 @@
 
         <div class="workspace-metrics">
             <div class="metric-item">
-                <span class="metric-val">{{ trip.confirmed_items_count }}</span>
+                <span class="metric-val" id="metricConfirmedCount">{{ trip.confirmed_items_count }}</span>
                 <span class="metric-label">Confirmed</span>
             </div>
             <div class="metric-separator">•</div>
             <div class="metric-item">
-                <span class="metric-val">{{ trip.idea_items_count }}</span>
+                <span class="metric-val" id="metricIdeaCount">{{ trip.idea_items_count }}</span>
                 <span class="metric-label">Ideas</span>
+            </div>
+            <div class="metric-separator">•</div>
+            <div class="metric-item">
+                <span class="metric-val" id="metricCompleteCount">{{ trip.complete_items_count }}</span>
+                <span class="metric-label">Complete</span>
             </div>
             <div class="metric-separator">•</div>
             <div class="metric-item">
@@ -150,12 +155,13 @@
     <div class="tab-header">
         <div>
             <h2 class="tab-title">Chronological Trip Timeline</h2>
-            <p class="tab-desc">Unified chronological flow of confirmed bookings and tentative ideas.</p>
+            <p class="tab-desc">Unified chronological flow of confirmed bookings, tentative ideas, and completed elements.</p>
         </div>
         <div class="timeline-filter-bar">
             <button class="filter-pill active" onclick="filterTimeline('all', this)">All Items ({{ timeline_items|length }})</button>
             <button class="filter-pill" onclick="filterTimeline('CONFIRMED', this)">Confirmed Only</button>
             <button class="filter-pill" onclick="filterTimeline('IDEA', this)">Ideas Only</button>
+            <button class="filter-pill" onclick="filterTimeline('COMPLETE', this)">Complete Only</button>
         </div>
     </div>
 
@@ -181,7 +187,7 @@
                             {{ item.status|title }}
                         </span>
                         {% if can_edit or item.obj.created_by == current_user %}
-                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('{{ item.type }}', '{{ item.id }}', this)" title="Toggle Confirmed / Idea">
+                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('{{ item.type }}', '{{ item.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
                             ⇄
                         </button>
                         {% endif %}
@@ -268,7 +274,7 @@
                         {{ stay.get_status_display }}
                     </span>
                     {% if can_edit or stay.created_by == current_user %}
-                    <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('stay', '{{ stay.id }}', this)" title="Toggle Confirmed / Idea">
+                    <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('stay', '{{ stay.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
                         ⇄
                     </button>
                     <button type="button" class="btn-card-action" onclick="openModal('editStayModal_{{ stay.id }}')" title="Edit Stay">✏️</button>
@@ -358,8 +364,9 @@
                         <div class="form-col">
                             <label class="form-label">Status</label>
                             <select name="status" class="form-control">
-                                <option value="IDEA" {% if stay.status == 'IDEA' %}selected{% endif %}>Idea</option>
+                                <option value="IDEA" {% if stay.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
                                 <option value="CONFIRMED" {% if stay.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                                <option value="COMPLETE" {% if stay.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
                             </select>
                         </div>
                     </div>
@@ -547,7 +554,7 @@
                             {{ do_item.get_status_display }}
                         </span>
                         {% if can_edit or do_item.created_by == current_user %}
-                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('do', '{{ do_item.id }}', this)">⇄</button>
+                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('do', '{{ do_item.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
                         <button type="button" class="btn-card-action" onclick="openModal('editDoModal_{{ do_item.id }}')">✏️</button>
                         <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteDoModal_{{ do_item.id }}')">🗑️</button>
                         {% endif %}
@@ -659,8 +666,9 @@
                             <div class="form-col">
                                 <label class="form-label">Status</label>
                                 <select name="status" class="form-control">
+                                    <option value="IDEA" {% if do_item.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
                                     <option value="CONFIRMED" {% if do_item.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
-                                    <option value="IDEA" {% if do_item.status == 'IDEA' %}selected{% endif %}>Idea</option>
+                                    <option value="COMPLETE" {% if do_item.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
                                 </select>
                             </div>
                         </div>
@@ -716,16 +724,22 @@
             {% for rec in recs %}
             <div class="rec-card rec-cat-{{ rec.category|lower }}">
                 <div class="rec-card-header">
-                    <span class="rec-category-badge">{{ rec.get_category_display }}</span>
-                    {% if rec.recommended_by %}
-                    <span class="rec-recommender">by @{{ rec.recommended_by.handle }}</span>
-                    {% endif %}
-                    {% if can_edit or rec.recommended_by == current_user %}
-                    <div class="rec-header-actions">
+                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                        <span class="rec-category-badge">{{ rec.get_category_display }}</span>
+                        <span class="status-pill status-{{ rec.status|lower }} status-badge-rec-{{ rec.id }}">
+                            {{ rec.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="rec-header-actions" style="display: flex; align-items: center; gap: 0.35rem;">
+                        {% if rec.recommended_by %}
+                        <span class="rec-recommender">by @{{ rec.recommended_by.handle }}</span>
+                        {% endif %}
+                        {% if can_edit or rec.recommended_by == current_user %}
+                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('rec', '{{ rec.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
                         <button type="button" class="btn-card-action" onclick="openModal('editRecModal_{{ rec.id }}')" title="Edit Rec">✏️</button>
                         <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteRecModal_{{ rec.id }}')" title="Delete Rec">🗑️</button>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
                 <h4 class="rec-title">{{ rec.title }}</h4>
                 {% if rec.description %}
@@ -773,14 +787,24 @@
                             <label class="form-label">Title <span class="required">*</span></label>
                             <input type="text" name="title" class="form-control" value="{{ rec.title }}" required>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Category</label>
-                            <select name="category" class="form-control">
-                                <option value="Food" {% if rec.category == 'Food' %}selected{% endif %}>Food & Dining</option>
-                                <option value="Spot" {% if rec.category == 'Spot' %}selected{% endif %}>Sight & Spot</option>
-                                <option value="Activity" {% if rec.category == 'Activity' %}selected{% endif %}>Activity</option>
-                                <option value="Tip" {% if rec.category == 'Tip' %}selected{% endif %}>Travel Tip</option>
-                            </select>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">Category</label>
+                                <select name="category" class="form-control">
+                                    <option value="Food" {% if rec.category == 'Food' %}selected{% endif %}>Food & Dining</option>
+                                    <option value="Spot" {% if rec.category == 'Spot' %}selected{% endif %}>Sight & Spot</option>
+                                    <option value="Activity" {% if rec.category == 'Activity' %}selected{% endif %}>Activity</option>
+                                    <option value="Tip" {% if rec.category == 'Tip' %}selected{% endif %}>Travel Tip</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-control">
+                                    <option value="IDEA" {% if rec.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
+                                    <option value="CONFIRMED" {% if rec.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                                    <option value="COMPLETE" {% if rec.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Address</label>
@@ -940,11 +964,11 @@
                     <input type="text" name="location" class="form-control" value="{{ trip.location }}" required>
                 </div>
                 <div class="form-col">
-                    <label class="form-label">Trip Status</label>
+                    <label class="form-label">TripSpace Status</label>
                     <select name="status" class="form-control">
-                        <option value="IDEA" {% if trip.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
-                        <option value="CONFIRMED" {% if trip.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
-                        <option value="COMPLETE" {% if trip.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
+                        <option value="UPCOMING" {% if trip.status == 'UPCOMING' %}selected{% endif %}>Upcoming</option>
+                        <option value="CURRENT" {% if trip.status == 'CURRENT' %}selected{% endif %}>Current</option>
+                        <option value="PAST" {% if trip.status == 'PAST' %}selected{% endif %}>Past</option>
                     </select>
                 </div>
             </div>
@@ -1101,8 +1125,9 @@
                 <div class="form-col">
                     <label class="form-label">Status</label>
                     <select name="status" class="form-control">
-                        <option value="IDEA">Idea (Proposing)</option>
+                        <option value="IDEA">Idea (Tentative)</option>
                         <option value="CONFIRMED" selected>Confirmed (Booked)</option>
+                        <option value="COMPLETE">Complete</option>
                     </select>
                 </div>
             </div>
@@ -1220,8 +1245,9 @@
                 <div class="form-col">
                     <label class="form-label">Status</label>
                     <select name="status" class="form-control">
-                        <option value="IDEA">Idea / Tentative</option>
+                        <option value="IDEA">Idea (Tentative)</option>
                         <option value="CONFIRMED" selected>Confirmed</option>
+                        <option value="COMPLETE">Complete</option>
                     </select>
                 </div>
             </div>
@@ -1327,8 +1353,9 @@
                 <div class="form-col">
                     <label class="form-label">Status</label>
                     <select name="status" class="form-control">
+                        <option value="IDEA">Idea (Tentative)</option>
                         <option value="CONFIRMED" selected>Confirmed</option>
-                        <option value="IDEA">Idea</option>
+                        <option value="COMPLETE">Complete</option>
                     </select>
                 </div>
                 <div class="form-col">
@@ -1364,14 +1391,24 @@
                 <input type="text" name="title" class="form-control" placeholder="e.g. Trattoria da Nino, Reynisfjara warning, Secret beach" required>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Category</label>
-                <select name="category" class="form-control">
-                    <option value="Food">Food & Dining</option>
-                    <option value="Spot">Sight & Spot</option>
-                    <option value="Activity">Activity & Experience</option>
-                    <option value="Tip">Travel Tip & Advice</option>
-                </select>
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-control">
+                        <option value="Food">Food & Dining</option>
+                        <option value="Spot">Sight & Spot</option>
+                        <option value="Activity">Activity & Experience</option>
+                        <option value="Tip">Travel Tip & Advice</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="IDEA" selected>Idea (Tentative)</option>
+                        <option value="CONFIRMED">Confirmed</option>
+                        <option value="COMPLETE">Complete</option>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group">

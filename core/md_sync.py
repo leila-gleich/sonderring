@@ -210,9 +210,9 @@ def sync_trip_to_markdown(trip):
         lines.append(f"* **Dates**: {trip.formatted_dates}")
         
         status_map = {
-            'IDEA': 'Idea (Tentative)',
-            'CONFIRMED': 'Confirmed',
-            'COMPLETE': 'Complete',
+            'UPCOMING': 'Upcoming',
+            'CURRENT': 'Current',
+            'PAST': 'Past',
         }
         status_str = status_map.get(trip.status, trip.get_status_display() if hasattr(trip, 'get_status_display') else trip.status)
         lines.append(f"* **Status**: `{trip.status}` ({status_str})")
@@ -242,6 +242,7 @@ def sync_trip_to_markdown(trip):
         lines.append("## Stays\n")
         confirmed_stays = list(trip.stays.filter(status='CONFIRMED').order_by('created_at'))
         potential_stays = list(trip.stays.filter(status='IDEA').order_by('created_at'))
+        complete_stays = list(trip.stays.filter(status='COMPLETE').order_by('created_at'))
 
         lines.append("### Confirmed")
         if confirmed_stays:
@@ -257,6 +258,13 @@ def sync_trip_to_markdown(trip):
         else:
             lines.append("*None recorded.*")
 
+        lines.append("\n### Complete")
+        if complete_stays:
+            for stay in complete_stays:
+                lines.extend(format_stay(stay))
+        else:
+            lines.append("*None recorded.*")
+
         lines.append("\n---\n")
 
         # ==========================================
@@ -265,6 +273,7 @@ def sync_trip_to_markdown(trip):
         lines.append("## Navs\n")
         confirmed_navs = list(trip.navs.filter(status='CONFIRMED').order_by('created_at'))
         potential_navs = list(trip.navs.filter(status='IDEA').order_by('created_at'))
+        complete_navs = list(trip.navs.filter(status='COMPLETE').order_by('created_at'))
 
         lines.append("### Confirmed")
         if confirmed_navs:
@@ -280,6 +289,13 @@ def sync_trip_to_markdown(trip):
         else:
             lines.append("*None recorded.*")
 
+        lines.append("\n### Complete")
+        if complete_navs:
+            for nav in complete_navs:
+                lines.extend(format_nav(nav))
+        else:
+            lines.append("*None recorded.*")
+
         lines.append("\n---\n")
 
         # ==========================================
@@ -288,6 +304,7 @@ def sync_trip_to_markdown(trip):
         lines.append("## Dos\n")
         confirmed_dos = list(trip.dos.filter(status='CONFIRMED').order_by('created_at'))
         potential_dos = list(trip.dos.filter(status='IDEA').order_by('created_at'))
+        complete_dos = list(trip.dos.filter(status='COMPLETE').order_by('created_at'))
 
         lines.append("### Confirmed")
         if confirmed_dos:
@@ -303,6 +320,13 @@ def sync_trip_to_markdown(trip):
         else:
             lines.append("*None recorded.*")
 
+        lines.append("\n### Complete")
+        if complete_dos:
+            for do in complete_dos:
+                lines.extend(format_do(do))
+        else:
+            lines.append("*None recorded.*")
+
         lines.append("\n---\n")
 
         # ==========================================
@@ -311,6 +335,7 @@ def sync_trip_to_markdown(trip):
         lines.append("## Recs\n")
         confirmed_recs = list(trip.recs.filter(status='CONFIRMED').order_by('created_at'))
         potential_recs = list(trip.recs.filter(status='IDEA').order_by('created_at'))
+        complete_recs = list(trip.recs.filter(status='COMPLETE').order_by('created_at'))
 
         lines.append("### Confirmed")
         if confirmed_recs:
@@ -322,6 +347,13 @@ def sync_trip_to_markdown(trip):
         lines.append("\n### Potential")
         if potential_recs:
             for rec in potential_recs:
+                lines.extend(format_rec(rec))
+        else:
+            lines.append("*None recorded.*")
+
+        lines.append("\n### Complete")
+        if complete_recs:
+            for rec in complete_recs:
                 lines.extend(format_rec(rec))
         else:
             lines.append("*None recorded.*")
