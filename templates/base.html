@@ -148,28 +148,46 @@
             return cookieValue;
         }
 
-        // AJAX Toggle Status (Idea <-> Confirmed)
-        async function toggleItemStatus(itemType, itemId, buttonElement) {
+        // AJAX Cycle/Update Item Status (Idea -> Confirmed -> Complete -> Idea)
+        async function toggleItemStatus(itemType, itemId, buttonElement, explicitStatus) {
             const csrftoken = getCookie('csrftoken');
+            const bodyParams = new URLSearchParams();
+            if (explicitStatus) {
+                bodyParams.append('status', explicitStatus);
+            }
             try {
                 const response = await fetch(`/items/${itemType}/${itemId}/toggle-status/`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': csrftoken,
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: bodyParams.toString()
                 });
                 const data = await response.json();
                 if (data.success) {
-                    const badge = document.querySelector(`.status-badge-${itemType}-${itemId}`);
-                    if (badge) {
+                    const badges = document.querySelectorAll(`.status-badge-${itemType}-${itemId}`);
+                    badges.forEach(badge => {
                         badge.className = `status-pill status-${data.new_status.toLowerCase()} status-badge-${itemType}-${itemId}`;
-                        badge.textContent = data.new_status === 'CONFIRMED' ? 'Confirmed' : 'Idea';
-                    }
+                        badge.textContent = data.status_display;
+                        const timelineEntry = badge.closest('.timeline-entry');
+                        if (timelineEntry) {
+                            timelineEntry.dataset.status = data.new_status;
+                        }
+                    });
                     if (buttonElement) {
                         buttonElement.classList.toggle('btn-confirmed', data.new_status === 'CONFIRMED');
-                        buttonElement.title = data.new_status === 'CONFIRMED' ? 'Click to change back to Idea' : 'Click to confirm item';
+                        buttonElement.classList.toggle('btn-complete', data.new_status === 'COMPLETE');
+                        const nextHint = data.new_status === 'IDEA' ? 'Confirmed' : (data.new_status === 'CONFIRMED' ? 'Complete' : 'Idea');
+                        buttonElement.title = `Status: ${data.status_display} (Click to switch to ${nextHint})`;
                     }
+                    const confirmedCounter = document.getElementById('metricConfirmedCount');
+                    const ideaCounter = document.getElementById('metricIdeaCount');
+                    const completeCounter = document.getElementById('metricCompleteCount');
+                    if (confirmedCounter && data.confirmed_count !== undefined) confirmedCounter.textContent = data.confirmed_count;
+                    if (ideaCounter && data.idea_count !== undefined) ideaCounter.textContent = data.idea_count;
+                    if (completeCounter && data.complete_count !== undefined) completeCounter.textContent = data.complete_count;
                 }
             } catch (err) {
                 console.error("Failed to toggle status:", err);

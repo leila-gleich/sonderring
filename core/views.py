@@ -474,21 +474,13 @@ def dashboard_view(request):
         Q(created_by=current_user) | Q(members__user=current_user)
     ).distinct()
 
-    # Lifecycle status-driven categorization: Confirmed, Idea (Tentative), Complete
-    confirmed_trips = user_trips.filter(status='CONFIRMED').order_by('-year', '-start_date')
-    idea_trips = user_trips.filter(status='IDEA').order_by('-year', '-start_date')
-    complete_trips = user_trips.filter(status='COMPLETE').order_by('-year', '-start_date')
-
-    # Combined active/planning trips & alias for backwards compatibility
-    upcoming_trips = user_trips.filter(status__in=['CONFIRMED', 'IDEA']).order_by('-year', '-start_date')
-    past_trips = complete_trips
+    # Categorize TripSpaces by Current/Upcoming vs Past
+    upcoming_trips = user_trips.filter(status__in=['CURRENT', 'UPCOMING']).order_by('-year', '-start_date')
+    past_trips = user_trips.filter(status='PAST').order_by('-year', '-start_date')
 
     context = {
         'current_user': current_user,
         'all_users': all_users,
-        'confirmed_trips': confirmed_trips,
-        'idea_trips': idea_trips,
-        'complete_trips': complete_trips,
         'upcoming_trips': upcoming_trips,
         'past_trips': past_trips,
         'now_year': timezone.now().year,
@@ -589,13 +581,13 @@ def trip_workspace_view(request, trip_id):
         )
     )
 
-    # Financial totals
+    # Financial totals (include both CONFIRMED and COMPLETE items)
     total_spend = sum(
-        float(s.total_price or 0) for s in stays if s.status == 'CONFIRMED'
+        float(s.total_price or 0) for s in stays if s.status in ('CONFIRMED', 'COMPLETE')
     ) + sum(
-        float(n.price or 0) for n in navs if n.status == 'CONFIRMED'
+        float(n.price or 0) for n in navs if n.status in ('CONFIRMED', 'COMPLETE')
     ) + sum(
-        float(d.price or 0) for d in dos if d.status == 'CONFIRMED'
+        float(d.price or 0) for d in dos if d.status in ('CONFIRMED', 'COMPLETE')
     )
 
     context = {
@@ -637,9 +629,9 @@ def create_trip_view(request):
     location = request.POST.get('location', '').strip()
     description = request.POST.get('description', '').strip()
     time_granularity = request.POST.get('time_granularity', 'YEAR')
-    trip_status = request.POST.get('status', 'IDEA').strip().upper()
-    if trip_status not in ['IDEA', 'CONFIRMED', 'COMPLETE']:
-        trip_status = 'IDEA'
+    trip_status = request.POST.get('status', 'UPCOMING').strip().upper()
+    if trip_status not in ['UPCOMING', 'CURRENT', 'PAST']:
+        trip_status = 'UPCOMING'
     
     if not title or not location:
         messages.error(request, "Trip title and location are required.")
@@ -706,7 +698,7 @@ def edit_trip_view(request, trip_id):
     trip.location = location
     trip.description = description
     trip.time_granularity = time_granularity
-    if new_status in ['IDEA', 'CONFIRMED', 'COMPLETE']:
+    if new_status in ['UPCOMING', 'CURRENT', 'PAST']:
         trip.status = new_status
 
     if time_granularity == 'EXACT_RANGE':
@@ -735,7 +727,7 @@ def edit_trip_view(request, trip_id):
 
 @require_POST
 def update_trip_status_view(request, trip_id):
-    """Updates a trip's lifecycle status (IDEA, CONFIRMED, COMPLETE) directly."""
+    """Updates a TripSpace's status (UPCOMING, CURRENT, PAST) directly."""
     current_user = get_current_user(request)
     trip = get_object_or_404(Trip, id=trip_id)
 
@@ -746,9 +738,9 @@ def update_trip_status_view(request, trip_id):
         return redirect('core:trip_workspace', trip_id=trip.id)
 
     new_status = request.POST.get('status', '').strip().upper()
-    if new_status not in ['IDEA', 'CONFIRMED', 'COMPLETE']:
+    if new_status not in ['UPCOMING', 'CURRENT', 'PAST']:
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return HttpResponseBadRequest("Invalid trip status. Must be IDEA, CONFIRMED, or COMPLETE.")
+            return HttpResponseBadRequest("Invalid trip status. Must be UPCOMING, CURRENT, or PAST.")
         messages.error(request, "Invalid trip status selected.")
         return redirect('core:trip_workspace', trip_id=trip.id)
 
@@ -756,12 +748,7 @@ def update_trip_status_view(request, trip_id):
     trip.updated_by = current_user
     trip.save()
 
-    status_labels = {
-        'IDEA': 'Idea (Tentative)',
-        'CONFIRMED': 'Confirmed',
-        'COMPLETE': 'Complete',
-    }
-    label = status_labels.get(new_status, trip.get_status_display())
+    label = trip.get_status_display()
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({
@@ -796,6 +783,11 @@ def delete_trip_view(request, trip_id):
 # Stay CRUD Operations
 # ==========================================
 
+def _normalize_item_status(raw_status, default='IDEA') -> str:
+    val = (raw_status or default).strip().upper()
+    return val if val in ('IDEA', 'CONFIRMED', 'COMPLETE') else default
+
+
 @require_POST
 def add_stay_view(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id)
@@ -816,7 +808,7 @@ def add_stay_view(request, trip_id):
     stay = Stay(
         trip=trip,
         title=title,
-        status=request.POST.get('status', 'IDEA'),
+        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
         place_type=request.POST.get('place_type', 'Hotel Room'),
         num_beds=int(request.POST.get('num_beds')) if request.POST.get('num_beds') else None,
         num_rooms=int(request.POST.get('num_rooms')) if request.POST.get('num_rooms') else None,
@@ -852,7 +844,7 @@ def edit_stay_view(request, trip_id, stay_id):
         return redirect(f"/trips/{trip_id}/#stays")
 
     stay.title = request.POST.get('title', stay.title).strip()
-    stay.status = request.POST.get('status', stay.status)
+    stay.status = _normalize_item_status(request.POST.get('status'), stay.status)
     stay.place_type = request.POST.get('place_type', stay.place_type)
     stay.num_beds = int(request.POST.get('num_beds')) if request.POST.get('num_beds') else None
     stay.num_rooms = int(request.POST.get('num_rooms')) if request.POST.get('num_rooms') else None
@@ -923,7 +915,7 @@ def add_nav_view(request, trip_id):
         mode=mode,
         trip_stage=request.POST.get('trip_stage', 'START_END'),
         direction=request.POST.get('direction', 'ARRIVING'),
-        status=request.POST.get('status', 'IDEA'),
+        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
         passenger_name=request.POST.get('passenger_name', '').strip(),
         origin_address=request.POST.get('origin_address', '').strip(),
         destination_address=request.POST.get('destination_address', '').strip(),
@@ -962,7 +954,7 @@ def edit_nav_view(request, trip_id, nav_id):
     nav.mode = request.POST.get('mode', nav.mode)
     nav.trip_stage = request.POST.get('trip_stage', nav.trip_stage)
     nav.direction = request.POST.get('direction', nav.direction)
-    nav.status = request.POST.get('status', nav.status)
+    nav.status = _normalize_item_status(request.POST.get('status'), nav.status)
     nav.passenger_name = request.POST.get('passenger_name', '').strip()
     nav.origin_address = request.POST.get('origin_address', '').strip()
     nav.destination_address = request.POST.get('destination_address', '').strip()
@@ -1030,7 +1022,7 @@ def add_do_view(request, trip_id):
         trip=trip,
         title=title,
         activity_type=request.POST.get('activity_type', 'Sightseeing'),
-        status=request.POST.get('status', 'IDEA'),
+        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
         address=request.POST.get('address', '').strip(),
         start_time=parse_datetime(s_time) if s_time else None,
         end_time=parse_datetime(e_time) if e_time else None,
@@ -1063,7 +1055,7 @@ def edit_do_view(request, trip_id, do_id):
 
     do_item.title = request.POST.get('title', do_item.title).strip()
     do_item.activity_type = request.POST.get('activity_type', do_item.activity_type)
-    do_item.status = request.POST.get('status', do_item.status)
+    do_item.status = _normalize_item_status(request.POST.get('status'), do_item.status)
     do_item.address = request.POST.get('address', '').strip()
 
     s_time = request.POST.get('start_time')
@@ -1124,7 +1116,7 @@ def add_rec_view(request, trip_id):
         trip=trip,
         title=title,
         category=request.POST.get('category', 'Food'),
-        status=request.POST.get('status', 'IDEA'),
+        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
         address=request.POST.get('address', '').strip(),
         link=request.POST.get('link', '').strip(),
         description=request.POST.get('description', '').strip(),
@@ -1147,7 +1139,7 @@ def edit_rec_view(request, trip_id, rec_id):
 
     rec.title = request.POST.get('title', rec.title).strip()
     rec.category = request.POST.get('category', rec.category)
-    rec.status = request.POST.get('status', rec.status)
+    rec.status = _normalize_item_status(request.POST.get('status'), rec.status)
     rec.address = request.POST.get('address', '').strip()
     rec.link = request.POST.get('link', '').strip()
     rec.description = request.POST.get('description', '').strip()
@@ -1524,7 +1516,7 @@ def remove_member_view(request, trip_id, member_id):
 
 @require_POST
 def toggle_item_status_view(request, item_type, item_id):
-    """Instant binary status toggle (Idea <-> Confirmed) via AJAX."""
+    """Cycles or updates trip element status (Idea -> Confirmed -> Complete -> Idea) via AJAX."""
     current_user = get_current_user(request)
     model_map = {'stay': Stay, 'nav': Nav, 'do': Do, 'rec': Rec}
     model = model_map.get(item_type.lower())
@@ -1535,7 +1527,17 @@ def toggle_item_status_view(request, item_type, item_id):
     if not can_user_edit_item(current_user, item.trip, item):
         return HttpResponseForbidden("You can only modify status of items you created or if you are a Trip Editor/Owner.")
 
-    item.status = 'CONFIRMED' if item.status == 'IDEA' else 'IDEA'
+    explicit_status = request.POST.get('status', '').strip().upper()
+    if explicit_status in ('IDEA', 'CONFIRMED', 'COMPLETE'):
+        item.status = explicit_status
+    else:
+        cycle_map = {
+            'IDEA': 'CONFIRMED',
+            'CONFIRMED': 'COMPLETE',
+            'COMPLETE': 'IDEA',
+        }
+        item.status = cycle_map.get(item.status, 'IDEA')
+
     item.updated_by = current_user
     item.save()
 
@@ -1543,7 +1545,10 @@ def toggle_item_status_view(request, item_type, item_id):
         'success': True,
         'item_id': str(item.id),
         'new_status': item.status,
-        'status_display': item.get_status_display()
+        'status_display': item.get_status_display(),
+        'confirmed_count': item.trip.confirmed_items_count,
+        'idea_count': item.trip.idea_items_count,
+        'complete_count': item.trip.complete_items_count,
     })
 
 

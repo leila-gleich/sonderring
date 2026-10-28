@@ -19,7 +19,7 @@
                 {{ nav.get_status_display }}
             </span>
             {% if can_edit or nav.created_by == current_user %}
-            <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('nav', '{{ nav.id }}', this)" title="Toggle Confirmed / Idea">
+            <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('nav', '{{ nav.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
                 ⇄
             </button>
             <button type="button" class="btn-card-action" onclick="openModal('editNavModal_{{ nav.id }}')" title="Edit Transit Leg">✏️</button>
@@ -159,8 +159,9 @@
                 <div class="form-col">
                     <label class="form-label">Status</label>
                     <select name="status" class="form-control">
-                        <option value="IDEA" {% if nav.status == 'IDEA' %}selected{% endif %}>Idea</option>
+                        <option value="IDEA" {% if nav.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
                         <option value="CONFIRMED" {% if nav.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                        <option value="COMPLETE" {% if nav.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
                     </select>
                 </div>
             </div>

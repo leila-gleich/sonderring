@@ -498,6 +498,24 @@ body {
 }
 
 .status-complete {
+    background: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid var(--primary-border);
+}
+
+.status-upcoming {
+    background: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid var(--primary-border);
+}
+
+.status-current {
+    background: var(--success-light);
+    color: var(--success);
+    border: 1px solid var(--success-border);
+}
+
+.status-past {
     background: #f1f5f9;
     color: #475569;
     border: 1px solid #cbd5e1;

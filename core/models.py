@@ -152,9 +152,9 @@ class Trip(models.Model):
         ('WINTER', 'Winter'),
     ]
     STATUS_CHOICES = [
-        ('IDEA', 'Idea'),
-        ('CONFIRMED', 'Confirmed'),
-        ('COMPLETE', 'Complete'),
+        ('UPCOMING', 'Upcoming'),
+        ('CURRENT', 'Current'),
+        ('PAST', 'Past'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -164,8 +164,8 @@ class Trip(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='IDEA',
-        help_text="Lifecycle state of the trip: Idea (Tentative), Confirmed, or Complete"
+        default='UPCOMING',
+        help_text="Lifecycle state of the TripSpace: Upcoming, Current, or Past"
     )
     time_granularity = models.CharField(max_length=20, choices=GRANULARITY_CHOICES, default='YEAR')
     season = models.CharField(max_length=10, choices=SEASON_CHOICES, blank=True, null=True)
@@ -231,6 +231,14 @@ class Trip(models.Model):
             self.dos.filter(status='IDEA').count()
         )
 
+    @property
+    def complete_items_count(self):
+        return (
+            self.stays.filter(status='COMPLETE').count() +
+            self.navs.filter(status='COMPLETE').count() +
+            self.dos.filter(status='COMPLETE').count()
+        )
+
 
 class TripMember(models.Model):
     ROLE_CHOICES = [
@@ -259,7 +267,7 @@ class TripMember(models.Model):
 
 
 class Stay(models.Model):
-    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed')]
+    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
     PLACE_TYPE_CHOICES = [
         ('Hotel Room', 'Hotel Room'),
         ('Entire Place', 'Entire Place'),
@@ -322,7 +330,7 @@ class Stay(models.Model):
 
 
 class Nav(models.Model):
-    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed')]
+    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
     STAGE_CHOICES = [
         ('START_END', 'Trip Start/End'),
         ('MID_TRIP', 'Mid-Trip'),
@@ -401,7 +409,7 @@ class Nav(models.Model):
 
 
 class Do(models.Model):
-    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed')]
+    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='dos')
@@ -450,7 +458,7 @@ class Do(models.Model):
 
 
 class Rec(models.Model):
-    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed')]
+    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
     CATEGORY_CHOICES = [
         ('Food', 'Food & Dining'),
         ('Spot', 'Sight & Spot'),

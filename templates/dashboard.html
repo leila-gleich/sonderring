@@ -17,24 +17,24 @@
 </div>
 
 <!-- ==========================================
-     1. CONFIRMED TRIPS
+     1. CURRENT & UPCOMING TRIPS
      ========================================== -->
 <section class="trips-section">
     <div class="section-header">
         <div class="section-title-wrap">
-            <h2 class="section-title">Confirmed Trips</h2>
-            <span class="section-counter">{{ confirmed_trips.count }} Confirmed</span>
+            <h2 class="section-title">Current & Upcoming Trips</h2>
+            <span class="section-counter">{{ upcoming_trips.count }} Active</span>
         </div>
-        <p class="section-desc">Committed itineraries with active stays, navs, and scheduled activities.</p>
+        <p class="section-desc">Active and upcoming itineraries where you are an Organizer or Invited Tripper.</p>
     </div>
 
-    {% if confirmed_trips %}
+    {% if upcoming_trips %}
     <div class="trips-grid">
-        {% for trip in confirmed_trips %}
+        {% for trip in upcoming_trips %}
         <a href="{% url 'core:trip_workspace' trip.id %}" class="trip-card">
             <div class="trip-card-header">
                 <span class="trip-location-badge">📍 {{ trip.location }}</span>
-                <span class="status-pill status-confirmed">Confirmed</span>
+                <span class="status-pill status-{{ trip.status|lower }}">{{ trip.get_status_display }}</span>
             </div>
             
             <h3 class="trip-card-title">{{ trip.title }}</h3>
@@ -75,94 +75,30 @@
     {% else %}
     <div class="empty-state">
         <div class="empty-icon">🗺️</div>
-        <h3>No confirmed trips yet</h3>
-        <p>Create a new TripSpace or promote a tentative idea once plans are locked in.</p>
-        <button class="btn btn-primary" onclick="openModal('createTripModal')">Create a New Trip</button>
+        <h3>No upcoming trips yet</h3>
+        <p>Start planning your next adventure with friends by creating a new TripSpace.</p>
+        <button class="btn btn-primary" onclick="openModal('createTripModal')">Create Your First Trip</button>
     </div>
     {% endif %}
 </section>
 
 <!-- ==========================================
-     2. TENTATIVE / IDEA TRIPS
-     ========================================== -->
-<section class="trips-section">
-    <div class="section-header">
-        <div class="section-title-wrap">
-            <h2 class="section-title">Tentative & Idea Trips</h2>
-            <span class="section-counter">{{ idea_trips.count }} Idea{{ idea_trips.count|pluralize }}</span>
-        </div>
-        <p class="section-desc">Tentative trip concepts and brainstorming spaces being explored with friends.</p>
-    </div>
-
-    {% if idea_trips %}
-    <div class="trips-grid">
-        {% for trip in idea_trips %}
-        <a href="{% url 'core:trip_workspace' trip.id %}" class="trip-card">
-            <div class="trip-card-header">
-                <span class="trip-location-badge">📍 {{ trip.location }}</span>
-                <span class="status-pill status-idea">Idea · Tentative</span>
-            </div>
-            
-            <h3 class="trip-card-title">{{ trip.title }}</h3>
-            <div class="trip-date-row">
-                <span class="calendar-icon">📅</span>
-                <span class="trip-dates">{{ trip.formatted_dates }}</span>
-            </div>
-
-            {% if trip.description %}
-            <p class="trip-card-desc">{{ trip.description|truncatechars:110 }}</p>
-            {% endif %}
-
-            <div class="trip-card-footer">
-                <div class="tripper-stack">
-                    {% for m in trip.members.all|slice:":4" %}
-                    <div class="tripper-avatar" title="@{{ m.user.handle }} ({{ m.role }})">
-                        {% if m.user.profile_image_url %}
-                        <img src="{{ m.user.profile_image_url }}" alt="{{ m.user.handle }}">
-                        {% else %}
-                        <span>{{ m.user.handle|slice:":1"|upper }}</span>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                    {% if trip.members.count > 4 %}
-                    <div class="tripper-avatar avatar-overflow">+{{ trip.members.count|add:"-4" }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="trip-stats-badges">
-                    <span class="stat-pill" title="Accommodations">🏨 {{ trip.stays.count }}</span>
-                    <span class="stat-pill" title="Transportation">✈️ {{ trip.navs.count }}</span>
-                    <span class="stat-pill" title="Activities">🎯 {{ trip.dos.count }}</span>
-                </div>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-    {% else %}
-    <p class="text-muted" style="margin-bottom: 1.5rem;">No tentative trip ideas right now. Click <strong>Create a New Trip!</strong> to brainstorm your next destination.</p>
-    {% endif %}
-</section>
-
-<!-- ==========================================
-     3. COMPLETED TRIPS (HISTORICAL ARCHIVE)
+     2. PAST TRIPS (HISTORICAL ARCHIVE)
      ========================================== -->
 <section class="trips-section past-trips-section">
     <div class="section-header">
         <div class="section-title-wrap">
-            <h2 class="section-title">Completed Trips</h2>
-            <span class="section-counter">{{ complete_trips.count }} Complete</span>
+            <h2 class="section-title">Your Past Trips</h2>
+            <span class="section-counter">{{ past_trips.count }} Archived</span>
         </div>
         <p class="section-desc">Completed travel memories and reference itineraries from your Sonderring archives.</p>
     </div>
 
     <div class="past-trips-grid">
-        {% for trip in complete_trips %}
+        {% for trip in past_trips %}
         <a href="{% url 'core:trip_workspace' trip.id %}" class="past-trip-card">
             <div class="past-trip-content">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.25rem;">
-                    <h4 class="past-trip-title" style="margin: 0;">{{ trip.title }}</h4>
-                    <span class="status-pill status-complete">Complete</span>
-                </div>
+                <h4 class="past-trip-title">{{ trip.title }}</h4>
                 <div class="past-trip-meta">
                     <span class="past-trip-location">📍 {{ trip.location }}</span>
                     <span class="past-trip-date">{{ trip.formatted_dates }}</span>
@@ -171,7 +107,7 @@
             <span class="past-trip-arrow">➔</span>
         </a>
         {% empty %}
-        <p class="text-muted">No completed trips archived yet.</p>
+        <p class="text-muted">No past trips archived yet.</p>
         {% endfor %}
     </div>
 </section>
@@ -203,11 +139,11 @@
                     <input type="text" id="tripLocation" name="location" class="form-control" placeholder="e.g., Malta, Sicily & Gozo" required>
                 </div>
                 <div class="form-col">
-                    <label for="tripStatus" class="form-label">Trip Status</label>
+                    <label for="tripStatus" class="form-label">TripSpace Status</label>
                     <select id="tripStatus" name="status" class="form-control">
-                        <option value="IDEA" selected>Idea (Tentative)</option>
-                        <option value="CONFIRMED">Confirmed</option>
-                        <option value="COMPLETE">Complete</option>
+                        <option value="UPCOMING" selected>Upcoming</option>
+                        <option value="CURRENT">Current</option>
+                        <option value="PAST">Past</option>
                     </select>
                 </div>
             </div>
