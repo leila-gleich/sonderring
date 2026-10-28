@@ -1,7 +1,7 @@
 import uuid
 import calendar
 from django.db import models
-from .encryption import ConfirmationEncryptor
+from .encryption import ConfirmationEncryptor, EncryptedCharField, EncryptedTextField
 
 class UserProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -14,7 +14,13 @@ class UserProfile(models.Model):
         default='',
         help_text="Hashed password (standard Django PBKDF2/Argon2)."
     )
-    phone_number = models.CharField(max_length=30, blank=True, null=True)
+    phone_number = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        aad_context='user:phone_number',
+        help_text="AES-256-GCM encrypted phone number."
+    )
     profile_image_url = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     last_login = models.DateTimeField(blank=True, null=True)
@@ -274,7 +280,12 @@ class Stay(models.Model):
     currency = models.CharField(max_length=3, default='USD')
     booking_link = models.URLField(blank=True, null=True)
     _encrypted_confirmation_code = models.TextField(db_column='encrypted_confirmation_code', blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    notes = EncryptedTextField(
+        blank=True,
+        null=True,
+        aad_context='stay:notes',
+        help_text="AES-256-GCM encrypted check-in instructions, keypad codes, and door notes."
+    )
     created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_stays')
     updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_stays')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -289,16 +300,20 @@ class Stay(models.Model):
         ]
 
     @property
+    def _confirmation_aad(self) -> str:
+        return f"stay:{self.trip_id}" if self.trip_id else "stay"
+
+    @property
     def has_confirmation_code(self):
         return bool(self._encrypted_confirmation_code)
 
     @property
     def confirmation_code(self):
-        return ConfirmationEncryptor.decrypt(self._encrypted_confirmation_code)
+        return ConfirmationEncryptor.decrypt(self._encrypted_confirmation_code, aad=self._confirmation_aad)
 
     @confirmation_code.setter
     def confirmation_code(self, value):
-        self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value)
+        self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value, aad=self._confirmation_aad)
 
     def __str__(self):
         return f"{self.title} ({self.status})"
@@ -326,7 +341,13 @@ class Nav(models.Model):
     trip_stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='START_END')
     direction = models.CharField(max_length=20, choices=DIRECTION_CHOICES, default='ARRIVING')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
-    passenger_name = models.CharField(max_length=100, blank=True, null=True)
+    passenger_name = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        aad_context='nav:passenger_name',
+        help_text="AES-256-GCM encrypted passenger name."
+    )
     description = models.TextField(blank=True, null=True)
     origin_address = models.TextField(blank=True, null=True)
     destination_address = models.TextField(blank=True, null=True)
@@ -334,7 +355,12 @@ class Nav(models.Model):
     arrival_time = models.DateTimeField(blank=True, null=True)
     date_confidence = models.CharField(max_length=20, choices=CONFIDENCE_CHOICES, default='CONFIRMED')
     time_confidence = models.CharField(max_length=20, choices=CONFIDENCE_CHOICES, default='CONFIRMED')
-    flexibility_notes = models.TextField(blank=True, null=True)
+    flexibility_notes = EncryptedTextField(
+        blank=True,
+        null=True,
+        aad_context='nav:flexibility_notes',
+        help_text="AES-256-GCM encrypted transit flexibility & ticket notes."
+    )
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     currency = models.CharField(max_length=3, default='USD')
     booking_link = models.URLField(blank=True, null=True)
@@ -353,16 +379,20 @@ class Nav(models.Model):
         ]
 
     @property
+    def _confirmation_aad(self) -> str:
+        return f"nav:{self.trip_id}" if self.trip_id else "nav"
+
+    @property
     def has_confirmation_code(self):
         return bool(self._encrypted_confirmation_code)
 
     @property
     def confirmation_code(self):
-        return ConfirmationEncryptor.decrypt(self._encrypted_confirmation_code)
+        return ConfirmationEncryptor.decrypt(self._encrypted_confirmation_code, aad=self._confirmation_aad)
 
     @confirmation_code.setter
     def confirmation_code(self, value):
-        self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value)
+        self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value, aad=self._confirmation_aad)
 
     def __str__(self):
         return f"{self.title} - {self.mode} ({self.status})"
@@ -398,16 +428,20 @@ class Do(models.Model):
         ]
 
     @property
+    def _confirmation_aad(self) -> str:
+        return f"do:{self.trip_id}" if self.trip_id else "do"
+
+    @property
     def has_confirmation_code(self):
         return bool(self._encrypted_confirmation_code)
 
     @property
     def confirmation_code(self):
-        return ConfirmationEncryptor.decrypt(self._encrypted_confirmation_code)
+        return ConfirmationEncryptor.decrypt(self._encrypted_confirmation_code, aad=self._confirmation_aad)
 
     @confirmation_code.setter
     def confirmation_code(self, value):
-        self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value)
+        self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value, aad=self._confirmation_aad)
 
     def __str__(self):
         return f"{self.title} ({self.status})"

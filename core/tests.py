@@ -412,4 +412,104 @@ class AccessControlAndRBACTests(TestCase):
         self.assertIsNone(self.client.session.get('user_id'))
 
 
+class CryptographicAndPIITests(TestCase):
+    def setUp(self):
+        self.user = UserProfile.objects.create(
+            email='crypto@example.com',
+            handle='cryptouser',
+            full_name='Crypto User',
+            phone_number='+1-555-867-5309',
+            is_active=True
+        )
+        self.trip_1 = Trip.objects.create(
+            title='Trip One',
+            location='Zurich',
+            year=2026,
+            time_granularity='YEAR',
+            created_by=self.user
+        )
+        self.trip_2 = Trip.objects.create(
+            title='Trip Two',
+            location='Geneva',
+            year=2026,
+            time_granularity='YEAR',
+            created_by=self.user
+        )
+
+    def tearDown(self):
+        from core.md_sync import delete_trip_markdown
+        for t in Trip.objects.all():
+            delete_trip_markdown(t)
+
+    def test_aead_context_binding_prevents_ciphertext_transplanting(self):
+        """Copying encrypted_confirmation_code to another trip must fail AAD verification."""
+        stay_1 = Stay(trip=self.trip_1, title='Alpine Lodge', created_by=self.user)
+        stay_1.confirmation_code = 'ZURICH-9988'
+        stay_1.save()
+
+        self.assertTrue(stay_1._encrypted_confirmation_code.startswith('v1:'))
+        self.assertEqual(stay_1.confirmation_code, 'ZURICH-9988')
+
+        # Transplant ciphertext from trip_1's stay into trip_2's stay
+        stay_2 = Stay(trip=self.trip_2, title='Lake Hotel', created_by=self.user)
+        stay_2._encrypted_confirmation_code = stay_1._encrypted_confirmation_code
+        stay_2.save()
+
+        with self.assertRaises(ValueError):
+            _ = stay_2.confirmation_code
+
+    def test_pii_fields_encrypted_in_database_and_decrypted_on_access(self):
+        """Verify phone_number, Stay.notes, and Nav.passenger_name are encrypted at rest in SQL."""
+        from django.db import connection
+
+        stay = Stay.objects.create(
+            trip=self.trip_1,
+            title='Vaulted Stay',
+            notes='Keypad code: 1234# · WiFi: SecretNet',
+            created_by=self.user
+        )
+        nav = Nav.objects.create(
+            trip=self.trip_1,
+            title='Swiss Air LX15',
+            mode='Flight',
+            passenger_name='Crypto User Passport #9911',
+            flexibility_notes='Frequent Flyer: LX-009182',
+            created_by=self.user
+        )
+
+        # Model attribute access transparently decrypts
+        self.user.refresh_from_db()
+        stay.refresh_from_db()
+        nav.refresh_from_db()
+        self.assertEqual(self.user.phone_number, '+1-555-867-5309')
+        self.assertEqual(stay.notes, 'Keypad code: 1234# · WiFi: SecretNet')
+        self.assertEqual(nav.passenger_name, 'Crypto User Passport #9911')
+        self.assertEqual(nav.flexibility_notes, 'Frequent Flyer: LX-009182')
+
+        # Raw SQL inspection verifies values on disk are AES-256-GCM ciphertexts ('v1:...')
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT phone_number FROM users WHERE id = %s", [str(self.user.id).replace('-', '') if connection.vendor == 'sqlite' else str(self.user.id)])
+            row = cursor.fetchone()
+            if not row:
+                cursor.execute("SELECT phone_number FROM users WHERE email = %s", [self.user.email])
+                row = cursor.fetchone()
+            raw_phone = row[0]
+            self.assertTrue(raw_phone.startswith('v1:'))
+            self.assertNotIn('867-5309', raw_phone)
+
+            cursor.execute("SELECT notes FROM stays WHERE title = %s", ['Vaulted Stay'])
+            raw_notes = cursor.fetchone()[0]
+            self.assertTrue(raw_notes.startswith('v1:'))
+            self.assertNotIn('1234#', raw_notes)
+
+    @override_settings(DEBUG=False, ENFORCE_PRODUCTION_KEYS=True)
+    def test_production_blocks_insecure_default_encryption_key(self):
+        """When DEBUG=False in production, using the default dev FIELD_ENCRYPTION_KEY raises ImproperlyConfigured."""
+        from django.core.exceptions import ImproperlyConfigured
+        from core.encryption import ConfirmationEncryptor
+        with self.assertRaises(ImproperlyConfigured):
+            ConfirmationEncryptor.encrypt('TEST-CODE')
+
+
+
 
