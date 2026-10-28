@@ -1,7 +1,7 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.template.context import BaseContext
-from core.models import UserProfile, OAuthIdentity, Trip, TripMember
+from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Nav, Do, Rec
 
 # Patch BaseContext.__copy__ for Python 3.14 compatibility with Django 4.2 test runner
 def _patched_copy(self):
@@ -311,5 +311,105 @@ class TripStatusTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.trip.refresh_from_db()
         self.assertEqual(self.trip.status, 'IDEA')
+
+
+class AccessControlAndRBACTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.owner = UserProfile.objects.create(
+            email='owner_rbac@example.com',
+            handle='ownerrbac',
+            full_name='Owner RBAC',
+            is_active=True
+        )
+        self.viewer = UserProfile.objects.create(
+            email='viewer_rbac@example.com',
+            handle='viewerrbac',
+            full_name='Viewer RBAC',
+            is_active=True
+        )
+        self.outsider = UserProfile.objects.create(
+            email='outsider@example.com',
+            handle='outsider',
+            full_name='Outsider User',
+            is_active=True
+        )
+        self.trip = Trip.objects.create(
+            title='RBAC Secured Trip',
+            location='Reykjavik',
+            year=2026,
+            time_granularity='YEAR',
+            created_by=self.owner
+        )
+        TripMember.objects.create(trip=self.trip, user=self.owner, role='OWNER')
+        TripMember.objects.create(trip=self.trip, user=self.viewer, role='VIEWER')
+
+        self.stay = Stay(
+            trip=self.trip,
+            title='Grand Hotel',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        self.stay.confirmation_code = 'SECRET-PNR-999'
+        self.stay.save()
+
+    def tearDown(self):
+        from core.md_sync import delete_trip_markdown
+        for t in Trip.objects.all():
+            delete_trip_markdown(t)
+
+    def test_reveal_code_blocks_unauthenticated_and_outsiders(self):
+        """Unauthenticated requests and non-members must receive 403 Forbidden on reveal-code."""
+        url = reverse('core:reveal_code', args=['stay', self.stay.id])
+
+        # 1. Unauthenticated
+        resp_unauth = self.client.get(url)
+        self.assertEqual(resp_unauth.status_code, 403)
+        self.assertNotIn('SECRET-PNR-999', resp_unauth.content.decode())
+
+        # 2. Authenticated outsider (not on trip)
+        session = self.client.session
+        session['user_id'] = str(self.outsider.id)
+        session.save()
+        resp_outsider = self.client.get(url)
+        self.assertEqual(resp_outsider.status_code, 403)
+        self.assertNotIn('SECRET-PNR-999', resp_outsider.content.decode())
+
+        # 3. Authorized member (Viewer) can reveal
+        session['user_id'] = str(self.viewer.id)
+        session.save()
+        resp_member = self.client.get(url)
+        self.assertEqual(resp_member.status_code, 200)
+        self.assertEqual(resp_member.json().get('code'), 'SECRET-PNR-999')
+
+    def test_viewer_cannot_add_stays_navs_dos_or_recs(self):
+        """Viewers must be blocked from creating Stays, Navs, Dos, or Recs."""
+        session = self.client.session
+        session['user_id'] = str(self.viewer.id)
+        session.save()
+
+        self.client.post(reverse('core:add_stay', args=[self.trip.id]), {'title': 'Unauthorized Stay'})
+        self.assertFalse(Stay.objects.filter(trip=self.trip, title='Unauthorized Stay').exists())
+
+        self.client.post(reverse('core:add_nav', args=[self.trip.id]), {'title': 'Unauthorized Nav', 'mode': 'Flight'})
+        self.assertFalse(Nav.objects.filter(trip=self.trip, title='Unauthorized Nav').exists())
+
+        self.client.post(reverse('core:add_do', args=[self.trip.id]), {'title': 'Unauthorized Do'})
+        self.assertFalse(Do.objects.filter(trip=self.trip, title='Unauthorized Do').exists())
+
+        self.client.post(reverse('core:add_rec', args=[self.trip.id]), {'title': 'Unauthorized Rec'})
+        self.assertFalse(Rec.objects.filter(trip=self.trip, title='Unauthorized Rec').exists())
+
+    @override_settings(ENABLE_DEMO_SWITCHER=False)
+    def test_demo_switcher_disabled_blocks_impersonation(self):
+        """When ENABLE_DEMO_SWITCHER is False, switch-user and demo_user_id login return 403."""
+        resp_switch = self.client.post(reverse('core:switch_user'), {'user_id': str(self.owner.id)})
+        self.assertEqual(resp_switch.status_code, 403)
+        self.assertIsNone(self.client.session.get('user_id'))
+
+        resp_demo_login = self.client.post(reverse('core:login'), {'demo_user_id': str(self.owner.id)})
+        self.assertEqual(resp_demo_login.status_code, 403)
+        self.assertIsNone(self.client.session.get('user_id'))
+
 
 

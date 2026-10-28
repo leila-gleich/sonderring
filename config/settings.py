@@ -163,3 +163,10 @@ GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 # Left empty by default so it dynamically matches whatever host you are on (localhost vs 127.0.0.1)
 GOOGLE_OAUTH_REDIRECT_URI = os.environ.get('GOOGLE_OAUTH_REDIRECT_URI', '')
 
+# Demo 1-click user switcher flag (enabled in local DEBUG mode by default, disabled in production)
+ENABLE_DEMO_SWITCHER = os.environ.get(
+    'ENABLE_DEMO_SWITCHER',
+    'True' if DEBUG else 'False'
+).lower() in ('true', '1')
+
+

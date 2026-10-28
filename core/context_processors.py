@@ -6,4 +6,5 @@ def auth_feature_flags(request):
     """
     return {
         'ENABLE_GOOGLE_OAUTH': getattr(settings, 'ENABLE_GOOGLE_OAUTH', False),
+        'ENABLE_DEMO_SWITCHER': getattr(settings, 'ENABLE_DEMO_SWITCHER', False),
     }

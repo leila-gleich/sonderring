@@ -47,8 +47,9 @@
                         <strong>{{ current_user.full_name }}</strong>
                     </div>
                     <a href="{% url 'core:profile' %}" class="dropdown-item">👤 View My Profile</a>
+                    {% if ENABLE_DEMO_SWITCHER and all_users %}
                     <div class="dropdown-divider"></div>
-                    <div class="dropdown-label">Switch Active User:</div>
+                    <div class="dropdown-label">Switch Active User (Demo):</div>
                     {% for u in all_users %}
                     <form method="POST" action="{% url 'core:switch_user' %}" class="dropdown-switch-form">
                         {% csrf_token %}
@@ -59,6 +60,7 @@
                         </button>
                     </form>
                     {% endfor %}
+                    {% endif %}
                     <div class="dropdown-divider"></div>
                     <a href="{% url 'core:logout' %}" class="dropdown-item text-danger">🚪 Log Out</a>
                 </div>
@@ -174,24 +176,37 @@
             }
         }
 
-        // AJAX Reveal Encrypted Confirmation Code
+        // AJAX Reveal Encrypted Confirmation Code (XSS-safe DOM rendering)
         async function revealCode(itemType, itemId, containerElement) {
             try {
-                containerElement.innerHTML = '<span class="loading-spinner"></span> Decrypting...';
+                containerElement.textContent = 'Decrypting...';
                 const response = await fetch(`/items/${itemType}/${itemId}/reveal-code/`);
                 const data = await response.json();
-                if (data.success) {
-                    containerElement.innerHTML = `
-                        <span class="revealed-code-box">
-                            <strong>${data.code}</strong>
-                            <button type="button" class="btn-copy" onclick="navigator.clipboard.writeText('${data.code}'); this.textContent='Copied!';">Copy</button>
-                        </span>
-                    `;
+                if (response.ok && data.success) {
+                    containerElement.textContent = '';
+                    const wrapper = document.createElement('span');
+                    wrapper.className = 'revealed-code-box';
+
+                    const codeEl = document.createElement('strong');
+                    codeEl.textContent = data.code;
+
+                    const copyBtn = document.createElement('button');
+                    copyBtn.type = 'button';
+                    copyBtn.className = 'btn-copy';
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.addEventListener('click', function() {
+                        navigator.clipboard.writeText(data.code);
+                        copyBtn.textContent = 'Copied!';
+                    });
+
+                    wrapper.appendChild(codeEl);
+                    wrapper.appendChild(copyBtn);
+                    containerElement.appendChild(wrapper);
                 } else {
-                    containerElement.innerHTML = `<span class="text-muted">None Set</span>`;
+                    containerElement.textContent = data.error || 'None Set';
                 }
             } catch (err) {
-                containerElement.innerHTML = `<span class="text-danger">Decryption Error</span>`;
+                containerElement.textContent = 'Decryption Error';
             }
         }
     </script>

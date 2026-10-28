@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime, parse_date
 from django.urls import reverse
+from django.conf import settings
 from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -85,6 +86,13 @@ def can_user_edit_item(user, trip, item):
     return False
 
 
+def get_demo_users():
+    """Returns active users list only when ENABLE_DEMO_SWITCHER is enabled."""
+    if getattr(settings, 'ENABLE_DEMO_SWITCHER', False):
+        return UserProfile.objects.filter(is_active=True).order_by('full_name')
+    return UserProfile.objects.none()
+
+
 # ==========================================
 # Authentication & User Management Views
 # ==========================================
@@ -97,12 +105,14 @@ def login_view(request):
     if current_user and request.method == 'GET' and not request.GET.get('switch'):
         return redirect('core:dashboard')
 
-    all_users = UserProfile.objects.filter(is_active=True).order_by('full_name')
+    all_users = get_demo_users()
 
     if request.method == 'POST':
-        # 1. 1-Click Demo Selection (useful for fast multi-user testing in dev/demo)
+        # 1. 1-Click Demo Selection (strictly gated by ENABLE_DEMO_SWITCHER)
         demo_user_id = request.POST.get('demo_user_id')
         if demo_user_id:
+            if not getattr(settings, 'ENABLE_DEMO_SWITCHER', False):
+                return HttpResponseForbidden("Demo login is disabled in this environment.")
             target_user = UserProfile.objects.filter(id=demo_user_id, is_active=True).first()
             if target_user:
                 request.session['user_id'] = str(target_user.id)
@@ -220,7 +230,10 @@ def logout_view(request):
 
 @require_POST
 def switch_user_view(request):
-    """Quick 1-click user switcher from the navigation bar."""
+    """Quick 1-click user switcher from the navigation bar (dev/demo only)."""
+    if not getattr(settings, 'ENABLE_DEMO_SWITCHER', False):
+        return HttpResponseForbidden("Demo user switching is disabled in this environment.")
+
     user_id = request.POST.get('user_id')
     target_user = get_object_or_404(UserProfile, id=user_id, is_active=True)
     request.session['user_id'] = str(target_user.id)
@@ -274,7 +287,7 @@ def profile_view(request):
     if not current_user:
         return redirect('core:login')
 
-    all_users = UserProfile.objects.filter(is_active=True).order_by('full_name')
+    all_users = get_demo_users()
 
     # Trips owned by the user
     owned_trips = Trip.objects.filter(created_by=current_user).order_by('-year', '-start_date')
@@ -340,7 +353,7 @@ def dashboard_view(request):
         login_url = reverse('core:login')
         return redirect(f"{login_url}?next={request.path}")
 
-    all_users = UserProfile.objects.filter(is_active=True).order_by('full_name')
+    all_users = get_demo_users()
     
     # Scoped strictly to trips the current user created or belongs to as a tripper
     user_trips = Trip.objects.filter(
@@ -381,7 +394,7 @@ def trip_workspace_view(request, trip_id):
         login_url = reverse('core:login')
         return redirect(f"{login_url}?next={request.path}")
 
-    all_users = UserProfile.objects.filter(is_active=True).order_by('full_name')
+    all_users = get_demo_users()
     trip = get_object_or_404(Trip, id=trip_id)
 
     # Determine user role on this specific trip
@@ -490,7 +503,7 @@ def trip_workspace_view(request, trip_id):
         'members': members,
         'timeline_items': timeline_items,
         'total_spend': total_spend,
-        'available_users': UserProfile.objects.exclude(trip_memberships__trip=trip),
+        'available_users': get_demo_users().exclude(trip_memberships__trip=trip),
     }
     return render(request, 'trip_workspace.html', context)
 
@@ -503,6 +516,8 @@ def trip_workspace_view(request, trip_id):
 def create_trip_view(request):
     """Creates a new Trip record supporting all 4 hybrid time granularities."""
     current_user = get_current_user(request)
+    if not current_user:
+        return redirect(f"{reverse('core:login')}?next={request.path}")
     
     title = request.POST.get('title', '').strip()
     location = request.POST.get('location', '').strip()
@@ -672,8 +687,8 @@ def add_stay_view(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id)
     current_user = get_current_user(request)
 
-    if not (can_user_edit_trip(current_user, trip) or TripMember.objects.filter(trip=trip, user=current_user).exists()):
-        messages.error(request, "Permission denied: You must be a tripper to add accommodations.")
+    if not can_user_edit_trip(current_user, trip):
+        messages.error(request, "Permission denied: Only Trip Owners and Editors can add accommodations.")
         return redirect(f"/trips/{trip_id}/#stays")
 
     title = request.POST.get('title', '').strip()
@@ -775,8 +790,8 @@ def add_nav_view(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id)
     current_user = get_current_user(request)
 
-    if not (can_user_edit_trip(current_user, trip) or TripMember.objects.filter(trip=trip, user=current_user).exists()):
-        messages.error(request, "Permission denied: You must be a tripper to add transportation legs.")
+    if not can_user_edit_trip(current_user, trip):
+        messages.error(request, "Permission denied: Only Trip Owners and Editors can add transportation legs.")
         return redirect(f"/trips/{trip_id}/#navs")
 
     title = request.POST.get('title', '').strip()
@@ -885,8 +900,8 @@ def add_do_view(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id)
     current_user = get_current_user(request)
 
-    if not (can_user_edit_trip(current_user, trip) or TripMember.objects.filter(trip=trip, user=current_user).exists()):
-        messages.error(request, "Permission denied: You must be a tripper to add activities.")
+    if not can_user_edit_trip(current_user, trip):
+        messages.error(request, "Permission denied: Only Trip Owners and Editors can add activities.")
         return redirect(f"/trips/{trip_id}/#dos")
 
     title = request.POST.get('title', '').strip()
@@ -981,6 +996,10 @@ def delete_do_view(request, trip_id, do_id):
 def add_rec_view(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id)
     current_user = get_current_user(request)
+
+    if not can_user_edit_trip(current_user, trip):
+        messages.error(request, "Permission denied: Only Trip Owners and Editors can add recommendations.")
+        return redirect(f"/trips/{trip_id}/#dos")
 
     title = request.POST.get('title', '').strip()
     if not title:
@@ -1147,10 +1166,28 @@ def invite_member_view(request, trip_id):
         messages.error(request, "Permission denied: Viewers cannot invite companions.")
         return redirect(f"/trips/{trip_id}/")
 
-    user_id = request.POST.get('user_id')
-    role = request.POST.get('role', 'EDITOR')
+    user_id = request.POST.get('user_id', '').strip()
+    handle_or_email = request.POST.get('handle_or_email', '').strip()
+    role = request.POST.get('role', 'EDITOR').strip().upper()
+    if role not in ('EDITOR', 'VIEWER'):
+        role = 'EDITOR'
 
-    user = get_object_or_404(UserProfile, id=user_id)
+    user = None
+    if handle_or_email:
+        clean_handle = handle_or_email.lstrip('@')
+        user = UserProfile.objects.filter(
+            Q(handle__iexact=clean_handle) | Q(email__iexact=handle_or_email),
+            is_active=True
+        ).first()
+        if not user:
+            messages.error(request, f"No active traveler found matching '{handle_or_email}'.")
+            return redirect(f"/trips/{trip_id}/")
+    elif user_id:
+        user = get_object_or_404(UserProfile, id=user_id, is_active=True)
+    else:
+        messages.error(request, "Please specify a handle, email, or user to invite.")
+        return redirect(f"/trips/{trip_id}/")
+
     membership, created = TripMember.objects.get_or_create(
         trip=trip,
         user=user,
@@ -1175,7 +1212,9 @@ def update_member_role_view(request, trip_id, member_id):
         return redirect(f"/trips/{trip_id}/")
 
     member = get_object_or_404(TripMember, id=member_id, trip=trip)
-    new_role = request.POST.get('role', 'EDITOR')
+    new_role = request.POST.get('role', 'EDITOR').strip().upper()
+    if new_role not in ('OWNER', 'EDITOR', 'VIEWER'):
+        new_role = 'EDITOR'
     member.role = new_role
     member.save()
 
@@ -1232,13 +1271,26 @@ def toggle_item_status_view(request, item_type, item_id):
 
 @require_GET
 def reveal_confirmation_code_view(request, item_type, item_id):
-    """Secure on-demand decryption endpoint for authorized trippers."""
-    model_map = {'stay': Stay, 'nav': Nav, 'do': Do, 'rec': Rec}
+    """Secure on-demand decryption endpoint strictly scoped to authorized trippers."""
+    current_user = get_current_user(request)
+    if not current_user:
+        return JsonResponse(
+            {'success': False, 'error': 'Authentication required to reveal confirmation codes.'},
+            status=403
+        )
+
+    model_map = {'stay': Stay, 'nav': Nav, 'do': Do}
     model = model_map.get(item_type.lower())
     if not model:
         return HttpResponseBadRequest("Invalid item type.")
 
     item = get_object_or_404(model, id=item_id)
+    if not get_user_trip_role(current_user, item.trip):
+        return JsonResponse(
+            {'success': False, 'error': 'Permission denied: You are not an authorized member of this trip.'},
+            status=403
+        )
+
     code = item.confirmation_code
 
     if not code:

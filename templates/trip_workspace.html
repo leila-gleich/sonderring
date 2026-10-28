@@ -1406,18 +1406,24 @@
         </div>
         <form method="POST" action="{% url 'core:invite_member' trip.id %}" class="modal-form">
             {% csrf_token %}
-            <p class="modal-subtitle">Choose a friend from your network to join this TripSpace.</p>
+            <p class="modal-subtitle">Invite a friend by their travel handle or email address to join this TripSpace.</p>
 
             <div class="form-group">
-                <label class="form-label">Select User</label>
-                <select name="user_id" class="form-control" required>
+                <label class="form-label">Invite by @Handle or Email</label>
+                <input type="text" name="handle_or_email" class="form-control" placeholder="e.g. @marco or marco@sonderring.com">
+            </div>
+
+            {% if ENABLE_DEMO_SWITCHER and available_users %}
+            <div class="form-group">
+                <label class="form-label">Or Quick-Select Demo User</label>
+                <select name="user_id" class="form-control">
+                    <option value="">-- Select a demo traveler --</option>
                     {% for u in available_users %}
                     <option value="{{ u.id }}">{{ u.full_name }} (@{{ u.handle }}) — {{ u.email }}</option>
-                    {% empty %}
-                    <option disabled>All demo users are already members!</option>
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
 
             <div class="form-group">
                 <label class="form-label">Assigned Role</label>
