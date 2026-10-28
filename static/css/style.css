@@ -772,6 +772,27 @@ body {
     border-radius: var(--radius-full);
 }
 
+.tab-sndr-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--primary);
+    background: rgba(14, 165, 233, 0.12);
+    border: 1px solid rgba(14, 165, 233, 0.28);
+    border-radius: 4px;
+    padding: 0.1rem 0.35rem;
+    line-height: 1;
+    letter-spacing: 0.04em;
+}
+
+.tab-btn.active .tab-sndr-letter {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
 .tab-btn.active .tab-counter {
     background: var(--primary-light);
     color: var(--primary);

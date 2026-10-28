@@ -134,13 +134,16 @@
             ⏱️ Timeline / Itinerary <span class="tab-counter">{{ timeline_items|length }}</span>
         </button>
         <button class="tab-btn" onclick="switchTab('stays', this)">
-            🏨 Stays <span class="tab-counter">{{ stays.count }}</span>
+            🏨 Stays <span class="tab-sndr-letter" title="Sonderring S Element: Stays">S</span> <span class="tab-counter">{{ stays.count }}</span>
         </button>
         <button class="tab-btn" onclick="switchTab('navs', this)">
-            ✈️ Navs <span class="tab-counter">{{ navs.count }}</span>
+            ✈️ Navs <span class="tab-sndr-letter" title="Sonderring N Element: Navs">N</span> <span class="tab-counter">{{ navs.count }}</span>
         </button>
         <button class="tab-btn" onclick="switchTab('dos', this)">
-            🎯 Dos & Recs <span class="tab-counter">{{ dos.count|add:recs.count }}</span>
+            🎯 Dos <span class="tab-sndr-letter" title="Sonderring D Element: Dos">D</span> <span class="tab-counter">{{ dos.count }}</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('recs', this)">
+            💡 Recs <span class="tab-sndr-letter" title="Sonderring R Element: Recs">R</span> <span class="tab-counter">{{ recs.count }}</span>
         </button>
         <button class="tab-btn" onclick="switchTab('vault', this)">
             🔒 Vault <span class="tab-counter">{{ attachments.count }}</span>
@@ -517,23 +520,18 @@
 </div>
 
 <!-- ==========================================
-     TAB 4: DOS & RECS (ACTIVITIES & POOL)
+     TAB 4: DOS (SCHEDULED ACTIVITIES) [D]
      ========================================== -->
 <div id="tab-dos" class="tab-content">
     <div class="tab-header">
         <div>
-            <h2 class="tab-title">Activities & Ideas (Dos & Recs)</h2>
-            <p class="tab-desc">Scheduled activities plus a brainstorming pool that can be promoted to the itinerary.</p>
+            <h2 class="tab-title">Scheduled Activities (Dos)</h2>
+            <p class="tab-desc">Confirmed activities, excursions, and scheduled itinerary items for the group.</p>
         </div>
         {% if can_edit %}
-        <div class="header-dual-actions">
-            <button type="button" class="btn btn-outline" onclick="openModal('addRecModal')">
-                <span class="btn-icon">💡</span> Propose a Rec
-            </button>
-            <button type="button" class="btn btn-primary" onclick="openModal('addDoModal')">
-                <span class="btn-icon">+</span> Add Scheduled Do
-            </button>
-        </div>
+        <button type="button" class="btn btn-primary" onclick="openModal('addDoModal')">
+            <span class="btn-icon">+</span> Add Scheduled Do
+        </button>
         {% endif %}
     </div>
 
@@ -710,14 +708,33 @@
         <p class="text-muted subhead-empty">No scheduled activities yet.</p>
         {% endif %}
     </div>
+</div>
 
-    <!-- Sub-Section B: Brainstorming Recommendations Pool -->
+<!-- ==========================================
+     TAB 5: RECS (RECOMMENDATIONS POOL) [R]
+     ========================================== -->
+<div id="tab-recs" class="tab-content">
+    <div class="tab-header">
+        <div>
+            <h2 class="tab-title">Trip Recommendations (Recs)</h2>
+            <p class="tab-desc">Curated recommendations manually added by trippers or submitted via the shared recommendation link.</p>
+        </div>
+        <div class="header-dual-actions">
+            {% if can_edit %}
+            <button type="button" class="btn btn-primary" onclick="openModal('addRecModal')">
+                <span class="btn-icon">💡</span> Add Recommendation
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recommendations Pool -->
     <div class="recs-group-section">
         <div class="recs-header-wrap">
-            <h3 class="group-title">💡 Recommendations Pool (Recs)</h3>
-            <span class="recs-counter">{{ recs.count }} Ideas suggested</span>
+            <h3 class="group-title">💡 Curated Recommendations</h3>
+            <span class="recs-counter">{{ recs.count }} Recommendation{{ recs.count|pluralize }}</span>
         </div>
-        <p class="recs-desc">Suggestions submitted by friends. Click <strong>"Promote to Itinerary"</strong> on any card to convert it into a scheduled Do.</p>
+        <p class="recs-desc">Curated recommendations and spots. Click <strong>"Promote to Itinerary"</strong> on any card to schedule it as a confirmed Do.</p>
 
         {% if recs %}
         <div class="recs-grid">
@@ -849,7 +866,7 @@
 </div>
 
 <!-- ==========================================
-     TAB 5: THE VAULT (ATTACHMENTS)
+     TAB 6: THE VAULT (ATTACHMENTS)
      ========================================== -->
 <div id="tab-vault" class="tab-content">
     <div class="tab-header">

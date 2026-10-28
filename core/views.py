@@ -1105,12 +1105,12 @@ def add_rec_view(request, trip_id):
 
     if not can_user_edit_trip(current_user, trip):
         messages.error(request, "Permission denied: Only Trip Owners and Editors can add recommendations.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        return redirect(f"/trips/{trip_id}/#recs")
 
     title = request.POST.get('title', '').strip()
     if not title:
         messages.error(request, "Recommendation title is required.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        return redirect(f"/trips/{trip_id}/#recs")
 
     Rec.objects.create(
         trip=trip,
@@ -1123,8 +1123,8 @@ def add_rec_view(request, trip_id):
         recommended_by=current_user,
         updated_by=current_user
     )
-    messages.success(request, f"Recommendation '{title}' added to the pool!")
-    return redirect(f"/trips/{trip_id}/#dos")
+    messages.success(request, f"Recommendation '{title}' added to Recs!")
+    return redirect(f"/trips/{trip_id}/#recs")
 
 
 @require_POST
@@ -1135,7 +1135,7 @@ def edit_rec_view(request, trip_id, rec_id):
 
     if not can_user_edit_item(current_user, trip, rec):
         messages.error(request, "Permission denied: You can only edit recommendations you created or if you are a Trip Editor/Owner.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        return redirect(f"/trips/{trip_id}/#recs")
 
     rec.title = request.POST.get('title', rec.title).strip()
     rec.category = request.POST.get('category', rec.category)
@@ -1147,7 +1147,7 @@ def edit_rec_view(request, trip_id, rec_id):
     rec.save()
 
     messages.success(request, f"Updated recommendation '{rec.title}'!")
-    return redirect(f"/trips/{trip_id}/#dos")
+    return redirect(f"/trips/{trip_id}/#recs")
 
 
 @require_POST
@@ -1158,12 +1158,12 @@ def delete_rec_view(request, trip_id, rec_id):
 
     if not can_user_edit_item(current_user, trip, rec):
         messages.error(request, "Permission denied: You can only delete recommendations you created or if you are a Trip Editor/Owner.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        return redirect(f"/trips/{trip_id}/#recs")
 
     title = rec.title
     rec.delete()
-    messages.success(request, f"Recommendation '{title}' removed from pool.")
-    return redirect(f"/trips/{trip_id}/#dos")
+    messages.success(request, f"Recommendation '{title}' removed.")
+    return redirect(f"/trips/{trip_id}/#recs")
 
 
 @require_POST
