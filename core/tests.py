@@ -585,6 +585,85 @@ class AuditLogAndHashChainTests(TestCase):
         self.assertIn(str(reveal_log.id), tamper_err)
 
 
+class AuthSessionAndHeadersHardeningTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.client = Client()
+        self.user = UserProfile.objects.create(
+            email='hardened@example.com',
+            handle='hardeneduser',
+            full_name='Hardened User',
+            is_active=True
+        )
+        self.user.set_password('ComplexPass2026!#')
+        self.user.save()
+
+    def test_open_redirect_blocked_on_login(self):
+        """External malicious ?next= URLs must be rejected and fall back to dashboard."""
+        resp = self.client.post(
+            f"{reverse('core:login')}?next=https://evil-phishing.example.com/steal",
+            {
+                'handle_or_email': 'hardeneduser',
+                'password': 'ComplexPass2026!#',
+            }
+        )
+        self.assertRedirects(resp, reverse('core:dashboard'))
+
+    def test_weak_numeric_and_common_passwords_rejected(self):
+        """Signup must enforce Django AUTH_PASSWORD_VALIDATORS and reject '12345678'."""
+        resp = self.client.post(reverse('core:signup'), {
+            'full_name': 'Weak Pass User',
+            'handle': 'weakpassuser',
+            'email': 'weak@example.com',
+            'password': '12345678',
+            'password_confirm': '12345678',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(UserProfile.objects.filter(handle='weakpassuser').exists())
+
+    def test_session_key_rotated_on_login(self):
+        """Login must rotate the session key to prevent Session Fixation attacks."""
+        session = self.client.session
+        session['pre_login_marker'] = 'fixed'
+        session.save()
+        old_session_key = session.session_key
+
+        resp = self.client.post(reverse('core:login'), {
+            'handle_or_email': 'hardeneduser',
+            'password': 'ComplexPass2026!#',
+        })
+        self.assertRedirects(resp, reverse('core:dashboard'))
+        self.assertNotEqual(self.client.session.session_key, old_session_key)
+
+    @override_settings(LOGIN_RATE_LIMIT_ATTEMPTS=3)
+    def test_login_brute_force_rate_limiting(self):
+        """Exceeding LOGIN_RATE_LIMIT_ATTEMPTS returns 429 Too Many Requests."""
+        for _ in range(3):
+            r = self.client.post(reverse('core:login'), {
+                'handle_or_email': 'hardeneduser',
+                'password': 'WrongPassword!',
+            })
+            self.assertEqual(r.status_code, 200)
+
+        # 4th attempt should be throttled with HTTP 429
+        throttled_resp = self.client.post(reverse('core:login'), {
+            'handle_or_email': 'hardeneduser',
+            'password': 'WrongPassword!',
+        })
+        self.assertEqual(throttled_resp.status_code, 429)
+
+    def test_security_headers_present_on_responses(self):
+        """Verify CSP, Referrer-Policy, Permissions-Policy, and X-Content-Type-Options headers."""
+        resp = self.client.get(reverse('core:login'))
+        self.assertIn('Content-Security-Policy', resp.headers)
+        self.assertIn("frame-ancestors 'none'", resp.headers['Content-Security-Policy'])
+        self.assertEqual(resp.headers.get('X-Content-Type-Options'), 'nosniff')
+        self.assertEqual(resp.headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin')
+        self.assertIn('Permissions-Policy', resp.headers)
+
+
+
 
 
 

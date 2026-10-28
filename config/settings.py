@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -142,11 +143,36 @@ FIELD_ENCRYPTION_KEY = os.environ.get(
 # Django REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
 }
+
+# ==========================================
+# Session, Cookie, Transport & Rate Limit Hardening
+# ==========================================
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 days
+CSRF_COOKIE_SAMESITE = 'Lax'
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+if not DEBUG and os.environ.get('DJANGO_DEBUG') == 'False':
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Rate Limiting Thresholds
+LOGIN_RATE_LIMIT_ATTEMPTS = int(os.environ.get('LOGIN_RATE_LIMIT_ATTEMPTS', '5'))
+LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get('LOGIN_RATE_LIMIT_WINDOW_SECONDS', '300'))
+REVEAL_CODE_RATE_LIMIT_PER_MIN = int(os.environ.get('REVEAL_CODE_RATE_LIMIT_PER_MIN', '15'))
+MAX_VAULT_UPLOAD_SIZE_MB = int(os.environ.get('MAX_VAULT_UPLOAD_SIZE_MB', '10'))
 
 # ==========================================
 # Authentication & OAuth Feature Flags

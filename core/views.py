@@ -2,11 +2,15 @@ import json
 import datetime
 from functools import wraps
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.http import require_POST, require_GET
 from django.contrib import messages
+from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime, parse_date
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse
 from django.conf import settings
 from django.db.models import Q
@@ -22,6 +26,35 @@ def get_client_ip(request):
     if x_forwarded_for:
         return x_forwarded_for.split(',')[0].strip()
     return request.META.get('REMOTE_ADDR') or '127.0.0.1'
+
+
+def get_safe_redirect_url(request, candidate_url=None, default='core:dashboard'):
+    """Validates redirect targets against allowed hosts to prevent Open Redirect vulnerabilities."""
+    raw_url = candidate_url or request.GET.get('next') or request.POST.get('next')
+    if raw_url and url_has_allowed_host_and_scheme(
+        url=raw_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure()
+    ):
+        return raw_url
+    return default
+
+
+def is_rate_limited(cache_key: str, max_attempts: int) -> bool:
+    """Returns True if the given cache key has reached or exceeded max_attempts."""
+    return cache.get(cache_key, 0) >= max_attempts
+
+
+def increment_rate_limit(cache_key: str, window_seconds: int) -> int:
+    """Increments a rate limit counter in cache with TTL."""
+    current = cache.get(cache_key, 0) + 1
+    cache.set(cache_key, current, timeout=window_seconds)
+    return current
+
+
+def clear_rate_limit(cache_key: str):
+    """Resets a rate limit counter upon successful authentication."""
+    cache.delete(cache_key)
 
 
 def log_security_event(request, action, resource_type, resource_id=None, trip=None, user=None, metadata=None):
@@ -138,16 +171,31 @@ def login_view(request):
                 return HttpResponseForbidden("Demo login is disabled in this environment.")
             target_user = UserProfile.objects.filter(id=demo_user_id, is_active=True).first()
             if target_user:
+                request.session.cycle_key()
                 request.session['user_id'] = str(target_user.id)
                 target_user.last_login = timezone.now()
                 target_user.save(update_fields=['last_login'])
                 messages.success(request, f"Welcome back, {target_user.full_name} (@{target_user.handle})!")
-                next_url = request.GET.get('next') or request.POST.get('next') or 'core:dashboard'
-                return redirect(next_url)
+                return redirect(get_safe_redirect_url(request))
 
-        # 2. Standard Email/Handle + Password verification
+        # 2. Standard Email/Handle + Password verification with Brute-Force Rate Limiting
         handle_or_email = request.POST.get('handle_or_email', '').strip()
         password = request.POST.get('password', '')
+        client_ip = get_client_ip(request)
+        rate_key = f"ratelimit:login:{client_ip}:{handle_or_email.lower().lstrip('@')}"
+        max_attempts = getattr(settings, 'LOGIN_RATE_LIMIT_ATTEMPTS', 5)
+        window_seconds = getattr(settings, 'LOGIN_RATE_LIMIT_WINDOW_SECONDS', 300)
+
+        if is_rate_limited(rate_key, max_attempts):
+            messages.error(request, "Too many failed login attempts. Please wait a few minutes and try again.")
+            return HttpResponse(
+                render(request, 'login.html', {
+                    'all_users': all_users,
+                    'current_user': current_user,
+                    'next': request.GET.get('next', ''),
+                }).content,
+                status=429
+            )
 
         if not handle_or_email:
             messages.error(request, "Please enter your email or travel handle.")
@@ -161,6 +209,8 @@ def login_view(request):
             ).first()
 
             if user and user.check_password(password):
+                clear_rate_limit(rate_key)
+                request.session.cycle_key()
                 request.session['user_id'] = str(user.id)
                 user.last_login = timezone.now()
                 user.save(update_fields=['last_login'])
@@ -173,9 +223,9 @@ def login_view(request):
                     metadata={'method': 'password'}
                 )
                 messages.success(request, f"Welcome back, {user.full_name}!")
-                next_url = request.GET.get('next') or request.POST.get('next') or 'core:dashboard'
-                return redirect(next_url)
+                return redirect(get_safe_redirect_url(request))
             else:
+                increment_rate_limit(rate_key, window_seconds)
                 log_security_event(
                     request,
                     action='AUTH_LOGIN_FAILED',
@@ -234,6 +284,11 @@ def signup_view(request):
             errors.append("Password must be at least 8 characters long.")
         elif password != password_confirm:
             errors.append("Passwords do not match.")
+        else:
+            try:
+                validate_password(password)
+            except ValidationError as exc:
+                errors.extend(exc.messages)
 
         if errors:
             for err in errors:
@@ -249,10 +304,10 @@ def signup_view(request):
             new_user.set_password(password)
             new_user.save()
 
+            request.session.cycle_key()
             request.session['user_id'] = str(new_user.id)
             messages.success(request, f"Welcome to Sonderring, {new_user.full_name}! Your account has been created.")
-            next_url = request.GET.get('next') or request.POST.get('next') or 'core:dashboard'
-            return redirect(next_url)
+            return redirect(get_safe_redirect_url(request))
 
     return render(request, 'signup.html', {
         'next': request.GET.get('next', ''),
@@ -275,12 +330,13 @@ def switch_user_view(request):
 
     user_id = request.POST.get('user_id')
     target_user = get_object_or_404(UserProfile, id=user_id, is_active=True)
+    request.session.cycle_key()
     request.session['user_id'] = str(target_user.id)
     target_user.last_login = timezone.now()
     target_user.save(update_fields=['last_login'])
     messages.success(request, f"Switched active user to {target_user.full_name} (@{target_user.handle})")
     
-    redirect_url = request.META.get('HTTP_REFERER') or '/'
+    redirect_url = get_safe_redirect_url(request, candidate_url=request.META.get('HTTP_REFERER'), default='/')
     return redirect(redirect_url)
 
 
@@ -308,8 +364,17 @@ def change_password_view(request):
         messages.error(request, "New passwords do not match.")
         return redirect('core:profile')
 
+    try:
+        validate_password(new_password)
+    except ValidationError as exc:
+        for err in exc.messages:
+            messages.error(request, err)
+        return redirect('core:profile')
+
     current_user.set_password(new_password)
     current_user.save(update_fields=['password'])
+    request.session.cycle_key()
+    request.session['user_id'] = str(current_user.id)
     log_security_event(
         request,
         action='PASSWORD_CHANGED',
@@ -1384,6 +1449,15 @@ def reveal_confirmation_code_view(request, item_type, item_id):
             {'success': False, 'error': 'Permission denied: You are not an authorized member of this trip.'},
             status=403
         )
+
+    rate_key = f"ratelimit:reveal:{current_user.id}"
+    max_reveals = getattr(settings, 'REVEAL_CODE_RATE_LIMIT_PER_MIN', 15)
+    if is_rate_limited(rate_key, max_reveals):
+        return JsonResponse(
+            {'success': False, 'error': 'Rate limit exceeded. Please wait before revealing more codes.'},
+            status=429
+        )
+    increment_rate_limit(rate_key, 60)
 
     code = item.confirmation_code
 

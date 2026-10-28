@@ -72,6 +72,7 @@ def google_dev_callback_view(request):
     current_user = get_current_user_or_none(request)
     try:
         user, action = authenticate_or_link_google_user(claims, current_user=current_user)
+        request.session.cycle_key()
         request.session['user_id'] = str(user.id)
 
         if action == 'linked':
@@ -129,6 +130,7 @@ def google_callback_view(request):
     current_user = get_current_user_or_none(request)
     try:
         user, action = authenticate_or_link_google_user(claims, current_user=current_user)
+        request.session.cycle_key()
         request.session['user_id'] = str(user.id)
 
         if action == 'linked':
