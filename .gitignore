@@ -21,3 +21,8 @@ staticfiles/
 # OS-specific
 .DS_Store
 Thumbs.db
+
+# Credentials & Recovery Codes
+*recovery-codes*.txt
+*.pem
+*.key
