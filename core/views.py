@@ -1,13 +1,16 @@
+import os
+import uuid
 import json
 import datetime
 from functools import wraps
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, HttpResponseForbidden, FileResponse
 from django.views.decorators.http import require_POST, require_GET
 from django.contrib import messages
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime, parse_date
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -1209,6 +1212,52 @@ def promote_rec_view(request, trip_id, rec_id):
 # Vault & Attachments Operations
 # ==========================================
 
+ALLOWED_VAULT_EXTENSIONS = {'.pdf', '.png', '.jpg', '.jpeg'}
+
+
+def sanitize_display_filename(raw_name: str) -> str:
+    """Strips directory components and control characters from a display filename."""
+    base = os.path.basename(raw_name or 'Document').strip()
+    cleaned = ''.join(ch for ch in base if ch.isprintable() and ch not in {'/', '\\', '\x00'})
+    return (cleaned or 'Document')[:255]
+
+
+def validate_and_sanitize_vault_file(file_obj):
+    """
+    Validates uploaded Vault files using size limits, extension allowlists, and
+    cryptographic magic-byte header inspection to block polyglot/XSS uploads.
+    Returns (is_valid, error_message, detected_mime, safe_ext).
+    """
+    max_mb = getattr(settings, 'MAX_VAULT_UPLOAD_SIZE_MB', 10)
+    max_bytes = max_mb * 1024 * 1024
+    if file_obj.size > max_bytes:
+        return False, f"File exceeds the maximum allowed size of {max_mb} MB.", None, None
+
+    _, ext = os.path.splitext((file_obj.name or '').lower())
+    if ext not in ALLOWED_VAULT_EXTENSIONS:
+        return False, "Unsupported file extension. Only PDF, PNG, and JPEG documents are allowed in the Vault.", None, None
+
+    header = file_obj.read(16)
+    file_obj.seek(0)
+
+    if header.startswith(b'%PDF-'):
+        detected_mime, safe_ext = 'application/pdf', '.pdf'
+    elif header.startswith(b'\x89PNG\r\n\x1a\n'):
+        detected_mime, safe_ext = 'image/png', '.png'
+    elif header.startswith(b'\xff\xd8\xff'):
+        detected_mime, safe_ext = 'image/jpeg', '.jpg' if ext == '.jpg' else '.jpeg'
+    else:
+        return False, "File signature verification failed: file content does not match a valid PDF, PNG, or JPEG.", None, None
+
+    # Ensure extension aligns with detected magic bytes
+    if (detected_mime == 'application/pdf' and ext != '.pdf') or \
+       (detected_mime == 'image/png' and ext != '.png') or \
+       (detected_mime == 'image/jpeg' and ext not in {'.jpg', '.jpeg'}):
+        return False, "File extension does not match its actual binary content.", None, None
+
+    return True, None, detected_mime, safe_ext
+
+
 @require_POST
 def upload_attachment_view(request, trip_id):
     """Uploads a booking document, ticket, or receipt to the Vault."""
@@ -1220,7 +1269,22 @@ def upload_attachment_view(request, trip_id):
         return redirect(f"/trips/{trip_id}/#vault")
 
     file_obj = request.FILES.get('file')
-    file_name = request.POST.get('file_name') or (file_obj.name if file_obj else 'Document')
+    raw_file_name = request.POST.get('file_name') or (file_obj.name if file_obj else 'Document')
+    file_name = sanitize_display_filename(raw_file_name)
+    detected_mime = 'application/pdf'
+
+    if file_obj:
+        is_valid, err_msg, detected_mime, safe_ext = validate_and_sanitize_vault_file(file_obj)
+        if not is_valid:
+            messages.error(request, err_msg)
+            return redirect(f"/trips/{trip_id}/#vault")
+        # Randomize storage filename to prevent path traversal and enumeration
+        randomized_name = f"{uuid.uuid4().hex}{safe_ext}"
+        file_obj.name = randomized_name
+        storage_path = f"vault/{trip.id}/{randomized_name}"
+    else:
+        storage_path = f"vault/{trip.id}/{uuid.uuid4().hex}.pdf"
+
     stay_id = request.POST.get('stay_id')
     nav_id = request.POST.get('nav_id')
     do_id = request.POST.get('do_id')
@@ -1228,9 +1292,9 @@ def upload_attachment_view(request, trip_id):
     attachment = Attachment(
         trip=trip,
         file_name=file_name,
-        file_type=file_obj.content_type if file_obj else 'application/pdf',
+        file_type=detected_mime,
         file=file_obj,
-        storage_path=f"vault/{trip.id}/{file_name}",
+        storage_path=storage_path,
         uploaded_by=current_user,
         updated_by=current_user
     )
@@ -1254,6 +1318,61 @@ def upload_attachment_view(request, trip_id):
     )
     messages.success(request, f"Uploaded '{attachment.file_name}' to the Vault!")
     return redirect(f"/trips/{trip_id}/#vault")
+
+
+@require_GET
+def download_attachment_view(request, trip_id, attachment_id):
+    """
+    Authenticated, RBAC-checked, and time-limited cryptographically signed
+    endpoint for downloading Vault documents.
+    """
+    trip = get_object_or_404(Trip, id=trip_id)
+    attachment = get_object_or_404(Attachment, id=attachment_id, trip=trip)
+    current_user = get_current_user(request)
+
+    if not current_user:
+        return HttpResponseForbidden("Authentication required.")
+
+    role = get_user_trip_role(current_user, trip)
+    if not role:
+        return HttpResponseForbidden("Access denied: You are not a member of this trip.")
+
+    token = request.GET.get('token', '')
+    if not token:
+        return HttpResponseForbidden("Missing signed download token.")
+
+    signer = TimestampSigner(salt='sonderring.vault.download')
+    max_age = getattr(settings, 'VAULT_SIGNED_URL_EXPIRY_SECONDS', 900)
+    try:
+        unsigned_val = signer.unsign(token, max_age=max_age)
+    except (BadSignature, SignatureExpired):
+        return HttpResponseForbidden("Invalid or expired download link.")
+
+    expected_val = f"{trip.id}:{attachment.id}"
+    if unsigned_val != expected_val:
+        return HttpResponseForbidden("Token scope mismatch.")
+
+    if not attachment.file:
+        return HttpResponseBadRequest("No physical file attached to this Vault record.")
+
+    log_security_event(
+        request,
+        action='VAULT_DOCUMENT_ACCESSED',
+        resource_type='ATTACHMENT',
+        resource_id=attachment.id,
+        trip=trip,
+        user=current_user,
+        metadata={'file_name': attachment.file_name, 'role': role}
+    )
+
+    response = FileResponse(
+        attachment.file.open('rb'),
+        as_attachment=True,
+        filename=sanitize_display_filename(attachment.file_name),
+        content_type=attachment.file_type or 'application/octet-stream',
+    )
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
 
 
 @require_POST

@@ -881,7 +881,7 @@
                     <td>
                         <div class="vault-action-row">
                             {% if att.file %}
-                            <a href="{{ att.file.url }}" target="_blank" class="btn btn-sm btn-outline">Download</a>
+                            <a href="{{ att.signed_download_url }}" class="btn btn-sm btn-outline">Download</a>
                             {% else %}
                             <span class="vault-secured-pill" title="Stored in secure encrypted cloud bucket">Encrypted Key</span>
                             {% endif %}

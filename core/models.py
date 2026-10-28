@@ -509,6 +509,20 @@ class Attachment(models.Model):
             models.Index(fields=['trip', 'created_at'], name='idx_att_trip_created'),
         ]
 
+    def generate_signed_token(self) -> str:
+        """Generates a cryptographically signed timestamped token scoped to this trip and attachment."""
+        from django.core.signing import TimestampSigner
+        signer = TimestampSigner(salt='sonderring.vault.download')
+        return signer.sign(f"{self.trip_id}:{self.id}")
+
+    @property
+    def signed_download_url(self) -> str:
+        """Returns a time-limited (15-min default) pre-signed URL for authorized download."""
+        from django.urls import reverse
+        from urllib.parse import quote
+        base_url = reverse('core:download_attachment', args=[self.trip_id, self.id])
+        return f"{base_url}?token={quote(self.generate_signed_token())}"
+
     def __str__(self):
         return f"{self.file_name} ({self.trip.title})"
 

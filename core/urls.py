@@ -49,6 +49,7 @@ urlpatterns = [
 
     # Vault Attachments
     path('trips/<uuid:trip_id>/vault/upload/', views.upload_attachment_view, name='upload_attachment'),
+    path('trips/<uuid:trip_id>/vault/<uuid:attachment_id>/download/', views.download_attachment_view, name='download_attachment'),
     path('trips/<uuid:trip_id>/vault/<uuid:attachment_id>/delete/', views.delete_attachment_view, name='delete_attachment'),
 
     # Interactive AJAX Endpoints

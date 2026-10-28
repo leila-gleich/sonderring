@@ -1,7 +1,7 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.template.context import BaseContext
-from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Nav, Do, Rec, SecurityAuditLog
+from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Nav, Do, Rec, Attachment, SecurityAuditLog
 
 # Patch BaseContext.__copy__ for Python 3.14 compatibility with Django 4.2 test runner
 def _patched_copy(self):
@@ -661,6 +661,104 @@ class AuthSessionAndHeadersHardeningTests(TestCase):
         self.assertEqual(resp.headers.get('X-Content-Type-Options'), 'nosniff')
         self.assertEqual(resp.headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin')
         self.assertIn('Permissions-Policy', resp.headers)
+
+
+class VaultSecurityAndLifecycleTests(TestCase):
+    """Tests for Document Vault magic-byte validation, signed download URLs, and file cleanup."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.owner = UserProfile.objects.create(handle="vaultowner", email="vaultowner@test.com")
+        self.outsider = UserProfile.objects.create(handle="vaultoutsider", email="vaultoutsider@test.com")
+        self.trip = Trip.objects.create(
+            title="Vault Security Trip",
+            start_date="2026-12-01",
+            end_date="2026-12-05",
+            created_by=self.owner
+        )
+        TripMember.objects.create(trip=self.trip, user=self.owner, role='OWNER')
+
+    def _login_as(self, user):
+        session = self.client.session
+        session['user_id'] = str(user.id)
+        session.save()
+
+    def test_spoofed_html_as_pdf_is_rejected(self):
+        """Uploading an HTML/script payload disguised with a .pdf extension must be blocked by magic-byte checks."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self._login_as(self.owner)
+
+        malicious_file = SimpleUploadedFile(
+            "boarding_pass.pdf",
+            b"<html><script>alert('xss')</script></html>",
+            content_type="application/pdf"
+        )
+        self.client.post(reverse('core:upload_attachment', args=[self.trip.id]), {
+            'file_name': 'Boarding Pass',
+            'file': malicious_file,
+        })
+        self.assertEqual(Attachment.objects.filter(trip=self.trip).count(), 0)
+
+    def test_valid_pdf_upload_signed_download_and_physical_cleanup(self):
+        """
+        Valid PDF magic bytes succeed, randomize disk filename, require valid signed token
+        and trip membership for download, log VAULT_DOCUMENT_ACCESSED, and delete physical file on removal.
+        """
+        import os
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self._login_as(self.owner)
+
+        valid_pdf = SimpleUploadedFile(
+            "itinerary.pdf",
+            b"%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
+            content_type="application/pdf"
+        )
+        self.client.post(reverse('core:upload_attachment', args=[self.trip.id]), {
+            'file_name': '../../Flight_Ticket.pdf',
+            'file': valid_pdf,
+        })
+
+        att = Attachment.objects.filter(trip=self.trip).first()
+        self.assertIsNotNone(att)
+        # Path traversal stripped from display name
+        self.assertEqual(att.file_name, 'Flight_Ticket.pdf')
+        # Physical file exists and is stored with randomized UUID filename
+        physical_path = att.file.path
+        self.assertTrue(os.path.exists(physical_path))
+        self.assertNotIn('itinerary', os.path.basename(physical_path))
+
+        # 1. Missing token is rejected (403)
+        base_download_url = reverse('core:download_attachment', args=[self.trip.id, att.id])
+        self.assertEqual(self.client.get(base_download_url).status_code, 403)
+
+        # 2. Tampered token is rejected (403)
+        self.assertEqual(self.client.get(f"{base_download_url}?token=tampered").status_code, 403)
+
+        # 3. Outsider with valid signed URL is rejected (403)
+        signed_url = att.signed_download_url
+        self._login_as(self.outsider)
+        self.assertEqual(self.client.get(signed_url).status_code, 403)
+
+        # 4. Authorized member with valid signed URL succeeds (200) and logs audit event
+        self._login_as(self.owner)
+        resp = self.client.get(signed_url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers.get('X-Content-Type-Options'), 'nosniff')
+        self.assertTrue(b"".join(resp.streaming_content).startswith(b"%PDF-1.7"))
+        self.assertTrue(
+            SecurityAuditLog.objects.filter(
+                action='VAULT_DOCUMENT_ACCESSED',
+                resource_id=str(att.id),
+                user=self.owner
+            ).exists()
+        )
+
+        # 5. Deleting attachment removes physical file from disk via post_delete signal
+        self.client.post(reverse('core:delete_attachment', args=[self.trip.id, att.id]))
+        self.assertFalse(Attachment.objects.filter(id=att.id).exists())
+        self.assertFalse(os.path.exists(physical_path))
+
 
 
 

@@ -72,3 +72,13 @@ def on_attachment_change(sender, instance, **kwargs):
             sync_trip_to_markdown(instance.trip)
     except Exception:
         pass
+
+
+@receiver(post_delete, sender=Attachment)
+def on_attachment_file_cleanup(sender, instance, **kwargs):
+    """Immediately purges the underlying physical file from storage upon Attachment deletion."""
+    try:
+        if instance.file and instance.file.name:
+            instance.file.delete(save=False)
+    except Exception:
+        pass
