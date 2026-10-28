@@ -38,6 +38,9 @@
         </div>
 
         <div class="profile-hero-actions">
+            <button type="button" class="btn btn-primary" onclick="openModal('createTripModal')">
+                + Create a Trip
+            </button>
             <button type="button" class="btn btn-outline" onclick="openModal('editProfileModal')">
                 ✏️ Edit Profile
             </button>
@@ -72,7 +75,10 @@
         <div class="profile-trips-col">
             <div class="col-header">
                 <h3>👑 Trips You Own (Organizer)</h3>
-                <span class="badge-count">{{ owned_trips.count }}</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="badge-count">{{ owned_trips.count }}</span>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="openModal('createTripModal')">+ Create a Trip</button>
+                </div>
             </div>
             {% if owned_trips %}
             <div class="profile-trip-list">
@@ -99,7 +105,7 @@
             {% else %}
             <div class="empty-state-sm">
                 <p>You haven't created any trips yet.</p>
-                <a href="{% url 'core:dashboard' %}" class="btn btn-sm btn-primary">+ Create a Trip</a>
+                <button type="button" class="btn btn-sm btn-primary" onclick="openModal('createTripModal')">+ Create a Trip</button>
             </div>
             {% endif %}
         </div>

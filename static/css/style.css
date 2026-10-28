@@ -106,6 +106,7 @@ body {
 
 .nav-links {
     display: flex;
+    align-items: center;
     gap: 1.5rem;
 }
 
@@ -119,6 +120,154 @@ body {
 
 .nav-link:hover, .nav-link.active {
     color: var(--primary);
+}
+
+.nav-dropdown-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.nav-split-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--bg-page);
+    padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-color);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.nav-split-link:hover {
+    border-color: var(--primary-border);
+    background: #ffffff;
+}
+
+.btn-nav-dropdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.15rem 0.35rem;
+    border-radius: var(--radius-full);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.btn-nav-dropdown:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.nav-trips-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 0.35rem;
+    border-radius: var(--radius-full);
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.nav-dropdown-caret {
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.tripspaces-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: auto;
+    width: 320px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 0.5rem 0;
+    z-index: 200;
+    animation: fadeIn 0.15s ease;
+}
+
+.tripspaces-dropdown-menu.active {
+    display: block;
+}
+
+.tripspaces-dropdown-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.tripspace-dropdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.tripspace-dropdown-item.active-tripspace {
+    background: var(--primary-light);
+    border-left: 3px solid var(--primary);
+}
+
+.tripspace-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.tripspace-dropdown-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.tripspace-dropdown-title {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tripspace-dropdown-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-empty-state {
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.dropdown-action-primary {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.dropdown-action-primary:hover {
+    background: var(--primary-light);
+}
+
+.btn-create-trip-nav {
+    white-space: nowrap;
 }
 
 .user-pill {
