@@ -1,5 +1,7 @@
+import datetime
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from django.template.context import BaseContext
 from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Nav, Do, Rec, Attachment, SecurityAuditLog
 
@@ -437,11 +439,41 @@ class AccessControlAndRBACTests(TestCase):
         self.client.post(reverse('core:add_rec', args=[self.trip.id]), {'title': 'Unauthorized Rec'})
         self.assertFalse(Rec.objects.filter(trip=self.trip, title='Unauthorized Rec').exists())
 
-    def test_viewer_cannot_edit_delete_or_toggle_any_item(self):
-        """Viewers are strictly read-only and cannot edit, delete, or toggle status even on items attributed to them."""
+    def test_viewer_cannot_edit_delete_or_toggle_others_item(self):
+        """Viewers cannot edit, delete, or toggle status of items created by others."""
+        stay_by_owner = Stay.objects.create(
+            trip=self.trip,
+            title='Owner Stay',
+            status='IDEA',
+            created_by=self.owner
+        )
+        session = self.client.session
+        session['user_id'] = str(self.viewer.id)
+        session.save()
+
+        # Cannot edit someone else's item
+        self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay_by_owner.id]), {'title': 'Tampered Stay'})
+        stay_by_owner.refresh_from_db()
+        self.assertEqual(stay_by_owner.title, 'Owner Stay')
+
+        # Cannot toggle status of someone else's item
+        resp_toggle = self.client.post(
+            reverse('core:toggle_status', args=['stay', stay_by_owner.id]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(resp_toggle.status_code, 403)
+        stay_by_owner.refresh_from_db()
+        self.assertEqual(stay_by_owner.status, 'IDEA')
+
+        # Cannot delete someone else's item
+        self.client.post(reverse('core:delete_stay', args=[self.trip.id, stay_by_owner.id]))
+        self.assertTrue(Stay.objects.filter(id=stay_by_owner.id).exists())
+
+    def test_author_can_edit_delete_and_toggle_own_item_under_universal_sovereignty(self):
+        """Under Universal Author Sovereignty, a member can edit, toggle status, and delete items they created even with VIEWER role."""
         stay_by_viewer = Stay.objects.create(
             trip=self.trip,
-            title='Original Stay',
+            title='Viewer Authored Stay',
             status='IDEA',
             created_by=self.viewer
         )
@@ -449,23 +481,23 @@ class AccessControlAndRBACTests(TestCase):
         session['user_id'] = str(self.viewer.id)
         session.save()
 
-        # Cannot edit
-        self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay_by_viewer.id]), {'title': 'Tampered Stay'})
+        # Can edit their own item
+        self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay_by_viewer.id]), {'title': 'Updated Viewer Stay'})
         stay_by_viewer.refresh_from_db()
-        self.assertEqual(stay_by_viewer.title, 'Original Stay')
+        self.assertEqual(stay_by_viewer.title, 'Updated Viewer Stay')
 
-        # Cannot toggle status
+        # Can toggle status of their own item
         resp_toggle = self.client.post(
             reverse('core:toggle_status', args=['stay', stay_by_viewer.id]),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
-        self.assertEqual(resp_toggle.status_code, 403)
+        self.assertEqual(resp_toggle.status_code, 200)
         stay_by_viewer.refresh_from_db()
-        self.assertEqual(stay_by_viewer.status, 'IDEA')
+        self.assertEqual(stay_by_viewer.status, 'CONFIRMED')
 
-        # Cannot delete
+        # Can delete their own item
         self.client.post(reverse('core:delete_stay', args=[self.trip.id, stay_by_viewer.id]))
-        self.assertTrue(Stay.objects.filter(id=stay_by_viewer.id).exists())
+        self.assertFalse(Stay.objects.filter(id=stay_by_viewer.id).exists())
 
     @override_settings(ENABLE_DEMO_SWITCHER=False)
     def test_demo_switcher_disabled_blocks_impersonation(self):
@@ -896,23 +928,28 @@ class PublicRecommendationTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertFalse(Rec.objects.filter(title='Buy Cheap Watches').exists())
 
-    def test_workspace_displays_rec_invite_link_and_sndr_tabs(self):
-        """Verify workspace top section contains copyable recommendation invite link and SNDR tabs."""
+    def test_workspace_displays_rec_invite_link_and_move_stay_taste_play_tabs(self):
+        """Verify workspace top section contains copyable recommendation invite link and Move, Stay, Taste, Play tabs."""
         session = self.client.session
         session['user_id'] = str(self.owner.id)
         session.save()
 
         resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
         self.assertEqual(resp.status_code, 200)
-        # SNDR tab elements
-        self.assertContains(resp, 'title="Sonderring S Element: Stays">S</span>')
-        self.assertContains(resp, 'title="Sonderring N Element: Navs">N</span>')
-        self.assertContains(resp, 'title="Sonderring D Element: Dos">D</span>')
-        self.assertContains(resp, 'title="Sonderring R Element: Recs">R</span>')
-        # Copy link widget in top section
-        self.assertContains(resp, 'rec-invite-bar')
+        # Move, Stay, Taste, Play tab elements
+        self.assertContains(resp, "switchTab('move', this)")
+        self.assertContains(resp, "switchTab('stay', this)")
+        self.assertContains(resp, "switchTab('taste', this)")
+        self.assertContains(resp, "switchTab('play', this)")
+        self.assertContains(resp, '✈️ Move')
+        self.assertContains(resp, '🏨 Stay')
+        self.assertContains(resp, '🍽️ Taste')
+        self.assertContains(resp, '🎯 Play')
+        # Recommendation Link button in workspace overview
+        self.assertContains(resp, 'Recommendation Link')
         self.assertContains(resp, self.trip.rec_token)
-        self.assertContains(resp, 'Copy Rec Link')
+        self.assertContains(resp, "Collect and record recommendations for your trip using this easy form. They will show up in the 'recommendations' section of your trip")
+        self.assertNotContains(resp, 'rec-invite-bar')
 
 
 class GlobalNavigationAndCreateTripModalTests(TestCase):
@@ -1007,6 +1044,770 @@ class GlobalNavigationAndCreateTripModalTests(TestCase):
         self.assertEqual(workspace_resp.status_code, 200)
         self.assertContains(workspace_resp, 'id="createTripModal"')
         self.assertContains(workspace_resp, "openModal('createTripModal')")
+
+
+class TripWorkspaceAddElementAndDisplayTests(TestCase):
+    """Tests for the Add Element top button, optional field omission, and card title structure."""
+
+    def setUp(self):
+        self.client = Client()
+        self.owner = UserProfile.objects.create(
+            email='tripper_owner@example.com',
+            handle='owner_sam',
+            full_name='Sam Owner',
+            is_active=True
+        )
+        self.viewer = UserProfile.objects.create(
+            email='tripper_viewer@example.com',
+            handle='viewer_val',
+            full_name='Val Viewer',
+            is_active=True
+        )
+        self.trip = Trip.objects.create(
+            title='Iceland Ring Road Expedition',
+            location='Reykjavik, Iceland',
+            status='UPCOMING',
+            created_by=self.owner,
+            time_granularity='YEAR',
+            year=2026
+        )
+        TripMember.objects.create(trip=self.trip, user=self.owner, role='OWNER')
+        TripMember.objects.create(trip=self.trip, user=self.viewer, role='VIEWER')
+
+    def test_add_element_button_and_dropdown_for_editor(self):
+        """Top workspace detail section has 'Add Element' button & dropdown for all 4 elements (Move, Stay, Taste, Play)."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # 'Add Element' button in workspace actions
+        self.assertContains(resp, 'id="addElementBtn"')
+        self.assertContains(resp, 'Add Element ▾')
+        self.assertContains(resp, 'id="addElementDropdownMenu"')
+
+        # All 4 elements present in dropdown
+        self.assertContains(resp, "openAddElement('move')")
+        self.assertContains(resp, "openAddElement('stay')")
+        self.assertContains(resp, "openAddElement('taste')")
+        self.assertContains(resp, "openAddElement('play')")
+
+        # Element chooser modal also available
+        self.assertContains(resp, 'id="addElementModal"')
+
+    def test_add_element_button_hidden_for_viewer(self):
+        """Viewers without edit permissions do not see 'Add Element' button."""
+        session = self.client.session
+        session['user_id'] = str(self.viewer.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'id="addElementBtn"')
+        self.assertNotContains(resp, 'id="addElementDropdownMenu"')
+
+    def test_blank_optional_inputs_do_not_render_placeholders(self):
+        """Unfilled optional inputs must NOT show placeholder/fallback text (TBD, Free, etc.)."""
+        from core.models import Stay, Nav, Do, Rec
+        # Create Stay with only required fields (no address, no check_in, no check_out, no price, no beds)
+        Stay.objects.create(
+            trip=self.trip,
+            title='Minimal Stay',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        # Create Nav with only required fields (no origin, no destination, no departure_time, no arrival_time, no price)
+        Nav.objects.create(
+            trip=self.trip,
+            title='Minimal Nav Flight',
+            mode='Flight',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        # Create Do with only required fields (no price, no start_time, no end_time, no address)
+        Do.objects.create(
+            trip=self.trip,
+            title='Minimal Activity',
+            status='IDEA',
+            created_by=self.owner
+        )
+
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Ensure no "TBD", "Price TBD", or "Free / Unticketed" are displayed for these items
+        self.assertNotContains(resp, 'Price TBD')
+        self.assertNotContains(resp, 'Free / Unticketed')
+        self.assertNotContains(resp, 'Origin TBD')
+        self.assertNotContains(resp, 'Destination TBD')
+        self.assertNotContains(resp, 'Flexible timing')
+        self.assertNotContains(resp, 'Origin ➔ Destination')
+
+    def test_filled_optional_inputs_render_properly(self):
+        """Filled optional inputs render their actual values."""
+        from core.models import Stay, Nav, Do
+        from django.utils import timezone
+        import datetime
+
+        now = timezone.now()
+        Stay.objects.create(
+            trip=self.trip,
+            title='Saga Luxury Hotel',
+            total_price=890.50,
+            num_beds=3,
+            check_in=now,
+            created_by=self.owner
+        )
+        Nav.objects.create(
+            trip=self.trip,
+            title='Icelandair Flight FI 614',
+            mode='Flight',
+            origin_address='BOS Boston',
+            destination_address='KEF Reykjavik',
+            price=640.00,
+            departure_time=now + datetime.timedelta(days=1),
+            created_by=self.owner
+        )
+        Do.objects.create(
+            trip=self.trip,
+            title='Blue Lagoon Spa Experience',
+            price=125.00,
+            start_time=now + datetime.timedelta(days=2),
+            created_by=self.owner
+        )
+
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Check values are rendered
+        self.assertContains(resp, '$890.50')
+        self.assertContains(resp, '3 Beds')
+        self.assertContains(resp, 'BOS Boston')
+        self.assertContains(resp, 'KEF Reykjavik')
+        self.assertContains(resp, '$640.00')
+        self.assertContains(resp, '$125.00')
+
+    def test_item_card_header_top_and_item_title_structure(self):
+        """Item card headers must contain item-card-header-top and full-width item-title."""
+        from core.models import Stay
+        Stay.objects.create(
+            trip=self.trip,
+            title='Grand Seaside Villa',
+            created_by=self.owner
+        )
+
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertContains(resp, 'class="item-card-header"')
+        self.assertContains(resp, 'class="item-card-header-top"')
+        self.assertContains(resp, '<h3 class="item-title">Grand Seaside Villa</h3>')
+
+    def test_workspace_top_bar_full_width_layout(self):
+        """Workspace top bar contains actions and keeps title unobstructed."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'class="workspace-top-bar"')
+        self.assertContains(resp, '<h1 class="workspace-title">')
+
+    def test_itinerary_view_edit_and_delete_actions_rendered(self):
+        """Itinerary / timeline view renders edit and delete triggers for author or editor."""
+        from core.models import Stay
+        stay = Stay.objects.create(
+            trip=self.trip,
+            title='Reykjavik Hotel',
+            created_by=self.owner
+        )
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, f"openEditItemModal('stay', '{stay.id}')")
+        self.assertContains(resp, f"openDeleteItemModal('stay', '{stay.id}')")
+
+    def test_edit_and_delete_redirects_to_next_url(self):
+        """Submitting an edit with next=<url> redirects to the specified next URL."""
+        from core.models import Stay
+        stay = Stay.objects.create(
+            trip=self.trip,
+            title='Initial Title',
+            created_by=self.owner
+        )
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.post(
+            reverse('core:edit_stay', args=[self.trip.id, stay.id]),
+            {'title': 'Updated Title', 'next': f"/trips/{self.trip.id}/#timeline"}
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, f"/trips/{self.trip.id}/#timeline")
+
+
+class DateRangeValidationAndOptionalStayTimesTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = UserProfile.objects.create(
+            email='dates_tester@example.com',
+            handle='datestester',
+            full_name='Dates Tester',
+            is_active=True
+        )
+        session = self.client.session
+        session['user_id'] = str(self.user.id)
+        session.save()
+
+        self.trip = Trip.objects.create(
+            title='Nordic Adventure',
+            location='Norway',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 11, 1),
+            end_date=datetime.date(2026, 11, 10),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=self.trip, user=self.user, role='OWNER')
+
+    def test_trip_creation_rejects_end_date_before_start_date(self):
+        """User cannot create a trip with end_date before start_date."""
+        resp = self.client.post(reverse('core:create_trip'), {
+            'title': 'Invalid Dates Trip',
+            'location': 'Reykjavik',
+            'time_granularity': 'EXACT_RANGE',
+            'start_date': '2026-12-10',
+            'end_date': '2026-12-05',
+        }, follow=True)
+        self.assertContains(resp, 'Trip end date cannot be before start date.')
+        self.assertFalse(Trip.objects.filter(title='Invalid Dates Trip').exists())
+
+    def test_trip_creation_accepts_valid_date_range(self):
+        """User can create a trip with end_date >= start_date."""
+        resp = self.client.post(reverse('core:create_trip'), {
+            'title': 'Valid Dates Trip',
+            'location': 'Reykjavik',
+            'time_granularity': 'EXACT_RANGE',
+            'start_date': '2026-12-05',
+            'end_date': '2026-12-10',
+        }, follow=True)
+        self.assertTrue(Trip.objects.filter(title='Valid Dates Trip').exists())
+
+    def test_trip_edit_rejects_end_date_before_start_date(self):
+        """User cannot update a trip to have end_date before start_date."""
+        resp = self.client.post(reverse('core:edit_trip', args=[self.trip.id]), {
+            'title': self.trip.title,
+            'location': self.trip.location,
+            'time_granularity': 'EXACT_RANGE',
+            'start_date': '2026-11-15',
+            'end_date': '2026-11-10',
+        }, follow=True)
+        self.assertContains(resp, 'Trip end date cannot be before start date.')
+        self.trip.refresh_from_db()
+        self.assertEqual(str(self.trip.start_date), '2026-11-01')
+
+    def test_confirmed_stay_requires_start_and_end_dates(self):
+        """Confirmed stays must require both check-in (start) and check-out (end) dates."""
+        # Missing both dates
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Missing Dates Hotel',
+            'status': 'CONFIRMED',
+        }, follow=True)
+        self.assertContains(resp, 'Confirmed stays require both a check-in date (start) and check-out date (end).')
+        self.assertFalse(Stay.objects.filter(title='Missing Dates Hotel').exists())
+
+        # Missing check-out date
+        resp2 = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Missing Checkout Hotel',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-02',
+        }, follow=True)
+        self.assertContains(resp2, 'Confirmed stays require both a check-in date (start) and check-out date (end).')
+        self.assertFalse(Stay.objects.filter(title='Missing Checkout Hotel').exists())
+
+    def test_confirmed_stay_accepts_dates_with_optional_times_omitted(self):
+        """Confirmed stays accept start date and end date with check-in/out times omitted (optional)."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Fjord Cabin',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-02',
+            'check_out_date': '2026-11-06',
+            'check_in_time': '',
+            'check_out_time': '',
+        }, follow=True)
+        stay = Stay.objects.get(title='Fjord Cabin')
+        self.assertEqual(stay.status, 'CONFIRMED')
+        self.assertIsNotNone(stay.check_in)
+        self.assertIsNotNone(stay.check_out)
+        self.assertFalse(stay.is_check_in_time_set)
+        self.assertFalse(stay.is_check_out_time_set)
+
+    def test_confirmed_stay_accepts_dates_with_optional_times_provided(self):
+        """Confirmed stays properly record optional check-in and check-out times when provided."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Grand Fjord Hotel',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-02',
+            'check_out_date': '2026-11-06',
+            'check_in_time': '15:00',
+            'check_out_time': '11:00',
+        }, follow=True)
+        stay = Stay.objects.get(title='Grand Fjord Hotel')
+        self.assertEqual(stay.status, 'CONFIRMED')
+        self.assertTrue(stay.is_check_in_time_set)
+        self.assertTrue(stay.is_check_out_time_set)
+        self.assertEqual(stay.check_in_time_str, '15:00')
+        self.assertEqual(stay.check_out_time_str, '11:00')
+
+    def test_idea_stay_allows_blank_dates(self):
+        """Stays marked as IDEA allow dates to be optional / blank."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Tentative Hostel Idea',
+            'status': 'IDEA',
+        }, follow=True)
+        self.assertTrue(Stay.objects.filter(title='Tentative Hostel Idea').exists())
+        stay = Stay.objects.get(title='Tentative Hostel Idea')
+        self.assertIsNone(stay.check_in)
+        self.assertIsNone(stay.check_out)
+
+    def test_stay_rejects_checkout_date_before_checkin_date(self):
+        """Stay rejects check_out_date that is before check_in_date."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Time Travel Lodge',
+            'status': 'IDEA',
+            'check_in_date': '2026-11-05',
+            'check_out_date': '2026-11-02',
+        }, follow=True)
+        self.assertContains(resp, 'Check-out date/time cannot be before check-in date/time.')
+        self.assertFalse(Stay.objects.filter(title='Time Travel Lodge').exists())
+
+    def test_stay_rejects_checkout_time_before_checkin_time_on_same_date(self):
+        """Stay on same date rejects checkout time that is before checkin time."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Dayroom Lounge',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-05',
+            'check_out_date': '2026-11-05',
+            'check_in_time': '14:00',
+            'check_out_time': '10:00',
+        }, follow=True)
+        self.assertContains(resp, 'Check-out date/time cannot be before check-in date/time.')
+        self.assertFalse(Stay.objects.filter(title='Dayroom Lounge').exists())
+
+    def test_edit_stay_rejects_invalid_date_order_and_confirms_valid_update(self):
+        """Editing stay enforces date bounds and updates dates/times."""
+        stay = Stay.objects.create(
+            trip=self.trip,
+            title='Initial Stay',
+            status='IDEA',
+            created_by=self.user
+        )
+
+        # Invalid edit: checkout before checkin
+        resp = self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay.id]), {
+            'title': 'Initial Stay',
+            'status': 'IDEA',
+            'check_in_date': '2026-11-05',
+            'check_out_date': '2026-11-03',
+        }, follow=True)
+        self.assertContains(resp, 'Check-out date/time cannot be before check-in date/time.')
+        stay.refresh_from_db()
+        self.assertIsNone(stay.check_in)
+
+        # Invalid edit: change status to CONFIRMED without dates
+        resp2 = self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay.id]), {
+            'title': 'Initial Stay',
+            'status': 'CONFIRMED',
+            'check_in_date': '',
+            'check_out_date': '',
+        }, follow=True)
+        self.assertContains(resp2, 'Confirmed stays require both a check-in date (start) and check-out date (end).')
+        stay.refresh_from_db()
+        self.assertEqual(stay.status, 'IDEA')
+
+        # Valid edit to CONFIRMED with dates and optional check-in time only
+        resp3 = self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay.id]), {
+            'title': 'Updated Confirmed Stay',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-03',
+            'check_out_date': '2026-11-07',
+            'check_in_time': '16:00',
+            'check_out_time': '',
+        }, follow=True)
+        stay.refresh_from_db()
+        self.assertEqual(stay.status, 'CONFIRMED')
+        self.assertTrue(stay.is_check_in_time_set)
+        self.assertFalse(stay.is_check_out_time_set)
+
+    def test_nav_rejects_arrival_before_departure(self):
+        """Nav rejects arrival_time earlier than departure_time."""
+        resp = self.client.post(reverse('core:add_nav', args=[self.trip.id]), {
+            'title': 'Backward Flight',
+            'mode': 'Flight',
+            'departure_time': '2026-11-02T14:00',
+            'arrival_time': '2026-11-02T10:00',
+        }, follow=True)
+        self.assertContains(resp, 'Arrival date/time cannot be before departure date/time.')
+        self.assertFalse(Nav.objects.filter(title='Backward Flight').exists())
+
+    def test_nav_accepts_valid_arrival_after_departure(self):
+        """Nav accepts arrival_time >= departure_time."""
+        resp = self.client.post(reverse('core:add_nav', args=[self.trip.id]), {
+            'title': 'Forward Flight',
+            'mode': 'Flight',
+            'departure_time': '2026-11-02T10:00',
+            'arrival_time': '2026-11-02T14:00',
+        }, follow=True)
+        self.assertTrue(Nav.objects.filter(title='Forward Flight').exists())
+
+    def test_do_rejects_end_time_before_start_time(self):
+        """Do rejects end_time earlier than start_time."""
+        resp = self.client.post(reverse('core:add_do', args=[self.trip.id]), {
+            'title': 'Rewind Tour',
+            'start_time': '2026-11-03T15:00',
+            'end_time': '2026-11-03T12:00',
+        }, follow=True)
+        self.assertContains(resp, 'End date/time cannot be before start date/time.')
+        self.assertFalse(Do.objects.filter(title='Rewind Tour').exists())
+
+    def test_do_accepts_valid_end_time_after_start_time(self):
+        """Do accepts end_time >= start_time."""
+        resp = self.client.post(reverse('core:add_do', args=[self.trip.id]), {
+            'title': 'Forward Tour',
+            'start_time': '2026-11-03T12:00',
+            'end_time': '2026-11-03T15:00',
+        }, follow=True)
+        self.assertTrue(Do.objects.filter(title='Forward Tour').exists())
+
+    def test_workspace_renders_stay_dates_and_optional_times_correctly(self):
+        """Workspace renders date-only stays without phantom times, and renders times when set."""
+        import datetime
+        now = timezone.now()
+        # Stay 1: Dates only, no times
+        s1 = Stay.objects.create(
+            trip=self.trip,
+            title='No Times Stay',
+            status='CONFIRMED',
+            check_in=datetime.datetime(2026, 11, 2, 0, 0, tzinfo=datetime.timezone.utc),
+            check_out=datetime.datetime(2026, 11, 6, 0, 0, tzinfo=datetime.timezone.utc),
+            has_check_in_time=False,
+            has_check_out_time=False,
+            created_by=self.user
+        )
+
+        # Stay 2: Dates and times
+        s2 = Stay.objects.create(
+            trip=self.trip,
+            title='With Times Stay',
+            status='CONFIRMED',
+            check_in=datetime.datetime(2026, 11, 6, 15, 0, tzinfo=datetime.timezone.utc),
+            check_out=datetime.datetime(2026, 11, 10, 11, 0, tzinfo=datetime.timezone.utc),
+            has_check_in_time=True,
+            has_check_out_time=True,
+            created_by=self.user
+        )
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Check Add Stay modal input fields
+        self.assertContains(resp, 'name="check_in_date"')
+        self.assertContains(resp, 'name="check_out_date"')
+        self.assertContains(resp, 'name="check_in_time"')
+        self.assertContains(resp, 'name="check_out_time"')
+        self.assertContains(resp, 'Check-in Time <small class="text-muted">(Optional)</small>')
+        self.assertContains(resp, 'Check-out Time <small class="text-muted">(Optional)</small>')
+
+        # Base JS date constraint functions
+        self.assertContains(resp, 'initAllDateConstraints')
+        self.assertContains(resp, 'setupStayDateSync')
+        self.assertContains(resp, 'setupDateRangePair')
+        self.assertContains(resp, 'setupDateTimeRangePair')
+
+
+class MoveStayTastePlayWorkflowTests(TestCase):
+    """Full workflow tests for the restructured Move, Stay, Taste, Play architecture."""
+
+    def setUp(self):
+        from core.models import UserProfile, Trip, TripMember, Move, Stay, Taste, Play
+        self.client = Client()
+        self.owner = UserProfile.objects.create(
+            email='mstp_owner@example.com',
+            handle='mstpowner',
+            full_name='MSTP Owner',
+            is_active=True
+        )
+        self.trip = Trip.objects.create(
+            title='Nordic Adventure',
+            location='Norway',
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + datetime.timedelta(days=7),
+            created_by=self.owner
+        )
+        TripMember.objects.create(trip=self.trip, user=self.owner, role='OWNER')
+
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+    def tearDown(self):
+        from core.md_sync import delete_trip_markdown
+        delete_trip_markdown(self.trip)
+
+    def test_move_crud_and_status_toggle(self):
+        """Test adding, editing, toggling status, and deleting a Move."""
+        from core.models import Move, Nav
+        # Add Move
+        resp = self.client.post(reverse('core:add_move', args=[self.trip.id]), {
+            'title': 'Flight from OSL to BOO',
+            'mode': 'Flight',
+            'origin': 'Oslo (OSL)',
+            'destination': 'Bodo (BOO)',
+            'departure_time': '2026-11-10T08:00',
+            'arrival_time': '2026-11-10T09:30',
+            'status': 'IDEA',
+            'price': '145.00',
+            'confirmation_code': 'NOR-FLY-778',
+        }, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        move = Move.objects.filter(trip=self.trip, title='Flight from OSL to BOO').first()
+        self.assertIsNotNone(move)
+        self.assertEqual(move.mode, 'Flight')
+        self.assertEqual(move.status, 'IDEA')
+        self.assertEqual(float(move.price), 145.00)
+        self.assertEqual(move.confirmation_code, 'NOR-FLY-778')
+
+        # Mirroring check to legacy Nav
+        nav = Nav.objects.filter(trip=self.trip, title='Flight from OSL to BOO').first()
+        self.assertIsNotNone(nav)
+
+        # Toggle status to CONFIRMED
+        toggle_resp = self.client.post(reverse('core:toggle_status', args=['move', move.id]), {
+            'status': 'CONFIRMED'
+        })
+        self.assertEqual(toggle_resp.status_code, 200)
+        move.refresh_from_db()
+        self.assertEqual(move.status, 'CONFIRMED')
+
+        # Edit Move
+        edit_resp = self.client.post(reverse('core:edit_move', args=[self.trip.id, move.id]), {
+            'title': 'Updated Flight to Bodo',
+            'mode': 'Flight',
+            'origin': 'Oslo (OSL)',
+            'destination': 'Bodo (BOO)',
+            'departure_time': '2026-11-10T08:30',
+            'arrival_time': '2026-11-10T10:00',
+            'status': 'CONFIRMED',
+            'price': '160.00',
+        }, follow=True)
+        self.assertEqual(edit_resp.status_code, 200)
+        move.refresh_from_db()
+        self.assertEqual(move.title, 'Updated Flight to Bodo')
+        self.assertEqual(float(move.price), 160.00)
+
+        # Delete Move
+        del_resp = self.client.post(reverse('core:delete_move', args=[self.trip.id, move.id]), follow=True)
+        self.assertEqual(del_resp.status_code, 200)
+        self.assertFalse(Move.objects.filter(id=move.id).exists())
+
+    def test_taste_crud_and_status_toggle(self):
+        """Test adding, editing, toggling status, and deleting a Taste item."""
+        from core.models import Taste
+        # Add Taste
+        resp = self.client.post(reverse('core:add_taste', args=[self.trip.id]), {
+            'title': 'Restaurant Lofoten Fiskerestaurant',
+            'taste_type': 'Restaurant',
+            'address': 'Havnegata 12, Svolvaer',
+            'start_time': '2026-11-12T19:30',
+            'status': 'IDEA',
+            'price': '95.00',
+            'confirmation_code': 'LOFOTEN-42',
+            'notes': 'Book window table overlooking harbor',
+        }, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        taste = Taste.objects.filter(trip=self.trip, title='Restaurant Lofoten Fiskerestaurant').first()
+        self.assertIsNotNone(taste)
+        self.assertEqual(taste.taste_type, 'Restaurant')
+        self.assertEqual(taste.confirmation_code, 'LOFOTEN-42')
+
+        # Toggle status to CONFIRMED
+        toggle_resp = self.client.post(reverse('core:toggle_status', args=['taste', taste.id]), {
+            'status': 'CONFIRMED'
+        })
+        self.assertEqual(toggle_resp.status_code, 200)
+        taste.refresh_from_db()
+        self.assertEqual(taste.status, 'CONFIRMED')
+
+        # Edit Taste
+        edit_resp = self.client.post(reverse('core:edit_taste', args=[self.trip.id, taste.id]), {
+            'title': 'Lofoten Seafood Feast',
+            'taste_type': 'Restaurant',
+            'address': 'Havnegata 12, Svolvaer',
+            'start_time': '2026-11-12T20:00',
+            'status': 'CONFIRMED',
+            'price': '110.00',
+            'notes': 'Confirmed window table',
+        }, follow=True)
+        self.assertEqual(edit_resp.status_code, 200)
+        taste.refresh_from_db()
+        self.assertEqual(taste.title, 'Lofoten Seafood Feast')
+        self.assertEqual(float(taste.price), 110.00)
+
+        # Delete Taste
+        del_resp = self.client.post(reverse('core:delete_taste', args=[self.trip.id, taste.id]), follow=True)
+        self.assertEqual(del_resp.status_code, 200)
+        self.assertFalse(Taste.objects.filter(id=taste.id).exists())
+
+    def test_play_crud_and_status_toggle(self):
+        """Test adding, editing, toggling status, and deleting a Play item."""
+        from core.models import Play
+        # Add Play
+        resp = self.client.post(reverse('core:add_play', args=[self.trip.id]), {
+            'title': 'Reinebringen Summit Hike',
+            'play_type': 'Outdoor & Hike',
+            'address': 'Reine, Lofoten',
+            'start_time': '2026-11-11T10:00',
+            'end_time': '2026-11-11T14:00',
+            'status': 'CONFIRMED',
+            'price': '0.00',
+            'notes': '1560 stone sherpa steps',
+        }, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        play = Play.objects.filter(trip=self.trip, title='Reinebringen Summit Hike').first()
+        self.assertIsNotNone(play)
+        self.assertEqual(play.play_type, 'Outdoor & Hike')
+        self.assertEqual(play.status, 'CONFIRMED')
+
+        # Edit Play
+        edit_resp = self.client.post(reverse('core:edit_play', args=[self.trip.id, play.id]), {
+            'title': 'Reinebringen Sherpa Stair Hike',
+            'play_type': 'Outdoor & Hike',
+            'address': 'Reine, Lofoten',
+            'start_time': '2026-11-11T09:30',
+            'end_time': '2026-11-11T13:30',
+            'status': 'COMPLETE',
+            'price': '0.00',
+            'notes': 'Completed successfully with great weather',
+        }, follow=True)
+        self.assertEqual(edit_resp.status_code, 200)
+        play.refresh_from_db()
+        self.assertEqual(play.title, 'Reinebringen Sherpa Stair Hike')
+        self.assertEqual(play.status, 'COMPLETE')
+
+        # Delete Play
+        del_resp = self.client.post(reverse('core:delete_play', args=[self.trip.id, play.id]), follow=True)
+        self.assertEqual(del_resp.status_code, 200)
+        self.assertFalse(Play.objects.filter(id=play.id).exists())
+
+    def test_markdown_sync_structure_order(self):
+        """Verify markdown file generates ## Move, ## Stay, ## Taste, ## Play in exact canonical order."""
+        import os
+        from core.models import Move, Stay, Taste, Play
+        from core.md_sync import sync_trip_to_markdown, get_trips_directory, get_trip_filename
+
+        Move.objects.create(
+            trip=self.trip,
+            title='Bergen Rail',
+            mode='Train',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        Stay.objects.create(
+            trip=self.trip,
+            title='Fjord Lodge',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        Taste.objects.create(
+            trip=self.trip,
+            title='Bakery Cinnamon Buns',
+            taste_type='Cafe & Bakery',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        Play.objects.create(
+            trip=self.trip,
+            title='Fjord Kayaking',
+            play_type='Water & Boat',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+
+        # Trigger md sync
+        md_path = sync_trip_to_markdown(self.trip)
+        self.assertTrue(os.path.exists(md_path))
+        with open(md_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        move_idx = content.find('## Move')
+        stay_idx = content.find('## Stay')
+        taste_idx = content.find('## Taste')
+        play_idx = content.find('## Play')
+
+        self.assertNotEqual(move_idx, -1)
+        self.assertNotEqual(stay_idx, -1)
+        self.assertNotEqual(taste_idx, -1)
+        self.assertNotEqual(play_idx, -1)
+
+        # Assert strict canonical ordering: Move -> Stay -> Taste -> Play
+        self.assertTrue(move_idx < stay_idx < taste_idx < play_idx)
+
+    def test_public_recommendation_populates_taste_and_play(self):
+        """Verify public recommend link categorizes entries into Taste vs Play."""
+        from core.models import Taste, Play
+
+        # Recommend Taste (Food/Dining)
+        url = reverse('core:public_recommend', args=[self.trip.rec_token])
+        resp1 = self.client.post(url, {
+            'guest_name': 'Foodie Friend',
+            'title': 'Best Fish Soup',
+            'category': 'Taste',
+            'sub_type': 'Restaurant',
+            'description': 'Creamy Bergen fish soup',
+        }, follow=True)
+        self.assertEqual(resp1.status_code, 200)
+        taste = Taste.objects.filter(trip=self.trip, title='Best Fish Soup').first()
+        self.assertIsNotNone(taste)
+        self.assertEqual(taste.guest_name, 'Foodie Friend')
+
+        # Recommend Play (Activity)
+        resp2 = self.client.post(url, {
+            'guest_name': 'Explorer Friend',
+            'title': 'Floibanen Funicular',
+            'category': 'Play',
+            'sub_type': 'Sightseeing',
+            'description': 'Funicular ride up Mount Floyen',
+        }, follow=True)
+        self.assertEqual(resp2.status_code, 200)
+        play = Play.objects.filter(trip=self.trip, title='Floibanen Funicular').first()
+        self.assertIsNotNone(play)
+        self.assertEqual(play.guest_name, 'Explorer Friend')
+
+
+
+
 
 
 

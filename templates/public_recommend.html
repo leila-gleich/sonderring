@@ -44,12 +44,10 @@
                     <small class="form-hint">So the trippers know who recommended it!</small>
                 </div>
                 <div class="form-col">
-                    <label class="form-label">Category <span class="required">*</span></label>
+                    <label class="form-label">Recommendation Type <span class="required">*</span></label>
                     <select name="category" class="form-control" required>
-                        <option value="Food" {% if form_data.category == 'Food' %}selected{% endif %}>🍽️ Food & Dining</option>
-                        <option value="Spot" {% if form_data.category == 'Spot' %}selected{% endif %}>🔭 Sight & Spot</option>
-                        <option value="Activity" {% if form_data.category == 'Activity' %}selected{% endif %}>🎯 Activity & Tour</option>
-                        <option value="Tip" {% if form_data.category == 'Tip' %}selected{% endif %}>💡 Travel Tip & Advice</option>
+                        <option value="Taste" {% if form_data.category == 'Taste' or form_data.category == 'Food' %}selected{% endif %}>🍽️ Taste (Food, Drink & Dining)</option>
+                        <option value="Play" {% if form_data.category == 'Play' or form_data.category == 'Activity' or form_data.category == 'Spot' %}selected{% endif %}>🎯 Play (Activity, Sight, Tour & Tip)</option>
                     </select>
                 </div>
             </div>
@@ -83,34 +81,59 @@
         </form>
         {% endif %}
 
-        {% if existing_recs %}
+        {% if existing_tastes or existing_plays %}
         <div class="existing-recs-section">
             <div class="existing-recs-header">
                 <h3 class="existing-recs-title">Recommendations Added So Far</h3>
-                <span class="existing-recs-count">{{ existing_recs|length }} spot{{ existing_recs|length|pluralize }}</span>
+                <span class="existing-recs-count">{{ existing_tastes|length|add:existing_plays|length }} items</span>
             </div>
             <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.25rem;">See what others have recommended so far for {{ trip.title }}.</p>
             <div class="recs-grid">
-                {% for r in existing_recs %}
-                <div class="rec-card rec-cat-{{ r.category|lower }}">
+                {% for t in existing_tastes %}
+                <div class="rec-card rec-cat-food">
                     <div class="rec-card-header">
-                        <span class="rec-category-badge">{{ r.get_category_display }}</span>
-                        {% if r.guest_name %}
-                        <span class="rec-guest-tag">💌 from {{ r.guest_name }}</span>
-                        {% elif r.recommended_by %}
-                        <span class="rec-recommender">by @{{ r.recommended_by.handle }}</span>
+                        <span class="rec-category-badge">🍽️ {{ t.get_taste_type_display }}</span>
+                        {% if t.guest_name %}
+                        <span class="rec-guest-tag">💌 from {{ t.guest_name }}</span>
+                        {% elif t.recommended_by %}
+                        <span class="rec-recommender">by @{{ t.recommended_by.handle }}</span>
                         {% endif %}
                     </div>
-                    <h4 class="rec-title">{{ r.title }}</h4>
-                    {% if r.description %}
-                    <p class="rec-desc">{{ r.description }}</p>
+                    <h4 class="rec-title">{{ t.title }}</h4>
+                    {% if t.description %}
+                    <p class="rec-desc">{{ t.description }}</p>
                     {% endif %}
-                    {% if r.address %}
-                    <div class="rec-address">📍 {{ r.address }}</div>
+                    {% if t.address %}
+                    <div class="rec-address">📍 {{ t.address }}</div>
                     {% endif %}
-                    {% if r.link %}
+                    {% if t.link %}
                     <div style="margin-top: 0.5rem;">
-                        <a href="{{ r.link }}" target="_blank" class="btn btn-sm btn-outline">View Link ↗</a>
+                        <a href="{{ t.link }}" target="_blank" class="btn btn-sm btn-outline">View Link ↗</a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                {% for p in existing_plays %}
+                <div class="rec-card rec-cat-activity">
+                    <div class="rec-card-header">
+                        <span class="rec-category-badge">🎯 {{ p.get_play_type_display }}</span>
+                        {% if p.guest_name %}
+                        <span class="rec-guest-tag">💌 from {{ p.guest_name }}</span>
+                        {% elif p.recommended_by %}
+                        <span class="rec-recommender">by @{{ p.recommended_by.handle }}</span>
+                        {% endif %}
+                    </div>
+                    <h4 class="rec-title">{{ p.title }}</h4>
+                    {% if p.description %}
+                    <p class="rec-desc">{{ p.description }}</p>
+                    {% endif %}
+                    {% if p.address %}
+                    <div class="rec-address">📍 {{ p.address }}</div>
+                    {% endif %}
+                    {% if p.link %}
+                    <div style="margin-top: 0.5rem;">
+                        <a href="{{ p.link }}" target="_blank" class="btn btn-sm btn-outline">View Link ↗</a>
                     </div>
                     {% endif %}
                 </div>

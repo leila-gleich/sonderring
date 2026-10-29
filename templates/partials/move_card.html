@@ -1,0 +1,250 @@
+<div class="item-card nav-card move-card">
+    <div class="item-card-header">
+        <div class="item-card-header-top">
+            <div class="nav-mode-row">
+                <span class="mode-icon">
+                    {% if move.mode == 'Flight' %}✈️
+                    {% elif move.mode == 'Train' %}🚆
+                    {% elif move.mode == 'Ferry' %}⛴️
+                    {% elif move.mode == 'Car' %}🚗
+                    {% elif move.mode == 'Bus' %}🚌
+                    {% else %}🧭{% endif %}
+                </span>
+                <span class="item-type-badge">{{ move.mode }} • {{ move.get_direction_display }}</span>
+            </div>
+            <div class="item-header-actions">
+                <span class="status-pill status-{{ move.status|lower }} status-badge-move-{{ move.id }}">
+                    {{ move.get_status_display }}
+                </span>
+                {% if can_edit or move.created_by == current_user %}
+                <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('move', '{{ move.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
+                    ⇄
+                </button>
+                <button type="button" class="btn-card-action" onclick="openEditItemModal('move', '{{ move.id }}')" title="Edit Move">✏️</button>
+                <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('move', '{{ move.id }}')" title="Delete Move">🗑️</button>
+                {% endif %}
+            </div>
+        </div>
+        <h4 class="item-title">{{ move.title }}</h4>
+    </div>
+
+    {% if move.passenger_name %}
+    <div class="passenger-tag-row">
+        <span class="passenger-icon">👤</span>
+        <span class="passenger-label">Passengers:</span>
+        <span class="passenger-names">{{ move.passenger_name }}</span>
+    </div>
+    {% endif %}
+
+    {% if move.origin_address or move.departure_time or move.destination_address or move.arrival_time %}
+    <div class="nav-route-box">
+        {% if move.origin_address or move.departure_time %}
+        <div class="route-point">
+            <span class="route-dot origin-dot"></span>
+            <div class="route-info">
+                <small class="route-label">Departure</small>
+                {% if move.origin_address %}<div class="route-place">{{ move.origin_address }}</div>{% endif %}
+                {% if move.departure_time %}
+                <div class="route-time">{{ move.departure_time|date:"M d, Y • g:i A" }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if move.origin_address or move.departure_time %}
+            {% if move.destination_address or move.arrival_time %}
+            <div class="route-connector-line">
+                <span class="connector-arrow">➔</span>
+            </div>
+            {% endif %}
+        {% endif %}
+
+        {% if move.destination_address or move.arrival_time %}
+        <div class="route-point">
+            <span class="route-dot dest-dot"></span>
+            <div class="route-info">
+                <small class="route-label">Arrival</small>
+                {% if move.destination_address %}<div class="route-place">{{ move.destination_address }}</div>{% endif %}
+                {% if move.arrival_time %}
+                <div class="route-time">{{ move.arrival_time|date:"M d, Y • g:i A" }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Confidence Badges -->
+    {% if move.departure_time or move.arrival_time %}
+    <div class="confidence-row">
+        {% if move.date_confidence == 'TENTATIVE' %}
+        <span class="confidence-pill pill-warning">⚠️ Date Tentative</span>
+        {% else %}
+        <span class="confidence-pill pill-success">✓ Date Confirmed</span>
+        {% endif %}
+
+        {% if move.time_confidence == 'TENTATIVE' %}
+        <span class="confidence-pill pill-warning">⚠️ Time Tentative</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if move.flexibility_notes %}
+    <p class="item-notes"><strong>Logistics:</strong> {{ move.flexibility_notes }}</p>
+    {% endif %}
+
+    {% if move.price or move.has_confirmation_code or move.booking_link %}
+    <div class="item-footer">
+        {% if move.price %}
+        <div class="price-box">
+            <span class="price-val">${{ move.price|floatformat:2 }}</span>
+            <span class="price-currency">{{ move.currency }}</span>
+        </div>
+        {% endif %}
+
+        {% if move.has_confirmation_code %}
+        <div class="code-box-container">
+            <span class="masked-code">••••••••</span>
+            <button type="button" class="btn btn-sm btn-outline" onclick="revealCode('move', '{{ move.id }}', this.parentElement)">Reveal Code</button>
+        </div>
+        {% endif %}
+
+        {% if move.booking_link %}
+        <a href="{{ move.booking_link }}" target="_blank" class="btn btn-sm btn-secondary">Booking Link ↗</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card-attribution-bar">
+        <span class="attr-author">Added by <strong>@{{ move.created_by.handle|default:"traveler" }}</strong> · {{ move.created_at|date:"M d, Y" }}</span>
+        {% if move.updated_by and move.updated_by != move.created_by %}
+        <span class="attr-editor">· Last edited by <strong>@{{ move.updated_by.handle }}</strong> ({{ move.updated_at|timesince }} ago)</span>
+        {% elif move.updated_by and move.updated_at != move.created_at %}
+        <span class="attr-editor">· Edited {{ move.updated_at|timesince }} ago</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- EDIT MOVE MODAL -->
+{% if can_edit or move.created_by == current_user %}
+<div id="editMoveModal_{{ move.id }}" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Move: {{ move.title }}</h3>
+            <button type="button" class="modal-close" onclick="closeModal('editMoveModal_{{ move.id }}')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:edit_move' trip.id move.id %}" class="modal-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="">
+            <div class="form-row">
+                <div class="form-col" style="flex: 2;">
+                    <label class="form-label">Transport Title <span class="required">*</span></label>
+                    <input type="text" name="title" class="form-control" value="{{ move.title }}" required>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Mode</label>
+                    <select name="mode" class="form-control">
+                        <option value="Flight" {% if move.mode == 'Flight' %}selected{% endif %}>Flight</option>
+                        <option value="Train" {% if move.mode == 'Train' %}selected{% endif %}>Train</option>
+                        <option value="Car" {% if move.mode == 'Car' %}selected{% endif %}>Car / Rental</option>
+                        <option value="Ferry" {% if move.mode == 'Ferry' %}selected{% endif %}>Ferry / Cruise</option>
+                        <option value="Bus" {% if move.mode == 'Bus' %}selected{% endif %}>Bus</option>
+                        <option value="Rideshare" {% if move.mode == 'Rideshare' %}selected{% endif %}>Rideshare</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Trip Stage</label>
+                    <select name="trip_stage" class="form-control">
+                        <option value="START_END" {% if move.trip_stage == 'START_END' %}selected{% endif %}>Trip Start/End</option>
+                        <option value="MID_TRIP" {% if move.trip_stage == 'MID_TRIP' %}selected{% endif %}>Mid-Trip</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Direction</label>
+                    <select name="direction" class="form-control">
+                        <option value="ARRIVING" {% if move.direction == 'ARRIVING' %}selected{% endif %}>Arriving to Trip</option>
+                        <option value="LEAVING" {% if move.direction == 'LEAVING' %}selected{% endif %}>Leaving Trip</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="IDEA" {% if move.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
+                        <option value="CONFIRMED" {% if move.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                        <option value="COMPLETE" {% if move.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Origin</label>
+                    <input type="text" name="origin_address" class="form-control" value="{{ move.origin_address|default:'' }}">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Destination</label>
+                    <input type="text" name="destination_address" class="form-control" value="{{ move.destination_address|default:'' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Departure Time</label>
+                    <input type="datetime-local" name="departure_time" class="form-control" value="{{ move.departure_time|date:'Y-m-d\TH:i' }}">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Arrival Time</label>
+                    <input type="datetime-local" name="arrival_time" class="form-control" value="{{ move.arrival_time|date:'Y-m-d\TH:i' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Passengers</label>
+                    <input type="text" name="passenger_name" class="form-control" value="{{ move.passenger_name|default:'' }}">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Price ($)</label>
+                    <input type="number" step="0.01" name="price" class="form-control" value="{{ move.price|default:'' }}">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Confirmation Code</label>
+                    <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Flexibility & Route Notes</label>
+                <textarea name="flexibility_notes" class="form-control" rows="2">{{ move.flexibility_notes|default:'' }}</textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editMoveModal_{{ move.id }}')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DELETE MOVE MODAL -->
+<div id="deleteMoveModal_{{ move.id }}" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title text-danger">Delete Move?</h3>
+            <button type="button" class="modal-close" onclick="closeModal('deleteMoveModal_{{ move.id }}')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:delete_move' trip.id move.id %}" class="modal-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="">
+            <p>Are you sure you want to remove <strong>"{{ move.title }}"</strong> from this trip?</p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('deleteMoveModal_{{ move.id }}')">Cancel</button>
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}

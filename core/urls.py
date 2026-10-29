@@ -21,25 +21,36 @@ urlpatterns = [
     path('trips/<uuid:trip_id>/status/', views.update_trip_status_view, name='update_trip_status'),
     path('trips/<uuid:trip_id>/delete/', views.delete_trip_view, name='delete_trip'),
 
+    # Move CRUD
+    path('trips/<uuid:trip_id>/moves/add/', views.add_move_view, name='add_move'),
+    path('trips/<uuid:trip_id>/moves/<uuid:move_id>/edit/', views.edit_move_view, name='edit_move'),
+    path('trips/<uuid:trip_id>/moves/<uuid:move_id>/delete/', views.delete_move_view, name='delete_move'),
+
     # Stays CRUD
     path('trips/<uuid:trip_id>/stays/add/', views.add_stay_view, name='add_stay'),
     path('trips/<uuid:trip_id>/stays/<uuid:stay_id>/edit/', views.edit_stay_view, name='edit_stay'),
     path('trips/<uuid:trip_id>/stays/<uuid:stay_id>/delete/', views.delete_stay_view, name='delete_stay'),
 
-    # Navs CRUD
-    path('trips/<uuid:trip_id>/navs/add/', views.add_nav_view, name='add_nav'),
-    path('trips/<uuid:trip_id>/navs/<uuid:nav_id>/edit/', views.edit_nav_view, name='edit_nav'),
-    path('trips/<uuid:trip_id>/navs/<uuid:nav_id>/delete/', views.delete_nav_view, name='delete_nav'),
+    # Taste CRUD (Food & Drink)
+    path('trips/<uuid:trip_id>/tastes/add/', views.add_taste_view, name='add_taste'),
+    path('trips/<uuid:trip_id>/tastes/<uuid:taste_id>/edit/', views.edit_taste_view, name='edit_taste'),
+    path('trips/<uuid:trip_id>/tastes/<uuid:taste_id>/delete/', views.delete_taste_view, name='delete_taste'),
 
-    # Dos CRUD
-    path('trips/<uuid:trip_id>/dos/add/', views.add_do_view, name='add_do'),
-    path('trips/<uuid:trip_id>/dos/<uuid:do_id>/edit/', views.edit_do_view, name='edit_do'),
-    path('trips/<uuid:trip_id>/dos/<uuid:do_id>/delete/', views.delete_do_view, name='delete_do'),
+    # Play CRUD (Activities, Sights, Experiences)
+    path('trips/<uuid:trip_id>/plays/add/', views.add_play_view, name='add_play'),
+    path('trips/<uuid:trip_id>/plays/<uuid:play_id>/edit/', views.edit_play_view, name='edit_play'),
+    path('trips/<uuid:trip_id>/plays/<uuid:play_id>/delete/', views.delete_play_view, name='delete_play'),
 
-    # Recs CRUD
-    path('trips/<uuid:trip_id>/recs/add/', views.add_rec_view, name='add_rec'),
-    path('trips/<uuid:trip_id>/recs/<uuid:rec_id>/edit/', views.edit_rec_view, name='edit_rec'),
-    path('trips/<uuid:trip_id>/recs/<uuid:rec_id>/delete/', views.delete_rec_view, name='delete_rec'),
+    # Legacy Navs, Dos, Recs Routes (Aliases for backward compatibility)
+    path('trips/<uuid:trip_id>/navs/add/', views.add_move_view, name='add_nav'),
+    path('trips/<uuid:trip_id>/navs/<uuid:nav_id>/edit/', views.edit_move_view, name='edit_nav'),
+    path('trips/<uuid:trip_id>/navs/<uuid:nav_id>/delete/', views.delete_move_view, name='delete_nav'),
+    path('trips/<uuid:trip_id>/dos/add/', views.add_play_view, name='add_do'),
+    path('trips/<uuid:trip_id>/dos/<uuid:do_id>/edit/', views.edit_play_view, name='edit_do'),
+    path('trips/<uuid:trip_id>/dos/<uuid:do_id>/delete/', views.delete_play_view, name='delete_do'),
+    path('trips/<uuid:trip_id>/recs/add/', views.add_taste_view, name='add_rec'),
+    path('trips/<uuid:trip_id>/recs/<uuid:rec_id>/edit/', views.edit_taste_view, name='edit_rec'),
+    path('trips/<uuid:trip_id>/recs/<uuid:rec_id>/delete/', views.delete_taste_view, name='delete_rec'),
     path('trips/<uuid:trip_id>/recs/<uuid:rec_id>/promote/', views.promote_rec_view, name='promote_rec'),
     path('trips/recommend/<str:rec_token>/', views.public_recommend_view, name='public_recommend'),
 

@@ -4,6 +4,7 @@ import hashlib
 import secrets
 from django.db import models
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from .encryption import ConfirmationEncryptor, EncryptedCharField, EncryptedTextField
 
 class UserProfile(models.Model):
@@ -207,12 +208,14 @@ class Trip(models.Model):
 
     @property
     def formatted_dates(self):
-        if self.time_granularity == 'EXACT_RANGE' and self.start_date and self.end_date:
-            if self.start_date.year == self.end_date.year:
-                if self.start_date.month == self.end_date.month:
-                    return f"{self.start_date.strftime('%b %d')} – {self.end_date.strftime('%d, %Y')}"
-                return f"{self.start_date.strftime('%b %d')} – {self.end_date.strftime('%b %d, %Y')}"
-            return f"{self.start_date.strftime('%b %d, %Y')} – {self.end_date.strftime('%b %d, %Y')}"
+        s_date = parse_date(self.start_date) if isinstance(self.start_date, str) else self.start_date
+        e_date = parse_date(self.end_date) if isinstance(self.end_date, str) else self.end_date
+        if self.time_granularity == 'EXACT_RANGE' and s_date and e_date:
+            if s_date.year == e_date.year:
+                if s_date.month == e_date.month:
+                    return f"{s_date.strftime('%b %d')} – {e_date.strftime('%d, %Y')}"
+                return f"{s_date.strftime('%b %d')} – {e_date.strftime('%b %d, %Y')}"
+            return f"{s_date.strftime('%b %d, %Y')} – {e_date.strftime('%b %d, %Y')}"
         elif self.time_granularity == 'SEASON_YEAR' and self.season:
             return f"{self.get_season_display()} {self.year}"
         elif self.time_granularity == 'MONTH' and self.start_month:
@@ -227,31 +230,47 @@ class Trip(models.Model):
 
     @property
     def total_items_count(self):
-        return self.stays.count() + self.navs.count() + self.dos.count()
+        return self.moves.count() + self.stays.count() + self.tastes.count() + self.plays.count()
 
     @property
     def confirmed_items_count(self):
         return (
+            self.moves.filter(status='CONFIRMED').count() +
             self.stays.filter(status='CONFIRMED').count() +
-            self.navs.filter(status='CONFIRMED').count() +
-            self.dos.filter(status='CONFIRMED').count()
+            self.tastes.filter(status='CONFIRMED').count() +
+            self.plays.filter(status='CONFIRMED').count()
         )
 
     @property
     def idea_items_count(self):
         return (
+            self.moves.filter(status='IDEA').count() +
             self.stays.filter(status='IDEA').count() +
-            self.navs.filter(status='IDEA').count() +
-            self.dos.filter(status='IDEA').count()
+            self.tastes.filter(status='IDEA').count() +
+            self.plays.filter(status='IDEA').count()
         )
 
     @property
     def complete_items_count(self):
         return (
+            self.moves.filter(status='COMPLETE').count() +
             self.stays.filter(status='COMPLETE').count() +
-            self.navs.filter(status='COMPLETE').count() +
-            self.dos.filter(status='COMPLETE').count()
+            self.tastes.filter(status='COMPLETE').count() +
+            self.plays.filter(status='COMPLETE').count()
         )
+
+    # Backward compatibility properties
+    @property
+    def navs(self):
+        return self.moves
+
+    @property
+    def dos(self):
+        return self.plays
+
+    @property
+    def recs(self):
+        return self.tastes
 
 
 class TripMember(models.Model):
@@ -300,6 +319,8 @@ class Stay(models.Model):
     address = models.TextField(blank=True, null=True)
     check_in = models.DateTimeField(blank=True, null=True)
     check_out = models.DateTimeField(blank=True, null=True)
+    has_check_in_time = models.BooleanField(default=False)
+    has_check_out_time = models.BooleanField(default=False)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     currency = models.CharField(max_length=3, default='USD')
     booking_link = models.URLField(blank=True, null=True)
@@ -341,6 +362,317 @@ class Stay(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.status})"
+
+    @property
+    def is_check_in_time_set(self):
+        return self.has_check_in_time or (bool(self.check_in) and (self.check_in.hour != 0 or self.check_in.minute != 0))
+
+    @property
+    def is_check_out_time_set(self):
+        return self.has_check_out_time or (bool(self.check_out) and (self.check_out.hour != 0 or self.check_out.minute != 0))
+
+    @property
+    def check_in_time_str(self):
+        if self.check_in and self.is_check_in_time_set:
+            return self.check_in.strftime('%H:%M')
+        return ''
+
+    @property
+    def check_out_time_str(self):
+        if self.check_out and self.is_check_out_time_set:
+            return self.check_out.strftime('%H:%M')
+        return ''
+
+
+class Move(models.Model):
+    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
+    STAGE_CHOICES = [
+        ('START_END', 'Trip Start/End'),
+        ('MID_TRIP', 'Mid-Trip'),
+    ]
+    DIRECTION_CHOICES = [
+        ('ARRIVING', 'Arriving to Trip'),
+        ('LEAVING', 'Leaving Trip'),
+    ]
+    CONFIDENCE_CHOICES = [
+        ('CONFIRMED', 'Confirmed'),
+        ('TENTATIVE', 'Tentative'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='moves')
+    title = models.CharField(max_length=150)
+    mode = models.CharField(max_length=50) # Flight, Train, Ferry, Car, Bus, etc.
+    trip_stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='START_END')
+    direction = models.CharField(max_length=20, choices=DIRECTION_CHOICES, default='ARRIVING')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
+    passenger_name = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        aad_context='move:passenger_name',
+        help_text="AES-256-GCM encrypted passenger name."
+    )
+    description = models.TextField(blank=True, null=True)
+    origin_address = models.TextField(blank=True, null=True)
+    destination_address = models.TextField(blank=True, null=True)
+    departure_time = models.DateTimeField(blank=True, null=True)
+    arrival_time = models.DateTimeField(blank=True, null=True)
+    has_departure_time = models.BooleanField(default=False)
+    has_arrival_time = models.BooleanField(default=False)
+    date_confidence = models.CharField(max_length=20, choices=CONFIDENCE_CHOICES, default='CONFIRMED')
+    time_confidence = models.CharField(max_length=20, choices=CONFIDENCE_CHOICES, default='CONFIRMED')
+    flexibility_notes = EncryptedTextField(
+        blank=True,
+        null=True,
+        aad_context='move:flexibility_notes',
+        help_text="AES-256-GCM encrypted transit flexibility & ticket notes."
+    )
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    currency = models.CharField(max_length=3, default='USD')
+    booking_link = models.URLField(blank=True, null=True)
+    _encrypted_confirmation_code = models.TextField(db_column='encrypted_confirmation_code', blank=True, null=True)
+    created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_moves')
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_moves')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'moves'
+        verbose_name = 'Move'
+        verbose_name_plural = 'Moves'
+        indexes = [
+            models.Index(fields=['trip', 'status', 'departure_time'], name='idx_move_trip_status_dept'),
+        ]
+
+    @property
+    def _confirmation_aad(self) -> str:
+        return f"move:{self.trip_id}" if self.trip_id else "move"
+
+    @property
+    def has_confirmation_code(self):
+        return bool(self._encrypted_confirmation_code)
+
+    @property
+    def confirmation_code(self):
+        return ConfirmationEncryptor.decrypt(self._encrypted_confirmation_code, aad=self._confirmation_aad)
+
+    @confirmation_code.setter
+    def confirmation_code(self, value):
+        self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value, aad=self._confirmation_aad)
+
+    def __str__(self):
+        return f"{self.title} - {self.mode} ({self.status})"
+
+    @property
+    def is_departure_time_set(self):
+        return self.has_departure_time or (bool(self.departure_time) and (self.departure_time.hour != 0 or self.departure_time.minute != 0))
+
+    @property
+    def is_arrival_time_set(self):
+        return self.has_arrival_time or (bool(self.arrival_time) and (self.arrival_time.hour != 0 or self.arrival_time.minute != 0))
+
+    @property
+    def departure_time_str(self):
+        if self.departure_time and self.is_departure_time_set:
+            return self.departure_time.strftime('%H:%M')
+        return ''
+
+    @property
+    def arrival_time_str(self):
+        if self.arrival_time and self.is_arrival_time_set:
+            return self.arrival_time.strftime('%H:%M')
+        return ''
+
+
+class Taste(models.Model):
+    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
+    TASTE_TYPE_CHOICES = [
+        ('Restaurant', 'Restaurant & Dining'),
+        ('Bar & Drinks', 'Bar & Cocktails'),
+        ('Cafe & Bakery', 'Café & Bakery'),
+        ('Winery & Brewery', 'Winery & Brewery'),
+        ('Food Market', 'Food Market & Street Food'),
+        ('Culinary Tour', 'Culinary Tour & Tasting'),
+        ('Dessert', 'Dessert & Ice Cream'),
+        ('Coffee', 'Coffee & Tea'),
+        ('Cooking Class', 'Cooking Class & Workshop'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='tastes')
+    title = models.CharField(max_length=150)
+    taste_type = models.CharField(max_length=50, choices=TASTE_TYPE_CHOICES, default='Restaurant')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
+    description = models.TextField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    start_time = models.DateTimeField(blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    has_start_time = models.BooleanField(default=False)
+    has_end_time = models.BooleanField(default=False)
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    currency = models.CharField(max_length=3, default='USD')
+    link = models.URLField(blank=True, null=True)
+    _encrypted_confirmation_code = models.TextField(db_column='encrypted_confirmation_code', blank=True, null=True)
+    notes = EncryptedTextField(
+        blank=True,
+        null=True,
+        aad_context='taste:notes',
+        help_text="AES-256-GCM encrypted reservation notes, table requests, or dietary details."
+    )
+    guest_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Name or nickname of non-tripper contributor"
+    )
+    recommended_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='recommended_tastes')
+    created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_tastes')
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_tastes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'tastes'
+        verbose_name = 'Taste'
+        verbose_name_plural = 'Tastes'
+        indexes = [
+            models.Index(fields=['trip', 'status', 'start_time'], name='idx_taste_trip_status_start'),
+        ]
+
+    @property
+    def _confirmation_aad(self) -> str:
+        return f"taste:{self.trip_id}" if self.trip_id else "taste"
+
+    @property
+    def has_confirmation_code(self):
+        return bool(self._encrypted_confirmation_code)
+
+    @property
+    def confirmation_code(self):
+        return ConfirmationEncryptor.decrypt(self._encrypted_confirmation_code, aad=self._confirmation_aad)
+
+    @confirmation_code.setter
+    def confirmation_code(self, value):
+        self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value, aad=self._confirmation_aad)
+
+    def __str__(self):
+        return f"{self.title} ({self.taste_type} - {self.status})"
+
+    @property
+    def is_start_time_set(self):
+        return self.has_start_time or (bool(self.start_time) and (self.start_time.hour != 0 or self.start_time.minute != 0))
+
+    @property
+    def is_end_time_set(self):
+        return self.has_end_time or (bool(self.end_time) and (self.end_time.hour != 0 or self.end_time.minute != 0))
+
+    @property
+    def start_time_str(self):
+        if self.start_time and self.is_start_time_set:
+            return self.start_time.strftime('%H:%M')
+        return ''
+
+    @property
+    def end_time_str(self):
+        if self.end_time and self.is_end_time_set:
+            return self.end_time.strftime('%H:%M')
+        return ''
+
+
+class Play(models.Model):
+    STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
+    PLAY_TYPE_CHOICES = [
+        ('Sightseeing', 'Sightseeing & Landmark'),
+        ('Outdoor & Hike', 'Outdoor & Hike'),
+        ('Tour & Excursion', 'Tour & Excursion'),
+        ('Culture & Museum', 'Culture & Museum'),
+        ('Water & Boat', 'Water & Boat'),
+        ('Nightlife & Music', 'Nightlife & Music'),
+        ('Event & Show', 'Event & Performance'),
+        ('Spa & Wellness', 'Spa & Wellness'),
+        ('Travel Tip', 'Travel Tip & Advice'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='plays')
+    title = models.CharField(max_length=150)
+    play_type = models.CharField(max_length=50, choices=PLAY_TYPE_CHOICES, default='Sightseeing')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
+    description = models.TextField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    start_time = models.DateTimeField(blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    has_start_time = models.BooleanField(default=False)
+    has_end_time = models.BooleanField(default=False)
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    currency = models.CharField(max_length=3, default='USD')
+    link = models.URLField(blank=True, null=True)
+    _encrypted_confirmation_code = models.TextField(db_column='encrypted_confirmation_code', blank=True, null=True)
+    notes = EncryptedTextField(
+        blank=True,
+        null=True,
+        aad_context='play:notes',
+        help_text="AES-256-GCM encrypted ticket instructions, entry codes, or tour guides."
+    )
+    guest_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Name or nickname of non-tripper contributor"
+    )
+    recommended_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='recommended_plays')
+    created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_plays')
+    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_plays')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'plays'
+        verbose_name = 'Play'
+        verbose_name_plural = 'Plays'
+        indexes = [
+            models.Index(fields=['trip', 'status', 'start_time'], name='idx_play_trip_status_start'),
+        ]
+
+    @property
+    def _confirmation_aad(self) -> str:
+        return f"play:{self.trip_id}" if self.trip_id else "play"
+
+    @property
+    def has_confirmation_code(self):
+        return bool(self._encrypted_confirmation_code)
+
+    @property
+    def confirmation_code(self):
+        return ConfirmationEncryptor.decrypt(self._encrypted_confirmation_code, aad=self._confirmation_aad)
+
+    @confirmation_code.setter
+    def confirmation_code(self, value):
+        self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value, aad=self._confirmation_aad)
+
+    def __str__(self):
+        return f"{self.title} ({self.play_type} - {self.status})"
+
+    @property
+    def is_start_time_set(self):
+        return self.has_start_time or (bool(self.start_time) and (self.start_time.hour != 0 or self.start_time.minute != 0))
+
+    @property
+    def is_end_time_set(self):
+        return self.has_end_time or (bool(self.end_time) and (self.end_time.hour != 0 or self.end_time.minute != 0))
+
+    @property
+    def start_time_str(self):
+        if self.start_time and self.is_start_time_set:
+            return self.start_time.strftime('%H:%M')
+        return ''
+
+    @property
+    def end_time_str(self):
+        if self.end_time and self.is_end_time_set:
+            return self.end_time.strftime('%H:%M')
+        return ''
 
 
 class Nav(models.Model):
@@ -517,9 +849,12 @@ class Attachment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='attachments')
     stay = models.ForeignKey(Stay, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
-    nav = models.ForeignKey(Nav, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
-    do = models.ForeignKey(Do, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
-    rec = models.ForeignKey(Rec, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
+    move = models.ForeignKey(Move, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
+    taste = models.ForeignKey(Taste, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
+    play = models.ForeignKey(Play, on_delete=models.CASCADE, null=True, blank=True, related_name='attachments')
+    nav = models.ForeignKey(Nav, on_delete=models.CASCADE, null=True, blank=True, related_name='legacy_attachments_nav')
+    do = models.ForeignKey(Do, on_delete=models.CASCADE, null=True, blank=True, related_name='legacy_attachments_do')
+    rec = models.ForeignKey(Rec, on_delete=models.CASCADE, null=True, blank=True, related_name='legacy_attachments_rec')
     file_name = models.CharField(max_length=255)
     file_type = models.CharField(max_length=50, blank=True, default='application/pdf')
     storage_path = models.TextField(blank=True, default='')

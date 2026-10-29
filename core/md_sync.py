@@ -2,6 +2,7 @@
 Markdown File Synchronizer for Sonderring Trips.
 Ensures that any creation, edit, status toggle, or deletion in the live web app
 permanently synchronizes to the corresponding markdown file in /Trips/.
+Organized into four canonical elements in exact order: Move, Stay, Taste, Play.
 """
 
 import re
@@ -47,7 +48,7 @@ def format_attribution(item) -> str:
     editor = getattr(item, 'updated_by', None)
     
     if guest:
-        author_str = f"Recommended by **{guest}** (via Recommendation Link)"
+        author_str = f"Recommended by **{guest}** (via Guest Link)"
     elif author:
         author_str = f"Added by `@{author.handle}`"
     else:
@@ -56,6 +57,51 @@ def format_attribution(item) -> str:
     if editor and author and editor.id != author.id:
         return f"{author_str} · Last edited by `@{editor.handle}`"
     return f"{author_str} · Last edited by `@{author.handle}`" if (author and not guest) else author_str
+
+
+def format_move(move) -> list[str]:
+    lines = [f"* **{move.title}**"]
+    lines.append(f"  * **Mode**: {move.mode}")
+    stage_disp = move.get_trip_stage_display() if hasattr(move, 'get_trip_stage_display') else move.trip_stage
+    lines.append(f"  * **Trip Stage**: `{move.trip_stage}` ({stage_disp})")
+    lines.append(f"  * **Direction**: `{move.direction}`")
+    
+    if move.origin_address:
+        lines.append(f"  * **Origin Address**: {move.origin_address}")
+    if move.destination_address:
+        lines.append(f"  * **Destination Address**: {move.destination_address}")
+    
+    if move.departure_time and move.arrival_time:
+        dep_str = move.departure_time.strftime('%b %d, %Y, %I:%M %p')
+        arr_str = move.arrival_time.strftime('%b %d, %Y, %I:%M %p')
+        lines.append(f"  * **Schedule**: {dep_str} ➔ {arr_str}")
+    elif move.departure_time:
+        lines.append(f"  * **Departure**: {move.departure_time.strftime('%b %d, %Y, %I:%M %p')}")
+    
+    lines.append(f"  * **Confidence**: Date: `{move.date_confidence}` · Time: `{move.time_confidence}`")
+    
+    if move.flexibility_notes:
+        lines.append(f"  * **Flexibility Notes**: {move.flexibility_notes}")
+    
+    if move.price is not None:
+        lines.append(f"  * **Price**: ${move.price:,.2f} {move.currency}")
+    
+    if move.passenger_name:
+        lines.append(f"  * **Passengers**: {move.passenger_name}")
+    
+    if move.booking_link:
+        lines.append(f"  * **Booking Link**: {move.booking_link}")
+    
+    code = move.confirmation_code
+    if code:
+        lines.append(f"  * **Confirmation Code**: `{code}` (Encrypted AES-256)")
+    
+    attachment = move.attachments.first()
+    if attachment:
+        lines.append(f"  * **Vault Attachment**: `{attachment.file_name}`")
+    
+    lines.append(f"  * **Attribution**: {format_attribution(move)}")
+    return lines
 
 
 def format_stay(stay) -> list[str]:
@@ -77,11 +123,24 @@ def format_stay(stay) -> list[str]:
         lines.append(f"  * **Address**: {stay.address}")
     
     if stay.check_in and stay.check_out:
-        in_str = stay.check_in.strftime('%b %d, %Y, %g:%M %p')
-        out_str = stay.check_out.strftime('%b %d, %Y, %g:%M %p')
+        if stay.is_check_in_time_set and stay.is_check_out_time_set:
+            in_str = stay.check_in.strftime('%b %d, %Y, %I:%M %p')
+            out_str = stay.check_out.strftime('%b %d, %Y, %I:%M %p')
+        elif stay.is_check_in_time_set:
+            in_str = stay.check_in.strftime('%b %d, %Y, %I:%M %p')
+            out_str = stay.check_out.strftime('%b %d, %Y')
+        elif stay.is_check_out_time_set:
+            in_str = stay.check_in.strftime('%b %d, %Y')
+            out_str = stay.check_out.strftime('%b %d, %Y, %I:%M %p')
+        else:
+            in_str = stay.check_in.strftime('%b %d, %Y')
+            out_str = stay.check_out.strftime('%b %d, %Y')
         lines.append(f"  * **Dates**: {in_str} – {out_str}")
     elif stay.check_in:
-        lines.append(f"  * **Check-in**: {stay.check_in.strftime('%b %d, %Y')}")
+        if stay.is_check_in_time_set:
+            lines.append(f"  * **Check-in**: {stay.check_in.strftime('%b %d, %Y, %I:%M %p')}")
+        else:
+            lines.append(f"  * **Check-in**: {stay.check_in.strftime('%b %d, %Y')}")
     
     if stay.total_price is not None:
         lines.append(f"  * **Total Price**: ${stay.total_price:,.2f} {stay.currency}")
@@ -93,7 +152,6 @@ def format_stay(stay) -> list[str]:
     if code:
         lines.append(f"  * **Confirmation Code**: `{code}` (Encrypted AES-256)")
     
-    # Vault attachments
     attachment = stay.attachments.first()
     if attachment:
         lines.append(f"  * **Vault Attachment**: `{attachment.file_name}`")
@@ -105,99 +163,88 @@ def format_stay(stay) -> list[str]:
     return lines
 
 
-def format_nav(nav) -> list[str]:
-    lines = [f"* **{nav.title}**"]
-    lines.append(f"  * **Mode**: {nav.mode}")
-    stage_disp = nav.get_trip_stage_display() if hasattr(nav, 'get_trip_stage_display') else nav.trip_stage
-    lines.append(f"  * **Trip Stage**: `{nav.trip_stage}` ({stage_disp})")
-    lines.append(f"  * **Direction**: `{nav.direction}`")
+def format_taste(taste) -> list[str]:
+    lines = [f"* **{taste.title}**"]
+    taste_label = taste.get_taste_type_display() if hasattr(taste, 'get_taste_type_display') else taste.taste_type
+    lines.append(f"  * **Taste Type**: {taste_label}")
     
-    if nav.origin_address:
-        lines.append(f"  * **Origin Address**: {nav.origin_address}")
-    if nav.destination_address:
-        lines.append(f"  * **Destination Address**: {nav.destination_address}")
+    if taste.address:
+        lines.append(f"  * **Address / Venue**: {taste.address}")
     
-    if nav.departure_time and nav.arrival_time:
-        dep_str = nav.departure_time.strftime('%b %d, %Y, %g:%M %p')
-        arr_str = nav.arrival_time.strftime('%b %d, %Y, %g:%M %p')
-        lines.append(f"  * **Schedule**: {dep_str} ➔ {arr_str}")
-    elif nav.departure_time:
-        lines.append(f"  * **Departure**: {nav.departure_time.strftime('%b %d, %Y, %g:%M %p')}")
+    if taste.start_time and taste.end_time:
+        st_str = taste.start_time.strftime('%b %d, %I:%M %p')
+        et_str = taste.end_time.strftime('%I:%M %p')
+        lines.append(f"  * **Schedule**: {st_str} – {et_str}")
+    elif taste.start_time:
+        lines.append(f"  * **Schedule**: {taste.start_time.strftime('%b %d, %I:%M %p')}")
     
-    lines.append(f"  * **Confidence**: Date: `{nav.date_confidence}` · Time: `{nav.time_confidence}`")
+    if taste.price is not None:
+        lines.append(f"  * **Price**: ${taste.price:,.2f} {taste.currency}" if taste.price > 0 else "  * **Price**: $0.00 USD (Complimentary)")
     
-    if nav.flexibility_notes:
-        lines.append(f"  * **Flexibility Notes**: {nav.flexibility_notes}")
-    
-    if nav.price is not None:
-        lines.append(f"  * **Price**: ${nav.price:,.2f} {nav.currency}")
-    
-    if nav.passenger_name:
-        lines.append(f"  * **Passengers**: {nav.passenger_name}")
-    
-    if nav.booking_link:
-        lines.append(f"  * **Booking Link**: {nav.booking_link}")
-    
-    code = nav.confirmation_code
+    code = taste.confirmation_code
     if code:
         lines.append(f"  * **Confirmation Code**: `{code}` (Encrypted AES-256)")
     
-    attachment = nav.attachments.first()
+    if taste.description:
+        lines.append(f"  * **Description**: {taste.description}")
+        
+    if taste.notes:
+        lines.append(f"  * **Notes**: {taste.notes}")
+    
+    if taste.link:
+        lines.append(f"  * **Link**: {taste.link}")
+        
+    attachment = taste.attachments.first()
     if attachment:
         lines.append(f"  * **Vault Attachment**: `{attachment.file_name}`")
     
-    lines.append(f"  * **Attribution**: {format_attribution(nav)}")
+    lines.append(f"  * **Attribution**: {format_attribution(taste)}")
     return lines
 
 
-def format_do(do) -> list[str]:
-    lines = [f"* **{do.title}**"]
-    if do.activity_type:
-        lines.append(f"  * **Activity Type**: {do.activity_type}")
-    if do.address:
-        lines.append(f"  * **Address / Venue**: {do.address}")
+def format_play(play) -> list[str]:
+    lines = [f"* **{play.title}**"]
+    play_label = play.get_play_type_display() if hasattr(play, 'get_play_type_display') else play.play_type
+    lines.append(f"  * **Play Type**: {play_label}")
     
-    if do.start_time and do.end_time:
-        st_str = do.start_time.strftime('%b %d, %g:%M %p')
-        et_str = do.end_time.strftime('%g:%M %p')
+    if play.address:
+        lines.append(f"  * **Address / Venue**: {play.address}")
+    
+    if play.start_time and play.end_time:
+        st_str = play.start_time.strftime('%b %d, %I:%M %p')
+        et_str = play.end_time.strftime('%I:%M %p')
         lines.append(f"  * **Schedule**: {st_str} – {et_str}")
-    elif do.start_time:
-        lines.append(f"  * **Schedule**: {do.start_time.strftime('%b %d, %g:%M %p')}")
+    elif play.start_time:
+        lines.append(f"  * **Schedule**: {play.start_time.strftime('%b %d, %I:%M %p')}")
     
-    if do.price is not None:
-        lines.append(f"  * **Price**: ${do.price:,.2f} {do.currency}" if do.price > 0 else "$0.00 USD (Free admission)")
+    if play.price is not None:
+        lines.append(f"  * **Price**: ${play.price:,.2f} {play.currency}" if play.price > 0 else "  * **Price**: $0.00 USD (Free admission)")
     
-    code = do.confirmation_code
+    code = play.confirmation_code
     if code:
         lines.append(f"  * **Confirmation Code**: `{code}` (Encrypted AES-256)")
     
-    if do.description:
-        lines.append(f"  * **Description**: {do.description}")
+    if play.description:
+        lines.append(f"  * **Description**: {play.description}")
+        
+    if play.notes:
+        lines.append(f"  * **Notes**: {play.notes}")
     
-    if do.link:
-        lines.append(f"  * **Link**: {do.link}")
+    if play.link:
+        lines.append(f"  * **Link**: {play.link}")
+        
+    attachment = play.attachments.first()
+    if attachment:
+        lines.append(f"  * **Vault Attachment**: `{attachment.file_name}`")
     
-    lines.append(f"  * **Attribution**: {format_attribution(do)}")
-    return lines
-
-
-def format_rec(rec) -> list[str]:
-    lines = [f"* **{rec.title}**"]
-    lines.append(f"  * **Category**: {rec.get_category_display() if hasattr(rec, 'get_category_display') else rec.category}")
-    if rec.address:
-        lines.append(f"  * **Address / Venue**: {rec.address}")
-    if rec.link:
-        lines.append(f"  * **Link**: {rec.link}")
-    if rec.description:
-        lines.append(f"  * **Description**: {rec.description}")
-    lines.append(f"  * **Attribution**: {format_attribution(rec)}")
+    lines.append(f"  * **Attribution**: {format_attribution(play)}")
     return lines
 
 
 def sync_trip_to_markdown(trip):
     """
-    Renders the Trip and all related Stays, Navs, Dos, and Recs into a standardized markdown file
-    in /Trips/, conforming strictly to the required schema headers and subheaders.
+    Renders the Trip and all related Move, Stay, Taste, Play items into a standardized markdown file
+    in /Trips/, strictly in the exact order: Move, Stay, Taste, Play.
     """
     global _is_syncing
     if _is_syncing:
@@ -245,12 +292,43 @@ def sync_trip_to_markdown(trip):
         lines.append("\n---\n")
 
         # ==========================================
-        # 1. STAYS
+        # 1. MOVE (Transit, Flights, Drives, Ferries)
         # ==========================================
-        lines.append("## Stays\n")
-        confirmed_stays = list(trip.stays.filter(status='CONFIRMED').order_by('created_at'))
-        potential_stays = list(trip.stays.filter(status='IDEA').order_by('created_at'))
-        complete_stays = list(trip.stays.filter(status='COMPLETE').order_by('created_at'))
+        lines.append("## Move\n")
+        confirmed_moves = list(trip.moves.filter(status='CONFIRMED').order_by('departure_time', 'created_at'))
+        potential_moves = list(trip.moves.filter(status='IDEA').order_by('departure_time', 'created_at'))
+        complete_moves = list(trip.moves.filter(status='COMPLETE').order_by('departure_time', 'created_at'))
+
+        lines.append("### Confirmed")
+        if confirmed_moves:
+            for move in confirmed_moves:
+                lines.extend(format_move(move))
+        else:
+            lines.append("*None recorded.*")
+
+        lines.append("\n### Potential")
+        if potential_moves:
+            for move in potential_moves:
+                lines.extend(format_move(move))
+        else:
+            lines.append("*None recorded.*")
+
+        lines.append("\n### Complete")
+        if complete_moves:
+            for move in complete_moves:
+                lines.extend(format_move(move))
+        else:
+            lines.append("*None recorded.*")
+
+        lines.append("\n---\n")
+
+        # ==========================================
+        # 2. STAY (Accommodations & Lodging)
+        # ==========================================
+        lines.append("## Stay\n")
+        confirmed_stays = list(trip.stays.filter(status='CONFIRMED').order_by('check_in', 'created_at'))
+        potential_stays = list(trip.stays.filter(status='IDEA').order_by('check_in', 'created_at'))
+        complete_stays = list(trip.stays.filter(status='COMPLETE').order_by('check_in', 'created_at'))
 
         lines.append("### Confirmed")
         if confirmed_stays:
@@ -276,93 +354,62 @@ def sync_trip_to_markdown(trip):
         lines.append("\n---\n")
 
         # ==========================================
-        # 2. NAVS
+        # 3. TASTE (Food, Drink, Dining, Bars)
         # ==========================================
-        lines.append("## Navs\n")
-        confirmed_navs = list(trip.navs.filter(status='CONFIRMED').order_by('created_at'))
-        potential_navs = list(trip.navs.filter(status='IDEA').order_by('created_at'))
-        complete_navs = list(trip.navs.filter(status='COMPLETE').order_by('created_at'))
+        lines.append("## Taste\n")
+        confirmed_tastes = list(trip.tastes.filter(status='CONFIRMED').order_by('start_time', 'created_at'))
+        potential_tastes = list(trip.tastes.filter(status='IDEA').order_by('start_time', 'created_at'))
+        complete_tastes = list(trip.tastes.filter(status='COMPLETE').order_by('start_time', 'created_at'))
 
         lines.append("### Confirmed")
-        if confirmed_navs:
-            for nav in confirmed_navs:
-                lines.extend(format_nav(nav))
+        if confirmed_tastes:
+            for taste in confirmed_tastes:
+                lines.extend(format_taste(taste))
         else:
             lines.append("*None recorded.*")
 
         lines.append("\n### Potential")
-        if potential_navs:
-            for nav in potential_navs:
-                lines.extend(format_nav(nav))
+        if potential_tastes:
+            for taste in potential_tastes:
+                lines.extend(format_taste(taste))
         else:
             lines.append("*None recorded.*")
 
         lines.append("\n### Complete")
-        if complete_navs:
-            for nav in complete_navs:
-                lines.extend(format_nav(nav))
+        if complete_tastes:
+            for taste in complete_tastes:
+                lines.extend(format_taste(taste))
         else:
             lines.append("*None recorded.*")
 
         lines.append("\n---\n")
 
         # ==========================================
-        # 3. DOS (Strictly separated from Recs)
+        # 4. PLAY (Activities, Sights, Experiences, Tips)
         # ==========================================
-        lines.append("## Dos\n")
-        confirmed_dos = list(trip.dos.filter(status='CONFIRMED').order_by('created_at'))
-        potential_dos = list(trip.dos.filter(status='IDEA').order_by('created_at'))
-        complete_dos = list(trip.dos.filter(status='COMPLETE').order_by('created_at'))
+        lines.append("## Play\n")
+        confirmed_plays = list(trip.plays.filter(status='CONFIRMED').order_by('start_time', 'created_at'))
+        potential_plays = list(trip.plays.filter(status='IDEA').order_by('start_time', 'created_at'))
+        complete_plays = list(trip.plays.filter(status='COMPLETE').order_by('start_time', 'created_at'))
 
         lines.append("### Confirmed")
-        if confirmed_dos:
-            for do in confirmed_dos:
-                lines.extend(format_do(do))
+        if confirmed_plays:
+            for play in confirmed_plays:
+                lines.extend(format_play(play))
         else:
             lines.append("*None recorded.*")
 
         lines.append("\n### Potential")
-        if potential_dos:
-            for do in potential_dos:
-                lines.extend(format_do(do))
+        if potential_plays:
+            for play in potential_plays:
+                lines.extend(format_play(play))
         else:
             lines.append("*None recorded.*")
 
         lines.append("\n### Complete")
-        if complete_dos:
-            for do in complete_dos:
-                lines.extend(format_do(do))
-        else:
-            lines.append("*None recorded.*")
-
-        lines.append("\n---\n")
-
-        # ==========================================
-        # 4. RECS (Strictly separated from Dos)
-        # ==========================================
-        lines.append("## Recs\n")
-        confirmed_recs = list(trip.recs.filter(status='CONFIRMED').order_by('created_at'))
-        potential_recs = list(trip.recs.filter(status='IDEA').order_by('created_at'))
-        complete_recs = list(trip.recs.filter(status='COMPLETE').order_by('created_at'))
-
-        lines.append("### Confirmed")
-        if confirmed_recs:
-            for rec in confirmed_recs:
-                lines.extend(format_rec(rec))
-        else:
-            lines.append("*None recorded.*")
-
-        lines.append("\n### Potential")
-        if potential_recs:
-            for rec in potential_recs:
-                lines.extend(format_rec(rec))
-        else:
-            lines.append("*None recorded.*")
-
-        lines.append("\n### Complete")
-        if complete_recs:
-            for rec in complete_recs:
-                lines.extend(format_rec(rec))
+        if complete_plays:
+            for play in complete_plays:
+                lines.extend(format_play(play))
         else:
             lines.append("*None recorded.*")
 
@@ -374,6 +421,8 @@ def sync_trip_to_markdown(trip):
             update_readme_catalog()
         except Exception:
             pass
+
+        return filepath
 
     finally:
         _is_syncing = False
@@ -408,22 +457,26 @@ This directory contains local markdown representations of the canonical trips de
 
 ---
 
-## 🏗️ Structural Uniformity Rules
+## 🏗️ Structural Uniformity Rules (Move, Stay, Taste, Play)
 
-Every markdown file in this folder strictly conforms to the canonical template:
+Every markdown file in this folder strictly conforms to the canonical template in exact order:
 1. **Trip Metadata Header**: Title, Location, Time Granularity, Dates, Status, Owner (`created_by`), Trippers (`trip_members`), and Description.
-2. **`## Stays`**:
+2. **`## Move`**: Transit, flights, trains, road trips, car rentals, ferries.
    * `### Confirmed`
    * `### Potential`
-3. **`## Navs`**:
+   * `### Complete`
+3. **`## Stay`**: Lodging, accommodations, hotel rooms, cabins, Airbnbs.
    * `### Confirmed`
    * `### Potential`
-4. **`## Dos`** *(Strictly separated from Recs)*:
+   * `### Complete`
+4. **`## Taste`**: Food and drink, restaurants, bars, cafés, wineries, food markets, food tours.
    * `### Confirmed`
    * `### Potential`
-5. **`## Recs`** *(Strictly separated from Dos)*:
+   * `### Complete`
+5. **`## Play`**: Activities, sightseeing, hikes, tours, experiences, sports, attractions, tips.
    * `### Confirmed`
    * `### Potential`
+   * `### Complete`
 
 ---
 

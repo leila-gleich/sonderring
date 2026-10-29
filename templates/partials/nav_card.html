@@ -1,6 +1,6 @@
 <div class="item-card nav-card">
     <div class="item-card-header">
-        <div>
+        <div class="item-card-header-top">
             <div class="nav-mode-row">
                 <span class="mode-icon">
                     {% if nav.mode == 'Flight' %}✈️
@@ -12,20 +12,20 @@
                 </span>
                 <span class="item-type-badge">{{ nav.mode }} • {{ nav.get_direction_display }}</span>
             </div>
-            <h4 class="item-title">{{ nav.title }}</h4>
+            <div class="item-header-actions">
+                <span class="status-pill status-{{ nav.status|lower }} status-badge-nav-{{ nav.id }}">
+                    {{ nav.get_status_display }}
+                </span>
+                {% if can_edit or nav.created_by == current_user %}
+                <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('nav', '{{ nav.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
+                    ⇄
+                </button>
+                <button type="button" class="btn-card-action" onclick="openEditItemModal('nav', '{{ nav.id }}')" title="Edit Transit Leg">✏️</button>
+                <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('nav', '{{ nav.id }}')" title="Delete Transit Leg">🗑️</button>
+                {% endif %}
+            </div>
         </div>
-        <div class="item-header-actions">
-            <span class="status-pill status-{{ nav.status|lower }} status-badge-nav-{{ nav.id }}">
-                {{ nav.get_status_display }}
-            </span>
-            {% if can_edit %}
-            <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('nav', '{{ nav.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
-                ⇄
-            </button>
-            <button type="button" class="btn-card-action" onclick="openModal('editNavModal_{{ nav.id }}')" title="Edit Transit Leg">✏️</button>
-            <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteNavModal_{{ nav.id }}')" title="Delete Transit Leg">🗑️</button>
-            {% endif %}
-        </div>
+        <h4 class="item-title">{{ nav.title }}</h4>
     </div>
 
     {% if nav.passenger_name %}
@@ -36,35 +36,46 @@
     </div>
     {% endif %}
 
+    {% if nav.origin_address or nav.departure_time or nav.destination_address or nav.arrival_time %}
     <div class="nav-route-box">
+        {% if nav.origin_address or nav.departure_time %}
         <div class="route-point">
             <span class="route-dot origin-dot"></span>
             <div class="route-info">
                 <small class="route-label">Departure</small>
-                <div class="route-place">{{ nav.origin_address|default:"Origin TBD" }}</div>
+                {% if nav.origin_address %}<div class="route-place">{{ nav.origin_address }}</div>{% endif %}
                 {% if nav.departure_time %}
                 <div class="route-time">{{ nav.departure_time|date:"M d, Y • g:i A" }}</div>
                 {% endif %}
             </div>
         </div>
+        {% endif %}
         
-        <div class="route-connector-line">
-            <span class="connector-arrow">➔</span>
-        </div>
+        {% if nav.origin_address or nav.departure_time %}
+            {% if nav.destination_address or nav.arrival_time %}
+            <div class="route-connector-line">
+                <span class="connector-arrow">➔</span>
+            </div>
+            {% endif %}
+        {% endif %}
 
+        {% if nav.destination_address or nav.arrival_time %}
         <div class="route-point">
             <span class="route-dot dest-dot"></span>
             <div class="route-info">
                 <small class="route-label">Arrival</small>
-                <div class="route-place">{{ nav.destination_address|default:"Destination TBD" }}</div>
+                {% if nav.destination_address %}<div class="route-place">{{ nav.destination_address }}</div>{% endif %}
                 {% if nav.arrival_time %}
                 <div class="route-time">{{ nav.arrival_time|date:"M d, Y • g:i A" }}</div>
                 {% endif %}
             </div>
         </div>
+        {% endif %}
     </div>
+    {% endif %}
 
     <!-- Confidence Badges -->
+    {% if nav.departure_time or nav.arrival_time %}
     <div class="confidence-row">
         {% if nav.date_confidence == 'TENTATIVE' %}
         <span class="confidence-pill pill-warning">⚠️ Date Tentative</span>
@@ -76,20 +87,20 @@
         <span class="confidence-pill pill-warning">⚠️ Time Tentative</span>
         {% endif %}
     </div>
+    {% endif %}
 
     {% if nav.flexibility_notes %}
     <p class="item-notes"><strong>Logistics:</strong> {{ nav.flexibility_notes }}</p>
     {% endif %}
 
+    {% if nav.price or nav.has_confirmation_code or nav.booking_link %}
     <div class="item-footer">
+        {% if nav.price %}
         <div class="price-box">
-            {% if nav.price %}
             <span class="price-val">${{ nav.price|floatformat:2 }}</span>
             <span class="price-currency">{{ nav.currency }}</span>
-            {% else %}
-            <span class="price-free">Price TBD</span>
-            {% endif %}
         </div>
+        {% endif %}
 
         {% if nav.has_confirmation_code %}
         <div class="code-box-container">
@@ -102,6 +113,7 @@
         <a href="{{ nav.booking_link }}" target="_blank" class="btn btn-sm btn-secondary">Booking Link ↗</a>
         {% endif %}
     </div>
+    {% endif %}
 
     <div class="card-attribution-bar">
         <span class="attr-author">Added by <strong>@{{ nav.created_by.handle|default:"traveler" }}</strong> · {{ nav.created_at|date:"M d, Y" }}</span>
@@ -114,7 +126,7 @@
 </div>
 
 <!-- EDIT NAV MODAL -->
-{% if can_edit %}
+{% if can_edit or nav.created_by == current_user %}
 <div id="editNavModal_{{ nav.id }}" class="modal-backdrop">
     <div class="modal-card">
         <div class="modal-header">
@@ -123,6 +135,7 @@
         </div>
         <form method="POST" action="{% url 'core:edit_nav' trip.id nav.id %}" class="modal-form">
             {% csrf_token %}
+            <input type="hidden" name="next" value="">
             <div class="form-row">
                 <div class="form-col" style="flex: 2;">
                     <label class="form-label">Transport Title <span class="required">*</span></label>
@@ -225,6 +238,7 @@
         </div>
         <form method="POST" action="{% url 'core:delete_nav' trip.id nav.id %}" class="modal-form">
             {% csrf_token %}
+            <input type="hidden" name="next" value="">
             <p>Are you sure you want to remove <strong>"{{ nav.title }}"</strong> from this trip?</p>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('deleteNavModal_{{ nav.id }}')">Cancel</button>
