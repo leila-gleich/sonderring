@@ -316,6 +316,9 @@
         function openModal(id) {
             const modal = document.getElementById(id);
             if (modal) {
+                if (modal.parentElement !== document.body) {
+                    document.body.appendChild(modal);
+                }
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
             }

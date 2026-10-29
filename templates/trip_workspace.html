@@ -7,69 +7,9 @@
      WORKSPACE TOP BAR & SUMMARY HEADER
      ========================================== -->
 <div class="workspace-header">
-    <div class="workspace-nav-back">
-        <a href="{% url 'core:dashboard' %}" class="back-link">‹ All TripSpaces</a>
-    </div>
-
-    {% if is_viewer %}
-    <div class="viewer-notice-banner">
-        <span class="notice-icon">👁️</span>
-        <div>
-            <strong>Read-Only Mode:</strong> You are viewing <strong>{{ trip.title }}</strong> as a <strong>Viewer</strong>. You can view all confirmed routes, stays, and tickets, but cannot edit items.
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="workspace-hero">
-        <div class="workspace-hero-content">
-            <div class="workspace-badge-row">
-                <span class="trip-location-badge">📍 {{ trip.location }}</span>
-                <span class="calendar-pill">📅 {{ trip.formatted_dates }}</span>
-                {% if can_edit %}
-                <form method="POST" action="{% url 'core:update_trip_status' trip.id %}" class="inline-status-form" style="display: inline-flex; align-items: center;">
-                    {% csrf_token %}
-                    <select name="status" onchange="this.form.submit()" class="status-pill status-{{ trip.status|lower }} trip-status-select" title="Change TripSpace Status (Upcoming, Current, Past)">
-                        <option value="UPCOMING" {% if trip.status == 'UPCOMING' %}selected{% endif %}>📅 Upcoming</option>
-                        <option value="CURRENT" {% if trip.status == 'CURRENT' %}selected{% endif %}>🔥 Current</option>
-                        <option value="PAST" {% if trip.status == 'PAST' %}selected{% endif %}>🏛️ Past</option>
-                    </select>
-                </form>
-                {% else %}
-                <span class="status-pill status-{{ trip.status|lower }}">
-                    {{ trip.get_status_display }}
-                </span>
-                {% endif %}
-                {% if user_role %}
-                <span class="chip-role chip-role-{{ user_role|lower }}">Your Role: {{ user_role }}</span>
-                {% endif %}
-            </div>
-            <h1 class="workspace-title">{{ trip.title }}</h1>
-            {% if trip.description %}
-            <p class="workspace-desc">{{ trip.description }}</p>
-            {% endif %}
-            <div class="workspace-attribution">
-                <span class="attr-tag">Created by <strong>@{{ trip.created_by.handle }}</strong> · {{ trip.created_at|date:"M d, Y" }}</span>
-                {% if trip.updated_by and trip.updated_by != trip.created_by %}
-                <span class="attr-tag attr-editor">· Last edited by <strong>@{{ trip.updated_by.handle }}</strong> ({{ trip.updated_at|timesince }} ago)</span>
-                {% elif trip.updated_by and trip.updated_at != trip.created_at %}
-                <span class="attr-tag attr-editor">· Edited {{ trip.updated_at|timesince }} ago</span>
-                {% endif %}
-            </div>
-
-            <!-- Friend Recommendation Invite Link Bar -->
-            <div class="rec-invite-bar" title="Share this link with friends, family, or locals to collect spot recommendations">
-                <div class="rec-invite-label">
-                    <span class="rec-invite-icon">💌</span>
-                    <strong>Friend Rec Link:</strong>
-                    <span class="rec-invite-desc">Share with non-trippers to collect spot recommendations</span>
-                </div>
-                <div class="rec-invite-copy-group">
-                    <input type="text" readonly class="rec-invite-input" value="{{ request.scheme }}://{{ request.get_host }}{% url 'core:public_recommend' trip.rec_token %}" id="recLinkInput" onclick="this.select()" title="Click to select full URL">
-                    <button type="button" class="btn btn-sm btn-outline rec-copy-btn" onclick="copyRecLink(this)">
-                        📋 Copy Link
-                    </button>
-                </div>
-            </div>
+    <div class="workspace-top-bar">
+        <div class="workspace-nav-back">
+            <a href="{% url 'core:dashboard' %}" class="back-link">‹ All TripSpaces</a>
         </div>
 
         <div class="workspace-actions">
@@ -132,6 +72,68 @@
                 Delete Trip
             </button>
             {% endif %}
+        </div>
+    </div>
+
+    {% if is_viewer %}
+    <div class="viewer-notice-banner">
+        <span class="notice-icon">👁️</span>
+        <div>
+            <strong>Read-Only Mode:</strong> You are viewing <strong>{{ trip.title }}</strong> as a <strong>Viewer</strong>. You can view all confirmed routes, stays, and tickets, and can edit items you personally created.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="workspace-hero">
+        <div class="workspace-hero-content">
+            <div class="workspace-badge-row">
+                <span class="trip-location-badge">📍 {{ trip.location }}</span>
+                <span class="calendar-pill">📅 {{ trip.formatted_dates }}</span>
+                {% if can_edit %}
+                <form method="POST" action="{% url 'core:update_trip_status' trip.id %}" class="inline-status-form" style="display: inline-flex; align-items: center;">
+                    {% csrf_token %}
+                    <select name="status" onchange="this.form.submit()" class="status-pill status-{{ trip.status|lower }} trip-status-select" title="Change TripSpace Status (Upcoming, Current, Past)">
+                        <option value="UPCOMING" {% if trip.status == 'UPCOMING' %}selected{% endif %}>📅 Upcoming</option>
+                        <option value="CURRENT" {% if trip.status == 'CURRENT' %}selected{% endif %}>🔥 Current</option>
+                        <option value="PAST" {% if trip.status == 'PAST' %}selected{% endif %}>🏛️ Past</option>
+                    </select>
+                </form>
+                {% else %}
+                <span class="status-pill status-{{ trip.status|lower }}">
+                    {{ trip.get_status_display }}
+                </span>
+                {% endif %}
+                {% if user_role %}
+                <span class="chip-role chip-role-{{ user_role|lower }}">Your Role: {{ user_role }}</span>
+                {% endif %}
+            </div>
+            <h1 class="workspace-title">{{ trip.title }}</h1>
+            {% if trip.description %}
+            <p class="workspace-desc">{{ trip.description }}</p>
+            {% endif %}
+            <div class="workspace-attribution">
+                <span class="attr-tag">Created by <strong>@{{ trip.created_by.handle }}</strong> · {{ trip.created_at|date:"M d, Y" }}</span>
+                {% if trip.updated_by and trip.updated_by != trip.created_by %}
+                <span class="attr-tag attr-editor">· Last edited by <strong>@{{ trip.updated_by.handle }}</strong> ({{ trip.updated_at|timesince }} ago)</span>
+                {% elif trip.updated_by and trip.updated_at != trip.created_at %}
+                <span class="attr-tag attr-editor">· Edited {{ trip.updated_at|timesince }} ago</span>
+                {% endif %}
+            </div>
+
+            <!-- Friend Recommendation Invite Link Bar -->
+            <div class="rec-invite-bar" title="Share this link with friends, family, or locals to collect spot recommendations">
+                <div class="rec-invite-label">
+                    <span class="rec-invite-icon">💌</span>
+                    <strong>Friend Rec Link:</strong>
+                    <span class="rec-invite-desc">Share with non-trippers to collect spot recommendations</span>
+                </div>
+                <div class="rec-invite-copy-group">
+                    <input type="text" readonly class="rec-invite-input" value="{{ request.scheme }}://{{ request.get_host }}{% url 'core:public_recommend' trip.rec_token %}" id="recLinkInput" onclick="this.select()" title="Click to select full URL">
+                    <button type="button" class="btn btn-sm btn-outline rec-copy-btn" onclick="copyRecLink(this)">
+                        📋 Copy Link
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -245,10 +247,12 @@
                         <span class="status-pill status-{{ item.status|lower }} status-badge-{{ item.type }}-{{ item.id }}">
                             {{ item.status|title }}
                         </span>
-                        {% if can_edit %}
+                        {% if can_edit or item.obj.created_by == current_user %}
                         <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('{{ item.type }}', '{{ item.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
                             ⇄
                         </button>
+                        <button type="button" class="btn-card-action" onclick="openEditItemModal('{{ item.type }}', '{{ item.id }}')" title="Edit {{ item.subtitle|default:'Item' }}">✏️</button>
+                        <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('{{ item.type }}', '{{ item.id }}')" title="Delete {{ item.subtitle|default:'Item' }}">🗑️</button>
                         {% endif %}
                     </div>
                 </div>
@@ -330,12 +334,12 @@
                         <span class="status-pill status-{{ stay.status|lower }} status-badge-stay-{{ stay.id }}">
                             {{ stay.get_status_display }}
                         </span>
-                        {% if can_edit %}
+                        {% if can_edit or stay.created_by == current_user %}
                         <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('stay', '{{ stay.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
                             ⇄
                         </button>
-                        <button type="button" class="btn-card-action" onclick="openModal('editStayModal_{{ stay.id }}')" title="Edit Stay">✏️</button>
-                        <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteStayModal_{{ stay.id }}')" title="Delete Stay">🗑️</button>
+                        <button type="button" class="btn-card-action" onclick="openEditItemModal('stay', '{{ stay.id }}')" title="Edit Stay">✏️</button>
+                        <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('stay', '{{ stay.id }}')" title="Delete Stay">🗑️</button>
                         {% endif %}
                     </div>
                 </div>
@@ -416,7 +420,7 @@
         </div>
 
         <!-- EDIT STAY MODAL -->
-        {% if can_edit %}
+        {% if can_edit or stay.created_by == current_user %}
         <div id="editStayModal_{{ stay.id }}" class="modal-backdrop">
             <div class="modal-card">
                 <div class="modal-header">
@@ -425,6 +429,7 @@
                 </div>
                 <form method="POST" action="{% url 'core:edit_stay' trip.id stay.id %}" class="modal-form">
                     {% csrf_token %}
+                    <input type="hidden" name="next" value="">
                     <div class="form-row">
                         <div class="form-col" style="flex: 2;">
                             <label class="form-label">Property Name <span class="required">*</span></label>
@@ -517,6 +522,7 @@
                 </div>
                 <form method="POST" action="{% url 'core:delete_stay' trip.id stay.id %}" class="modal-form">
                     {% csrf_token %}
+                    <input type="hidden" name="next" value="">
                     <p>Are you sure you want to remove <strong>"{{ stay.title }}"</strong> from this trip?</p>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('deleteStayModal_{{ stay.id }}')">Cancel</button>
@@ -615,10 +621,10 @@
                             <span class="status-pill status-{{ do_item.status|lower }} status-badge-do-{{ do_item.id }}">
                                 {{ do_item.get_status_display }}
                             </span>
-                            {% if can_edit %}
+                            {% if can_edit or do_item.created_by == current_user %}
                             <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('do', '{{ do_item.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
-                            <button type="button" class="btn-card-action" onclick="openModal('editDoModal_{{ do_item.id }}')">✏️</button>
-                            <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteDoModal_{{ do_item.id }}')">🗑️</button>
+                            <button type="button" class="btn-card-action" onclick="openEditItemModal('do', '{{ do_item.id }}')" title="Edit Activity">✏️</button>
+                            <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('do', '{{ do_item.id }}')" title="Delete Activity">🗑️</button>
                             {% endif %}
                         </div>
                     </div>
@@ -683,7 +689,7 @@
             </div>
 
             <!-- EDIT DO MODAL -->
-            {% if can_edit %}
+            {% if can_edit or do_item.created_by == current_user %}
             <div id="editDoModal_{{ do_item.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">
@@ -692,6 +698,7 @@
                     </div>
                     <form method="POST" action="{% url 'core:edit_do' trip.id do_item.id %}" class="modal-form">
                         {% csrf_token %}
+                        <input type="hidden" name="next" value="">
                         <div class="form-row">
                             <div class="form-col" style="flex: 2;">
                                 <label class="form-label">Activity Title <span class="required">*</span></label>
@@ -763,6 +770,7 @@
                     </div>
                     <form method="POST" action="{% url 'core:delete_do' trip.id do_item.id %}" class="modal-form">
                         {% csrf_token %}
+                        <input type="hidden" name="next" value="">
                         <p>Are you sure you want to delete <strong>"{{ do_item.title }}"</strong>?</p>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" onclick="closeModal('deleteDoModal_{{ do_item.id }}')">Cancel</button>
@@ -826,10 +834,10 @@
                         {% elif rec.recommended_by %}
                         <span class="rec-recommender">by @{{ rec.recommended_by.handle }}</span>
                         {% endif %}
-                        {% if can_edit %}
+                        {% if can_edit or rec.recommended_by == current_user %}
                         <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('rec', '{{ rec.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
-                        <button type="button" class="btn-card-action" onclick="openModal('editRecModal_{{ rec.id }}')" title="Edit Rec">✏️</button>
-                        <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteRecModal_{{ rec.id }}')" title="Delete Rec">🗑️</button>
+                        <button type="button" class="btn-card-action" onclick="openEditItemModal('rec', '{{ rec.id }}')" title="Edit Rec">✏️</button>
+                        <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('rec', '{{ rec.id }}')" title="Delete Rec">🗑️</button>
                         {% endif %}
                     </div>
                 </div>
@@ -872,7 +880,7 @@
             </div>
 
             <!-- EDIT REC MODAL -->
-            {% if can_edit %}
+            {% if can_edit or rec.recommended_by == current_user %}
             <div id="editRecModal_{{ rec.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">
@@ -881,6 +889,7 @@
                     </div>
                     <form method="POST" action="{% url 'core:edit_rec' trip.id rec.id %}" class="modal-form">
                         {% csrf_token %}
+                        <input type="hidden" name="next" value="">
                         <div class="form-group">
                             <label class="form-label">Title <span class="required">*</span></label>
                             <input type="text" name="title" class="form-control" value="{{ rec.title }}" required>
@@ -929,6 +938,7 @@
                     </div>
                     <form method="POST" action="{% url 'core:delete_rec' trip.id rec.id %}" class="modal-form">
                         {% csrf_token %}
+                        <input type="hidden" name="next" value="">
                         <p>Remove <strong>"{{ rec.title }}"</strong> from the ideas pool?</p>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" onclick="closeModal('deleteRecModal_{{ rec.id }}')">Cancel</button>
@@ -1021,9 +1031,10 @@
                             {% else %}
                             <span class="vault-secured-pill" title="Stored in secure encrypted cloud bucket">Encrypted Key</span>
                             {% endif %}
-                            {% if can_edit %}
+                            {% if can_edit or att.uploaded_by == current_user %}
                             <form method="POST" action="{% url 'core:delete_attachment' trip.id att.id %}" style="display: inline;">
                                 {% csrf_token %}
+                                <input type="hidden" name="next" value="">
                                 <button type="submit" class="btn btn-sm btn-danger-outline" onclick="return confirm('Remove this document from the vault?');" title="Delete Document">🗑️</button>
                             </form>
                             {% endif %}
@@ -1777,6 +1788,47 @@
         } else if (type === 'rec') {
             switchTab('recs');
             openModal('addRecModal');
+        }
+    }
+
+    // Universal Edit & Delete Modal Launchers with Contextual Return (Itinerary & Elements)
+    function openEditItemModal(type, id) {
+        let modalId = '';
+        if (type === 'stay') modalId = 'editStayModal_' + id;
+        else if (type === 'nav') modalId = 'editNavModal_' + id;
+        else if (type === 'do') modalId = 'editDoModal_' + id;
+        else if (type === 'rec') modalId = 'editRecModal_' + id;
+
+        if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                const nextInput = modal.querySelector('input[name="next"]');
+                if (nextInput) {
+                    const currentHash = window.location.hash || '#timeline';
+                    nextInput.value = window.location.pathname + window.location.search + currentHash;
+                }
+            }
+            openModal(modalId);
+        }
+    }
+
+    function openDeleteItemModal(type, id) {
+        let modalId = '';
+        if (type === 'stay') modalId = 'deleteStayModal_' + id;
+        else if (type === 'nav') modalId = 'deleteNavModal_' + id;
+        else if (type === 'do') modalId = 'deleteDoModal_' + id;
+        else if (type === 'rec') modalId = 'deleteRecModal_' + id;
+
+        if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                const nextInput = modal.querySelector('input[name="next"]');
+                if (nextInput) {
+                    const currentHash = window.location.hash || '#timeline';
+                    nextInput.value = window.location.pathname + window.location.search + currentHash;
+                }
+            }
+            openModal(modalId);
         }
     }
 

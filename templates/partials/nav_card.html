@@ -16,12 +16,12 @@
                 <span class="status-pill status-{{ nav.status|lower }} status-badge-nav-{{ nav.id }}">
                     {{ nav.get_status_display }}
                 </span>
-                {% if can_edit %}
+                {% if can_edit or nav.created_by == current_user %}
                 <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('nav', '{{ nav.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
                     ⇄
                 </button>
-                <button type="button" class="btn-card-action" onclick="openModal('editNavModal_{{ nav.id }}')" title="Edit Transit Leg">✏️</button>
-                <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteNavModal_{{ nav.id }}')" title="Delete Transit Leg">🗑️</button>
+                <button type="button" class="btn-card-action" onclick="openEditItemModal('nav', '{{ nav.id }}')" title="Edit Transit Leg">✏️</button>
+                <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('nav', '{{ nav.id }}')" title="Delete Transit Leg">🗑️</button>
                 {% endif %}
             </div>
         </div>
@@ -126,7 +126,7 @@
 </div>
 
 <!-- EDIT NAV MODAL -->
-{% if can_edit %}
+{% if can_edit or nav.created_by == current_user %}
 <div id="editNavModal_{{ nav.id }}" class="modal-backdrop">
     <div class="modal-card">
         <div class="modal-header">
@@ -135,6 +135,7 @@
         </div>
         <form method="POST" action="{% url 'core:edit_nav' trip.id nav.id %}" class="modal-form">
             {% csrf_token %}
+            <input type="hidden" name="next" value="">
             <div class="form-row">
                 <div class="form-col" style="flex: 2;">
                     <label class="form-label">Transport Title <span class="required">*</span></label>
@@ -237,6 +238,7 @@
         </div>
         <form method="POST" action="{% url 'core:delete_nav' trip.id nav.id %}" class="modal-form">
             {% csrf_token %}
+            <input type="hidden" name="next" value="">
             <p>Are you sure you want to remove <strong>"{{ nav.title }}"</strong> from this trip?</p>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('deleteNavModal_{{ nav.id }}')">Cancel</button>

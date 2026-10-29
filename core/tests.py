@@ -437,11 +437,41 @@ class AccessControlAndRBACTests(TestCase):
         self.client.post(reverse('core:add_rec', args=[self.trip.id]), {'title': 'Unauthorized Rec'})
         self.assertFalse(Rec.objects.filter(trip=self.trip, title='Unauthorized Rec').exists())
 
-    def test_viewer_cannot_edit_delete_or_toggle_any_item(self):
-        """Viewers are strictly read-only and cannot edit, delete, or toggle status even on items attributed to them."""
+    def test_viewer_cannot_edit_delete_or_toggle_others_item(self):
+        """Viewers cannot edit, delete, or toggle status of items created by others."""
+        stay_by_owner = Stay.objects.create(
+            trip=self.trip,
+            title='Owner Stay',
+            status='IDEA',
+            created_by=self.owner
+        )
+        session = self.client.session
+        session['user_id'] = str(self.viewer.id)
+        session.save()
+
+        # Cannot edit someone else's item
+        self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay_by_owner.id]), {'title': 'Tampered Stay'})
+        stay_by_owner.refresh_from_db()
+        self.assertEqual(stay_by_owner.title, 'Owner Stay')
+
+        # Cannot toggle status of someone else's item
+        resp_toggle = self.client.post(
+            reverse('core:toggle_status', args=['stay', stay_by_owner.id]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(resp_toggle.status_code, 403)
+        stay_by_owner.refresh_from_db()
+        self.assertEqual(stay_by_owner.status, 'IDEA')
+
+        # Cannot delete someone else's item
+        self.client.post(reverse('core:delete_stay', args=[self.trip.id, stay_by_owner.id]))
+        self.assertTrue(Stay.objects.filter(id=stay_by_owner.id).exists())
+
+    def test_author_can_edit_delete_and_toggle_own_item_under_universal_sovereignty(self):
+        """Under Universal Author Sovereignty, a member can edit, toggle status, and delete items they created even with VIEWER role."""
         stay_by_viewer = Stay.objects.create(
             trip=self.trip,
-            title='Original Stay',
+            title='Viewer Authored Stay',
             status='IDEA',
             created_by=self.viewer
         )
@@ -449,23 +479,23 @@ class AccessControlAndRBACTests(TestCase):
         session['user_id'] = str(self.viewer.id)
         session.save()
 
-        # Cannot edit
-        self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay_by_viewer.id]), {'title': 'Tampered Stay'})
+        # Can edit their own item
+        self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay_by_viewer.id]), {'title': 'Updated Viewer Stay'})
         stay_by_viewer.refresh_from_db()
-        self.assertEqual(stay_by_viewer.title, 'Original Stay')
+        self.assertEqual(stay_by_viewer.title, 'Updated Viewer Stay')
 
-        # Cannot toggle status
+        # Can toggle status of their own item
         resp_toggle = self.client.post(
             reverse('core:toggle_status', args=['stay', stay_by_viewer.id]),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
-        self.assertEqual(resp_toggle.status_code, 403)
+        self.assertEqual(resp_toggle.status_code, 200)
         stay_by_viewer.refresh_from_db()
-        self.assertEqual(stay_by_viewer.status, 'IDEA')
+        self.assertEqual(stay_by_viewer.status, 'CONFIRMED')
 
-        # Cannot delete
+        # Can delete their own item
         self.client.post(reverse('core:delete_stay', args=[self.trip.id, stay_by_viewer.id]))
-        self.assertTrue(Stay.objects.filter(id=stay_by_viewer.id).exists())
+        self.assertFalse(Stay.objects.filter(id=stay_by_viewer.id).exists())
 
     @override_settings(ENABLE_DEMO_SWITCHER=False)
     def test_demo_switcher_disabled_blocks_impersonation(self):
@@ -1179,6 +1209,54 @@ class TripWorkspaceAddElementAndDisplayTests(TestCase):
         self.assertContains(resp, 'class="item-card-header"')
         self.assertContains(resp, 'class="item-card-header-top"')
         self.assertContains(resp, '<h3 class="item-title">Grand Seaside Villa</h3>')
+
+    def test_workspace_top_bar_full_width_layout(self):
+        """Workspace top bar contains actions and keeps title unobstructed."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'class="workspace-top-bar"')
+        self.assertContains(resp, '<h1 class="workspace-title">')
+
+    def test_itinerary_view_edit_and_delete_actions_rendered(self):
+        """Itinerary / timeline view renders edit and delete triggers for author or editor."""
+        from core.models import Stay
+        stay = Stay.objects.create(
+            trip=self.trip,
+            title='Reykjavik Hotel',
+            created_by=self.owner
+        )
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, f"openEditItemModal('stay', '{stay.id}')")
+        self.assertContains(resp, f"openDeleteItemModal('stay', '{stay.id}')")
+
+    def test_edit_and_delete_redirects_to_next_url(self):
+        """Submitting an edit with next=<url> redirects to the specified next URL."""
+        from core.models import Stay
+        stay = Stay.objects.create(
+            trip=self.trip,
+            title='Initial Title',
+            created_by=self.owner
+        )
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.post(
+            reverse('core:edit_stay', args=[self.trip.id, stay.id]),
+            {'title': 'Updated Title', 'next': f"/trips/{self.trip.id}/#timeline"}
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, f"/trips/{self.trip.id}/#timeline")
+
 
 
 

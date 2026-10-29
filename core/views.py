@@ -132,11 +132,17 @@ def is_user_trip_owner(user, trip):
 def can_user_edit_item(user, trip, item):
     """
     Evaluates whether a user can edit/delete this specific itinerary item:
-    Strictly restricted to Trip Owners and Editors. Viewers are read-only.
+    Trip Owners, Editors, OR the user who personally created/uploaded the item (Universal Author Sovereignty).
     """
     if not user or not trip:
         return False
-    return can_user_edit_trip(user, trip)
+    if can_user_edit_trip(user, trip):
+        return True
+    if item:
+        author = getattr(item, 'created_by', None) or getattr(item, 'recommended_by', None) or getattr(item, 'uploaded_by', None)
+        if author and author.id == user.id:
+            return True
+    return False
 
 
 def get_demo_users():
@@ -870,6 +876,9 @@ def edit_stay_view(request, trip_id, stay_id):
     stay.updated_by = current_user
     stay.save()
     messages.success(request, f"Updated Stay '{stay.title}'!")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
     return redirect(f"/trips/{trip_id}/#stays")
 
 
@@ -886,6 +895,9 @@ def delete_stay_view(request, trip_id, stay_id):
     title = stay.title
     stay.delete()
     messages.success(request, f"Stay '{title}' deleted.")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
     return redirect(f"/trips/{trip_id}/#stays")
 
 
@@ -980,6 +992,9 @@ def edit_nav_view(request, trip_id, nav_id):
     nav.updated_by = current_user
     nav.save()
     messages.success(request, f"Updated Transit Leg '{nav.title}'!")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
     return redirect(f"/trips/{trip_id}/#navs")
 
 
@@ -996,6 +1011,9 @@ def delete_nav_view(request, trip_id, nav_id):
     title = nav.title
     nav.delete()
     messages.success(request, f"Transit leg '{title}' deleted.")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
     return redirect(f"/trips/{trip_id}/#navs")
 
 
@@ -1077,6 +1095,9 @@ def edit_do_view(request, trip_id, do_id):
     do_item.updated_by = current_user
     do_item.save()
     messages.success(request, f"Updated Activity '{do_item.title}'!")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
     return redirect(f"/trips/{trip_id}/#dos")
 
 
@@ -1093,6 +1114,9 @@ def delete_do_view(request, trip_id, do_id):
     title = do_item.title
     do_item.delete()
     messages.success(request, f"Activity '{title}' deleted.")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
     return redirect(f"/trips/{trip_id}/#dos")
 
 
@@ -1149,6 +1173,9 @@ def edit_rec_view(request, trip_id, rec_id):
     rec.save()
 
     messages.success(request, f"Updated recommendation '{rec.title}'!")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
     return redirect(f"/trips/{trip_id}/#recs")
 
 
@@ -1165,6 +1192,9 @@ def delete_rec_view(request, trip_id, rec_id):
     title = rec.title
     rec.delete()
     messages.success(request, f"Recommendation '{title}' removed.")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
     return redirect(f"/trips/{trip_id}/#recs")
 
 
@@ -1449,6 +1479,9 @@ def delete_attachment_view(request, trip_id, attachment_id):
         metadata={'file_name': file_name}
     )
     messages.success(request, f"Document '{file_name}' removed from Vault.")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
     return redirect(f"/trips/{trip_id}/#vault")
 
 
