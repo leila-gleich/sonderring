@@ -1009,6 +1009,179 @@ class GlobalNavigationAndCreateTripModalTests(TestCase):
         self.assertContains(workspace_resp, "openModal('createTripModal')")
 
 
+class TripWorkspaceAddElementAndDisplayTests(TestCase):
+    """Tests for the Add Element top button, optional field omission, and card title structure."""
+
+    def setUp(self):
+        self.client = Client()
+        self.owner = UserProfile.objects.create(
+            email='tripper_owner@example.com',
+            handle='owner_sam',
+            full_name='Sam Owner',
+            is_active=True
+        )
+        self.viewer = UserProfile.objects.create(
+            email='tripper_viewer@example.com',
+            handle='viewer_val',
+            full_name='Val Viewer',
+            is_active=True
+        )
+        self.trip = Trip.objects.create(
+            title='Iceland Ring Road Expedition',
+            location='Reykjavik, Iceland',
+            status='UPCOMING',
+            created_by=self.owner,
+            time_granularity='YEAR',
+            year=2026
+        )
+        TripMember.objects.create(trip=self.trip, user=self.owner, role='OWNER')
+        TripMember.objects.create(trip=self.trip, user=self.viewer, role='VIEWER')
+
+    def test_add_element_button_and_dropdown_for_editor(self):
+        """Top workspace detail section has 'Add Element' button & dropdown for all 4 elements (S, N, D, R)."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # 'Add Element' button in workspace actions
+        self.assertContains(resp, 'id="addElementBtn"')
+        self.assertContains(resp, 'Add Element ▾')
+        self.assertContains(resp, 'id="addElementDropdownMenu"')
+
+        # All 4 elements present in dropdown
+        self.assertContains(resp, "openAddElement('stay')")
+        self.assertContains(resp, "openAddElement('nav')")
+        self.assertContains(resp, "openAddElement('do')")
+        self.assertContains(resp, "openAddElement('rec')")
+
+        # Element chooser modal also available
+        self.assertContains(resp, 'id="addElementModal"')
+
+    def test_add_element_button_hidden_for_viewer(self):
+        """Viewers without edit permissions do not see 'Add Element' button."""
+        session = self.client.session
+        session['user_id'] = str(self.viewer.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'id="addElementBtn"')
+        self.assertNotContains(resp, 'id="addElementDropdownMenu"')
+
+    def test_blank_optional_inputs_do_not_render_placeholders(self):
+        """Unfilled optional inputs must NOT show placeholder/fallback text (TBD, Free, etc.)."""
+        from core.models import Stay, Nav, Do, Rec
+        # Create Stay with only required fields (no address, no check_in, no check_out, no price, no beds)
+        Stay.objects.create(
+            trip=self.trip,
+            title='Minimal Stay',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        # Create Nav with only required fields (no origin, no destination, no departure_time, no arrival_time, no price)
+        Nav.objects.create(
+            trip=self.trip,
+            title='Minimal Nav Flight',
+            mode='Flight',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        # Create Do with only required fields (no price, no start_time, no end_time, no address)
+        Do.objects.create(
+            trip=self.trip,
+            title='Minimal Activity',
+            status='IDEA',
+            created_by=self.owner
+        )
+
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Ensure no "TBD", "Price TBD", or "Free / Unticketed" are displayed for these items
+        self.assertNotContains(resp, 'Price TBD')
+        self.assertNotContains(resp, 'Free / Unticketed')
+        self.assertNotContains(resp, 'Origin TBD')
+        self.assertNotContains(resp, 'Destination TBD')
+        self.assertNotContains(resp, 'Flexible timing')
+        self.assertNotContains(resp, 'Origin ➔ Destination')
+
+    def test_filled_optional_inputs_render_properly(self):
+        """Filled optional inputs render their actual values."""
+        from core.models import Stay, Nav, Do
+        from django.utils import timezone
+        import datetime
+
+        now = timezone.now()
+        Stay.objects.create(
+            trip=self.trip,
+            title='Saga Luxury Hotel',
+            total_price=890.50,
+            num_beds=3,
+            check_in=now,
+            created_by=self.owner
+        )
+        Nav.objects.create(
+            trip=self.trip,
+            title='Icelandair Flight FI 614',
+            mode='Flight',
+            origin_address='BOS Boston',
+            destination_address='KEF Reykjavik',
+            price=640.00,
+            departure_time=now + datetime.timedelta(days=1),
+            created_by=self.owner
+        )
+        Do.objects.create(
+            trip=self.trip,
+            title='Blue Lagoon Spa Experience',
+            price=125.00,
+            start_time=now + datetime.timedelta(days=2),
+            created_by=self.owner
+        )
+
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Check values are rendered
+        self.assertContains(resp, '$890.50')
+        self.assertContains(resp, '3 Beds')
+        self.assertContains(resp, 'BOS Boston')
+        self.assertContains(resp, 'KEF Reykjavik')
+        self.assertContains(resp, '$640.00')
+        self.assertContains(resp, '$125.00')
+
+    def test_item_card_header_top_and_item_title_structure(self):
+        """Item card headers must contain item-card-header-top and full-width item-title."""
+        from core.models import Stay
+        Stay.objects.create(
+            trip=self.trip,
+            title='Grand Seaside Villa',
+            created_by=self.owner
+        )
+
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertContains(resp, 'class="item-card-header"')
+        self.assertContains(resp, 'class="item-card-header-top"')
+        self.assertContains(resp, '<h3 class="item-title">Grand Seaside Villa</h3>')
+
+
+
 
 
 

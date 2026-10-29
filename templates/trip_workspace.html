@@ -73,6 +73,44 @@
         </div>
 
         <div class="workspace-actions">
+            {% if can_edit %}
+            <div class="dropdown-wrapper add-element-dropdown-wrapper">
+                <button type="button" class="btn btn-primary" onclick="toggleDropdown('addElementDropdownMenu')" id="addElementBtn" title="Add an element to this TripSpace">
+                    <span class="btn-icon">＋</span> Add Element ▾
+                </button>
+                <div id="addElementDropdownMenu" class="dropdown-menu add-element-dropdown-menu">
+                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('stay')">
+                        <span class="element-dropdown-icon">🏨</span>
+                        <div class="element-dropdown-text">
+                            <strong>Add Stay</strong>
+                            <small>Accommodations & lodging</small>
+                        </div>
+                    </button>
+                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('nav')">
+                        <span class="element-dropdown-icon">✈️</span>
+                        <div class="element-dropdown-text">
+                            <strong>Add Nav</strong>
+                            <small>Flights, drives & transit legs</small>
+                        </div>
+                    </button>
+                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('do')">
+                        <span class="element-dropdown-icon">🎯</span>
+                        <div class="element-dropdown-text">
+                            <strong>Add Do</strong>
+                            <small>Scheduled activities & tours</small>
+                        </div>
+                    </button>
+                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('rec')">
+                        <span class="element-dropdown-icon">💡</span>
+                        <div class="element-dropdown-text">
+                            <strong>Add Rec</strong>
+                            <small>Curated spots & suggestions</small>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
             <button type="button" class="btn btn-primary-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and nontrippers">
                 <span class="btn-icon">💌</span> Copy Rec Link
             </button>
@@ -215,14 +253,13 @@
                     </div>
                 </div>
 
+                {% if item.timestamp or item.location or item.price %}
                 <div class="timeline-details-row">
                     {% if item.timestamp %}
                     <span class="detail-tag">
                         🕒 {{ item.timestamp|date:"M j, Y — g:i A" }}
                         {% if item.end_timestamp %} ➔ {{ item.end_timestamp|date:"M j, g:i A" }}{% endif %}
                     </span>
-                    {% else %}
-                    <span class="detail-tag text-muted">🕒 Flexible timing</span>
                     {% endif %}
 
                     {% if item.location %}
@@ -233,6 +270,7 @@
                     <span class="detail-tag tag-price">💵 {{ item.currency }} ${{ item.price|floatformat:2 }}</span>
                     {% endif %}
                 </div>
+                {% endif %}
 
                 {% if item.has_code %}
                 <div class="code-reveal-row">
@@ -286,22 +324,22 @@
         {% for stay in stays %}
         <div class="item-card stay-card">
             <div class="item-card-header">
-                <div>
+                <div class="item-card-header-top">
                     <span class="item-type-badge">{{ stay.place_type|default:"Accommodation" }}</span>
-                    <h3 class="item-title">{{ stay.title }}</h3>
+                    <div class="item-header-actions">
+                        <span class="status-pill status-{{ stay.status|lower }} status-badge-stay-{{ stay.id }}">
+                            {{ stay.get_status_display }}
+                        </span>
+                        {% if can_edit %}
+                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('stay', '{{ stay.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
+                            ⇄
+                        </button>
+                        <button type="button" class="btn-card-action" onclick="openModal('editStayModal_{{ stay.id }}')" title="Edit Stay">✏️</button>
+                        <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteStayModal_{{ stay.id }}')" title="Delete Stay">🗑️</button>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="item-header-actions">
-                    <span class="status-pill status-{{ stay.status|lower }} status-badge-stay-{{ stay.id }}">
-                        {{ stay.get_status_display }}
-                    </span>
-                    {% if can_edit %}
-                    <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('stay', '{{ stay.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">
-                        ⇄
-                    </button>
-                    <button type="button" class="btn-card-action" onclick="openModal('editStayModal_{{ stay.id }}')" title="Edit Stay">✏️</button>
-                    <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteStayModal_{{ stay.id }}')" title="Delete Stay">🗑️</button>
-                    {% endif %}
-                </div>
+                <h3 class="item-title">{{ stay.title }}</h3>
             </div>
 
             {% if stay.address %}
@@ -313,37 +351,46 @@
             {% endif %}
 
             <!-- Capacity details -->
+            {% if stay.num_beds or stay.num_rooms or stay.num_guests %}
             <div class="capacity-row">
                 {% if stay.num_beds %}<span class="capacity-pill">🛏️ {{ stay.num_beds }} Bed{{ stay.num_beds|pluralize }}</span>{% endif %}
                 {% if stay.num_rooms %}<span class="capacity-pill">🚪 {{ stay.num_rooms }} Room{{ stay.num_rooms|pluralize }}</span>{% endif %}
                 {% if stay.num_guests %}<span class="capacity-pill">👥 Up to {{ stay.num_guests }} Guest{{ stay.num_guests|pluralize }}</span>{% endif %}
             </div>
+            {% endif %}
 
+            {% if stay.check_in or stay.check_out %}
             <div class="item-time-row">
+                {% if stay.check_in %}
                 <div>
                     <small class="time-label">Check-in</small>
-                    <div class="time-val">{{ stay.check_in|date:"M d, Y"|default:"TBD" }}{% if stay.check_in %} <span class="time-sub">{{ stay.check_in|date:"g:i A" }}</span>{% endif %}</div>
+                    <div class="time-val">{{ stay.check_in|date:"M d, Y" }} <span class="time-sub">{{ stay.check_in|date:"g:i A" }}</span></div>
                 </div>
+                {% endif %}
+                {% if stay.check_in and stay.check_out %}
                 <div class="time-arrow">➔</div>
+                {% endif %}
+                {% if stay.check_out %}
                 <div>
                     <small class="time-label">Check-out</small>
-                    <div class="time-val">{{ stay.check_out|date:"M d, Y"|default:"TBD" }}{% if stay.check_out %} <span class="time-sub">{{ stay.check_out|date:"g:i A" }}</span>{% endif %}</div>
+                    <div class="time-val">{{ stay.check_out|date:"M d, Y" }} <span class="time-sub">{{ stay.check_out|date:"g:i A" }}</span></div>
                 </div>
+                {% endif %}
             </div>
+            {% endif %}
 
             {% if stay.notes %}
             <p class="item-notes"><strong>Notes:</strong> {{ stay.notes }}</p>
             {% endif %}
 
+            {% if stay.total_price or stay.has_confirmation_code or stay.booking_link %}
             <div class="item-footer">
+                {% if stay.total_price %}
                 <div class="price-box">
-                    {% if stay.total_price %}
                     <span class="price-val">${{ stay.total_price|floatformat:2 }}</span>
                     <span class="price-currency">{{ stay.currency }} Total</span>
-                    {% else %}
-                    <span class="price-free">Price TBD</span>
-                    {% endif %}
                 </div>
+                {% endif %}
 
                 {% if stay.has_confirmation_code %}
                 <div class="code-box-container">
@@ -356,6 +403,7 @@
                 <a href="{{ stay.booking_link }}" target="_blank" class="btn btn-sm btn-secondary">Booking Link ↗</a>
                 {% endif %}
             </div>
+            {% endif %}
 
             <div class="card-attribution-bar">
                 <span class="attr-author">Added by <strong>@{{ stay.created_by.handle|default:"traveler" }}</strong> · {{ stay.created_at|date:"M d, Y" }}</span>
@@ -561,20 +609,20 @@
             {% for do_item in dos %}
             <div class="item-card do-card">
                 <div class="item-card-header">
-                    <div>
+                    <div class="item-card-header-top">
                         <span class="item-type-badge">{{ do_item.activity_type|default:"Activity" }}</span>
-                        <h4 class="item-title">{{ do_item.title }}</h4>
+                        <div class="item-header-actions">
+                            <span class="status-pill status-{{ do_item.status|lower }} status-badge-do-{{ do_item.id }}">
+                                {{ do_item.get_status_display }}
+                            </span>
+                            {% if can_edit %}
+                            <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('do', '{{ do_item.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
+                            <button type="button" class="btn-card-action" onclick="openModal('editDoModal_{{ do_item.id }}')">✏️</button>
+                            <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteDoModal_{{ do_item.id }}')">🗑️</button>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="item-header-actions">
-                        <span class="status-pill status-{{ do_item.status|lower }} status-badge-do-{{ do_item.id }}">
-                            {{ do_item.get_status_display }}
-                        </span>
-                        {% if can_edit %}
-                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('do', '{{ do_item.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
-                        <button type="button" class="btn-card-action" onclick="openModal('editDoModal_{{ do_item.id }}')">✏️</button>
-                        <button type="button" class="btn-card-action btn-card-delete" onclick="openModal('deleteDoModal_{{ do_item.id }}')">🗑️</button>
-                        {% endif %}
-                    </div>
+                    <h4 class="item-title">{{ do_item.title }}</h4>
                 </div>
 
                 {% if do_item.address %}
@@ -584,14 +632,18 @@
                 </div>
                 {% endif %}
 
-                {% if do_item.start_time %}
+                {% if do_item.start_time or do_item.end_time %}
                 <div class="item-time-row">
+                    {% if do_item.start_time %}
                     <div>
                         <small class="time-label">Starts</small>
                         <div class="time-val">{{ do_item.start_time|date:"M d, g:i A" }}</div>
                     </div>
-                    {% if do_item.end_time %}
+                    {% endif %}
+                    {% if do_item.start_time and do_item.end_time %}
                     <div class="time-arrow">➔</div>
+                    {% endif %}
+                    {% if do_item.end_time %}
                     <div>
                         <small class="time-label">Ends</small>
                         <div class="time-val">{{ do_item.end_time|date:"g:i A" }}</div>
@@ -604,14 +656,13 @@
                 <p class="item-notes">{{ do_item.description }}</p>
                 {% endif %}
 
+                {% if do_item.price or do_item.has_confirmation_code %}
                 <div class="item-footer">
+                    {% if do_item.price %}
                     <div class="price-box">
-                        {% if do_item.price %}
                         <span class="price-val">${{ do_item.price|floatformat:2 }}</span>
-                        {% else %}
-                        <span class="price-free">Free / Unticketed</span>
-                        {% endif %}
                     </div>
+                    {% endif %}
                     {% if do_item.has_confirmation_code %}
                     <div class="code-box-container">
                         <span class="masked-code">••••••••</span>
@@ -619,6 +670,7 @@
                     </div>
                     {% endif %}
                 </div>
+                {% endif %}
 
                 <div class="card-attribution-bar">
                     <span class="attr-author">Added by <strong>@{{ do_item.created_by.handle|default:"traveler" }}</strong> · {{ do_item.created_at|date:"M d, Y" }}</span>
@@ -789,6 +841,7 @@
                 <div class="rec-address">📍 {{ rec.address }}</div>
                 {% endif %}
 
+                {% if can_edit or rec.link %}
                 <div class="rec-actions">
                     {% if can_edit %}
                     <form method="POST" action="{% url 'core:promote_rec' trip.id rec.id %}">
@@ -802,6 +855,7 @@
                     <a href="{{ rec.link }}" target="_blank" class="btn btn-sm btn-outline">Link ↗</a>
                     {% endif %}
                 </div>
+                {% endif %}
 
                 <div class="card-attribution-bar">
                     {% if rec.guest_name %}
@@ -995,6 +1049,55 @@
 <!-- ==========================================
      MODALS
      ========================================== -->
+
+<!-- ADD ELEMENT CHOOSER MODAL -->
+{% if can_edit %}
+<div id="addElementModal" class="modal-backdrop">
+    <div class="modal-card modal-card-element-chooser">
+        <div class="modal-header">
+            <div>
+                <h3 class="modal-title">Add Element to TripSpace</h3>
+                <p class="modal-subtitle">Choose one of the 4 Sonderring elements to add to {{ trip.title }}.</p>
+            </div>
+            <button type="button" class="modal-close" onclick="closeModal('addElementModal')">×</button>
+        </div>
+        <div class="element-chooser-grid">
+            <button type="button" class="element-chooser-card chooser-stay" onclick="openAddElement('stay')">
+                <span class="chooser-icon">🏨</span>
+                <span class="chooser-letter">S</span>
+                <div class="chooser-info">
+                    <strong>Stay</strong>
+                    <span>Accommodations & Lodging</span>
+                </div>
+            </button>
+            <button type="button" class="element-chooser-card chooser-nav" onclick="openAddElement('nav')">
+                <span class="chooser-icon">✈️</span>
+                <span class="chooser-letter">N</span>
+                <div class="chooser-info">
+                    <strong>Nav</strong>
+                    <span>Flights, Trains & Transit Legs</span>
+                </div>
+            </button>
+            <button type="button" class="element-chooser-card chooser-do" onclick="openAddElement('do')">
+                <span class="chooser-icon">🎯</span>
+                <span class="chooser-letter">D</span>
+                <div class="chooser-info">
+                    <strong>Do</strong>
+                    <span>Scheduled Activities & Tours</span>
+                </div>
+            </button>
+            <button type="button" class="element-chooser-card chooser-rec" onclick="openAddElement('rec')">
+                <span class="chooser-icon">💡</span>
+                <span class="chooser-letter">R</span>
+                <div class="chooser-info">
+                    <strong>Rec</strong>
+                    <span>Curated Spots & Recommendations</span>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- 0. EDIT TRIP DETAILS MODAL -->
 {% if can_edit %}
@@ -1651,10 +1754,30 @@
         if (target) {
             target.classList.add('active');
         }
-        if (btnElement) {
-            btnElement.classList.add('active');
+        const activeBtn = btnElement || document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
         }
         window.location.hash = tabName;
+    }
+
+    // Direct Add Element from Top Bar / Modal
+    function openAddElement(type) {
+        closeAllDropdowns();
+        closeModal('addElementModal');
+        if (type === 'stay') {
+            switchTab('stays');
+            openModal('addStayModal');
+        } else if (type === 'nav') {
+            switchTab('navs');
+            openModal('addNavModal');
+        } else if (type === 'do') {
+            switchTab('dos');
+            openModal('addDoModal');
+        } else if (type === 'rec') {
+            switchTab('recs');
+            openModal('addRecModal');
+        }
     }
 
     // Auto-select tab if hash in URL

@@ -537,12 +537,20 @@ def trip_workspace_view(request, trip_id):
             'obj': s,
         })
     for n in navs:
+        nav_location = None
+        if n.origin_address and n.destination_address:
+            nav_location = f"{n.origin_address} ➔ {n.destination_address}"
+        elif n.origin_address:
+            nav_location = n.origin_address
+        elif n.destination_address:
+            nav_location = n.destination_address
+
         timeline_items.append({
             'type': 'nav',
             'id': str(n.id),
             'title': n.title,
             'subtitle': f"{n.mode} ({n.get_direction_display() if hasattr(n, 'get_direction_display') else n.direction})",
-            'location': f"{n.origin_address or 'Origin'} ➔ {n.destination_address or 'Destination'}",
+            'location': nav_location,
             'status': n.status,
             'timestamp': n.departure_time,
             'end_timestamp': n.arrival_time,

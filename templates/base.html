@@ -330,7 +330,7 @@
         }
 
         function closeAllDropdowns() {
-            document.querySelectorAll('.user-dropdown-menu, .tripspaces-dropdown-menu').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.user-dropdown-menu, .tripspaces-dropdown-menu, .add-element-dropdown-menu').forEach(el => el.classList.remove('active'));
         }
 
         function toggleDropdown(id) {
@@ -361,6 +361,9 @@
             }
             if (!e.target.closest('.nav-dropdown-wrapper')) {
                 document.querySelectorAll('.tripspaces-dropdown-menu').forEach(el => el.classList.remove('active'));
+            }
+            if (!e.target.closest('.add-element-dropdown-wrapper')) {
+                document.querySelectorAll('.add-element-dropdown-menu').forEach(el => el.classList.remove('active'));
             }
         });
 
