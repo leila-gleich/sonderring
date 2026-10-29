@@ -928,23 +928,28 @@ class PublicRecommendationTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertFalse(Rec.objects.filter(title='Buy Cheap Watches').exists())
 
-    def test_workspace_displays_rec_invite_link_and_sndr_tabs(self):
-        """Verify workspace top section contains copyable recommendation invite link and SNDR tabs."""
+    def test_workspace_displays_rec_invite_link_and_move_stay_taste_play_tabs(self):
+        """Verify workspace top section contains copyable recommendation invite link and Move, Stay, Taste, Play tabs."""
         session = self.client.session
         session['user_id'] = str(self.owner.id)
         session.save()
 
         resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
         self.assertEqual(resp.status_code, 200)
-        # SNDR tab elements
-        self.assertContains(resp, 'title="Sonderring S Element: Stays">S</span>')
-        self.assertContains(resp, 'title="Sonderring N Element: Navs">N</span>')
-        self.assertContains(resp, 'title="Sonderring D Element: Dos">D</span>')
-        self.assertContains(resp, 'title="Sonderring R Element: Recs">R</span>')
-        # Copy link widget in top section
-        self.assertContains(resp, 'rec-invite-bar')
+        # Move, Stay, Taste, Play tab elements
+        self.assertContains(resp, "switchTab('move', this)")
+        self.assertContains(resp, "switchTab('stay', this)")
+        self.assertContains(resp, "switchTab('taste', this)")
+        self.assertContains(resp, "switchTab('play', this)")
+        self.assertContains(resp, '✈️ Move')
+        self.assertContains(resp, '🏨 Stay')
+        self.assertContains(resp, '🍽️ Taste')
+        self.assertContains(resp, '🎯 Play')
+        # Recommendation Link button in workspace overview
+        self.assertContains(resp, 'Recommendation Link')
         self.assertContains(resp, self.trip.rec_token)
-        self.assertContains(resp, 'Copy Rec Link')
+        self.assertContains(resp, "Collect and record recommendations for your trip using this easy form. They will show up in the 'recommendations' section of your trip")
+        self.assertNotContains(resp, 'rec-invite-bar')
 
 
 class GlobalNavigationAndCreateTripModalTests(TestCase):
@@ -1070,7 +1075,7 @@ class TripWorkspaceAddElementAndDisplayTests(TestCase):
         TripMember.objects.create(trip=self.trip, user=self.viewer, role='VIEWER')
 
     def test_add_element_button_and_dropdown_for_editor(self):
-        """Top workspace detail section has 'Add Element' button & dropdown for all 4 elements (S, N, D, R)."""
+        """Top workspace detail section has 'Add Element' button & dropdown for all 4 elements (Move, Stay, Taste, Play)."""
         session = self.client.session
         session['user_id'] = str(self.owner.id)
         session.save()
@@ -1084,10 +1089,10 @@ class TripWorkspaceAddElementAndDisplayTests(TestCase):
         self.assertContains(resp, 'id="addElementDropdownMenu"')
 
         # All 4 elements present in dropdown
+        self.assertContains(resp, "openAddElement('move')")
         self.assertContains(resp, "openAddElement('stay')")
-        self.assertContains(resp, "openAddElement('nav')")
-        self.assertContains(resp, "openAddElement('do')")
-        self.assertContains(resp, "openAddElement('rec')")
+        self.assertContains(resp, "openAddElement('taste')")
+        self.assertContains(resp, "openAddElement('play')")
 
         # Element chooser modal also available
         self.assertContains(resp, 'id="addElementModal"')
@@ -1537,6 +1542,269 @@ class DateRangeValidationAndOptionalStayTimesTests(TestCase):
         self.assertContains(resp, 'setupStayDateSync')
         self.assertContains(resp, 'setupDateRangePair')
         self.assertContains(resp, 'setupDateTimeRangePair')
+
+
+class MoveStayTastePlayWorkflowTests(TestCase):
+    """Full workflow tests for the restructured Move, Stay, Taste, Play architecture."""
+
+    def setUp(self):
+        from core.models import UserProfile, Trip, TripMember, Move, Stay, Taste, Play
+        self.client = Client()
+        self.owner = UserProfile.objects.create(
+            email='mstp_owner@example.com',
+            handle='mstpowner',
+            full_name='MSTP Owner',
+            is_active=True
+        )
+        self.trip = Trip.objects.create(
+            title='Nordic Adventure',
+            location='Norway',
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + datetime.timedelta(days=7),
+            created_by=self.owner
+        )
+        TripMember.objects.create(trip=self.trip, user=self.owner, role='OWNER')
+
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+    def tearDown(self):
+        from core.md_sync import delete_trip_markdown
+        delete_trip_markdown(self.trip)
+
+    def test_move_crud_and_status_toggle(self):
+        """Test adding, editing, toggling status, and deleting a Move."""
+        from core.models import Move, Nav
+        # Add Move
+        resp = self.client.post(reverse('core:add_move', args=[self.trip.id]), {
+            'title': 'Flight from OSL to BOO',
+            'mode': 'Flight',
+            'origin': 'Oslo (OSL)',
+            'destination': 'Bodo (BOO)',
+            'departure_time': '2026-11-10T08:00',
+            'arrival_time': '2026-11-10T09:30',
+            'status': 'IDEA',
+            'price': '145.00',
+            'confirmation_code': 'NOR-FLY-778',
+        }, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        move = Move.objects.filter(trip=self.trip, title='Flight from OSL to BOO').first()
+        self.assertIsNotNone(move)
+        self.assertEqual(move.mode, 'Flight')
+        self.assertEqual(move.status, 'IDEA')
+        self.assertEqual(float(move.price), 145.00)
+        self.assertEqual(move.confirmation_code, 'NOR-FLY-778')
+
+        # Mirroring check to legacy Nav
+        nav = Nav.objects.filter(trip=self.trip, title='Flight from OSL to BOO').first()
+        self.assertIsNotNone(nav)
+
+        # Toggle status to CONFIRMED
+        toggle_resp = self.client.post(reverse('core:toggle_status', args=['move', move.id]), {
+            'status': 'CONFIRMED'
+        })
+        self.assertEqual(toggle_resp.status_code, 200)
+        move.refresh_from_db()
+        self.assertEqual(move.status, 'CONFIRMED')
+
+        # Edit Move
+        edit_resp = self.client.post(reverse('core:edit_move', args=[self.trip.id, move.id]), {
+            'title': 'Updated Flight to Bodo',
+            'mode': 'Flight',
+            'origin': 'Oslo (OSL)',
+            'destination': 'Bodo (BOO)',
+            'departure_time': '2026-11-10T08:30',
+            'arrival_time': '2026-11-10T10:00',
+            'status': 'CONFIRMED',
+            'price': '160.00',
+        }, follow=True)
+        self.assertEqual(edit_resp.status_code, 200)
+        move.refresh_from_db()
+        self.assertEqual(move.title, 'Updated Flight to Bodo')
+        self.assertEqual(float(move.price), 160.00)
+
+        # Delete Move
+        del_resp = self.client.post(reverse('core:delete_move', args=[self.trip.id, move.id]), follow=True)
+        self.assertEqual(del_resp.status_code, 200)
+        self.assertFalse(Move.objects.filter(id=move.id).exists())
+
+    def test_taste_crud_and_status_toggle(self):
+        """Test adding, editing, toggling status, and deleting a Taste item."""
+        from core.models import Taste
+        # Add Taste
+        resp = self.client.post(reverse('core:add_taste', args=[self.trip.id]), {
+            'title': 'Restaurant Lofoten Fiskerestaurant',
+            'taste_type': 'Restaurant',
+            'address': 'Havnegata 12, Svolvaer',
+            'start_time': '2026-11-12T19:30',
+            'status': 'IDEA',
+            'price': '95.00',
+            'confirmation_code': 'LOFOTEN-42',
+            'notes': 'Book window table overlooking harbor',
+        }, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        taste = Taste.objects.filter(trip=self.trip, title='Restaurant Lofoten Fiskerestaurant').first()
+        self.assertIsNotNone(taste)
+        self.assertEqual(taste.taste_type, 'Restaurant')
+        self.assertEqual(taste.confirmation_code, 'LOFOTEN-42')
+
+        # Toggle status to CONFIRMED
+        toggle_resp = self.client.post(reverse('core:toggle_status', args=['taste', taste.id]), {
+            'status': 'CONFIRMED'
+        })
+        self.assertEqual(toggle_resp.status_code, 200)
+        taste.refresh_from_db()
+        self.assertEqual(taste.status, 'CONFIRMED')
+
+        # Edit Taste
+        edit_resp = self.client.post(reverse('core:edit_taste', args=[self.trip.id, taste.id]), {
+            'title': 'Lofoten Seafood Feast',
+            'taste_type': 'Restaurant',
+            'address': 'Havnegata 12, Svolvaer',
+            'start_time': '2026-11-12T20:00',
+            'status': 'CONFIRMED',
+            'price': '110.00',
+            'notes': 'Confirmed window table',
+        }, follow=True)
+        self.assertEqual(edit_resp.status_code, 200)
+        taste.refresh_from_db()
+        self.assertEqual(taste.title, 'Lofoten Seafood Feast')
+        self.assertEqual(float(taste.price), 110.00)
+
+        # Delete Taste
+        del_resp = self.client.post(reverse('core:delete_taste', args=[self.trip.id, taste.id]), follow=True)
+        self.assertEqual(del_resp.status_code, 200)
+        self.assertFalse(Taste.objects.filter(id=taste.id).exists())
+
+    def test_play_crud_and_status_toggle(self):
+        """Test adding, editing, toggling status, and deleting a Play item."""
+        from core.models import Play
+        # Add Play
+        resp = self.client.post(reverse('core:add_play', args=[self.trip.id]), {
+            'title': 'Reinebringen Summit Hike',
+            'play_type': 'Outdoor & Hike',
+            'address': 'Reine, Lofoten',
+            'start_time': '2026-11-11T10:00',
+            'end_time': '2026-11-11T14:00',
+            'status': 'CONFIRMED',
+            'price': '0.00',
+            'notes': '1560 stone sherpa steps',
+        }, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        play = Play.objects.filter(trip=self.trip, title='Reinebringen Summit Hike').first()
+        self.assertIsNotNone(play)
+        self.assertEqual(play.play_type, 'Outdoor & Hike')
+        self.assertEqual(play.status, 'CONFIRMED')
+
+        # Edit Play
+        edit_resp = self.client.post(reverse('core:edit_play', args=[self.trip.id, play.id]), {
+            'title': 'Reinebringen Sherpa Stair Hike',
+            'play_type': 'Outdoor & Hike',
+            'address': 'Reine, Lofoten',
+            'start_time': '2026-11-11T09:30',
+            'end_time': '2026-11-11T13:30',
+            'status': 'COMPLETE',
+            'price': '0.00',
+            'notes': 'Completed successfully with great weather',
+        }, follow=True)
+        self.assertEqual(edit_resp.status_code, 200)
+        play.refresh_from_db()
+        self.assertEqual(play.title, 'Reinebringen Sherpa Stair Hike')
+        self.assertEqual(play.status, 'COMPLETE')
+
+        # Delete Play
+        del_resp = self.client.post(reverse('core:delete_play', args=[self.trip.id, play.id]), follow=True)
+        self.assertEqual(del_resp.status_code, 200)
+        self.assertFalse(Play.objects.filter(id=play.id).exists())
+
+    def test_markdown_sync_structure_order(self):
+        """Verify markdown file generates ## Move, ## Stay, ## Taste, ## Play in exact canonical order."""
+        import os
+        from core.models import Move, Stay, Taste, Play
+        from core.md_sync import sync_trip_to_markdown, get_trips_directory, get_trip_filename
+
+        Move.objects.create(
+            trip=self.trip,
+            title='Bergen Rail',
+            mode='Train',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        Stay.objects.create(
+            trip=self.trip,
+            title='Fjord Lodge',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        Taste.objects.create(
+            trip=self.trip,
+            title='Bakery Cinnamon Buns',
+            taste_type='Cafe & Bakery',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+        Play.objects.create(
+            trip=self.trip,
+            title='Fjord Kayaking',
+            play_type='Water & Boat',
+            status='CONFIRMED',
+            created_by=self.owner
+        )
+
+        # Trigger md sync
+        md_path = sync_trip_to_markdown(self.trip)
+        self.assertTrue(os.path.exists(md_path))
+        with open(md_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        move_idx = content.find('## Move')
+        stay_idx = content.find('## Stay')
+        taste_idx = content.find('## Taste')
+        play_idx = content.find('## Play')
+
+        self.assertNotEqual(move_idx, -1)
+        self.assertNotEqual(stay_idx, -1)
+        self.assertNotEqual(taste_idx, -1)
+        self.assertNotEqual(play_idx, -1)
+
+        # Assert strict canonical ordering: Move -> Stay -> Taste -> Play
+        self.assertTrue(move_idx < stay_idx < taste_idx < play_idx)
+
+    def test_public_recommendation_populates_taste_and_play(self):
+        """Verify public recommend link categorizes entries into Taste vs Play."""
+        from core.models import Taste, Play
+
+        # Recommend Taste (Food/Dining)
+        url = reverse('core:public_recommend', args=[self.trip.rec_token])
+        resp1 = self.client.post(url, {
+            'guest_name': 'Foodie Friend',
+            'title': 'Best Fish Soup',
+            'category': 'Taste',
+            'sub_type': 'Restaurant',
+            'description': 'Creamy Bergen fish soup',
+        }, follow=True)
+        self.assertEqual(resp1.status_code, 200)
+        taste = Taste.objects.filter(trip=self.trip, title='Best Fish Soup').first()
+        self.assertIsNotNone(taste)
+        self.assertEqual(taste.guest_name, 'Foodie Friend')
+
+        # Recommend Play (Activity)
+        resp2 = self.client.post(url, {
+            'guest_name': 'Explorer Friend',
+            'title': 'Floibanen Funicular',
+            'category': 'Play',
+            'sub_type': 'Sightseeing',
+            'description': 'Funicular ride up Mount Floyen',
+        }, follow=True)
+        self.assertEqual(resp2.status_code, 200)
+        play = Play.objects.filter(trip=self.trip, title='Floibanen Funicular').first()
+        self.assertIsNotNone(play)
+        self.assertEqual(play.guest_name, 'Explorer Friend')
+
 
 
 

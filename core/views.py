@@ -20,7 +20,7 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Trip, Stay, Nav, Do, Rec, UserProfile, TripMember, Attachment, OAuthIdentity, SecurityAuditLog
+from .models import Trip, Stay, Move, Taste, Play, Nav, Do, Rec, UserProfile, TripMember, Attachment, OAuthIdentity, SecurityAuditLog
 
 
 def get_client_ip(request):
@@ -514,19 +514,45 @@ def trip_workspace_view(request, trip_id):
     is_viewer = (user_role == 'VIEWER')
     can_edit = is_editor
 
+    moves = trip.moves.select_related('created_by', 'updated_by').all().order_by('departure_time', 'created_at')
     stays = trip.stays.select_related('created_by', 'updated_by').all().order_by('check_in', 'created_at')
-    navs = trip.navs.select_related('created_by', 'updated_by').all().order_by('departure_time', 'created_at')
-    dos = trip.dos.select_related('created_by', 'updated_by').all().order_by('start_time', 'created_at')
-    recs = trip.recs.select_related('recommended_by', 'updated_by').all().order_by('-created_at')
-    attachments = trip.attachments.select_related('stay', 'nav', 'do', 'uploaded_by', 'updated_by').all().order_by('-created_at')
+    tastes = trip.tastes.select_related('recommended_by', 'created_by', 'updated_by').all().order_by('start_time', 'created_at')
+    plays = trip.plays.select_related('recommended_by', 'created_by', 'updated_by').all().order_by('start_time', 'created_at')
+    attachments = trip.attachments.select_related('move', 'stay', 'taste', 'play', 'uploaded_by', 'updated_by').all().order_by('-created_at')
     members = trip.members.select_related('user').all()
 
-    # Navs grouped by stage
-    navs_start_end = [n for n in navs if n.trip_stage == 'START_END']
-    navs_mid_trip = [n for n in navs if n.trip_stage == 'MID_TRIP']
+    # Moves grouped by stage
+    moves_start_end = [m for m in moves if m.trip_stage == 'START_END']
+    moves_mid_trip = [m for m in moves if m.trip_stage == 'MID_TRIP']
 
-    # Combined Chronological Timeline Items
+    # Combined Chronological Timeline Items (Move, Stay, Taste, Play)
     timeline_items = []
+    for m in moves:
+        move_location = None
+        if m.origin_address and m.destination_address:
+            move_location = f"{m.origin_address} ➔ {m.destination_address}"
+        elif m.origin_address:
+            move_location = m.origin_address
+        elif m.destination_address:
+            move_location = m.destination_address
+
+        timeline_items.append({
+            'type': 'move',
+            'id': str(m.id),
+            'title': m.title,
+            'subtitle': f"{m.mode} ({m.get_direction_display() if hasattr(m, 'get_direction_display') else m.direction})",
+            'location': move_location,
+            'status': m.status,
+            'timestamp': m.departure_time,
+            'end_timestamp': m.arrival_time,
+            'has_time': m.is_departure_time_set,
+            'has_end_time': m.is_arrival_time_set,
+            'price': m.price,
+            'currency': m.currency,
+            'has_code': m.has_confirmation_code,
+            'obj': m,
+        })
+
     for s in stays:
         timeline_items.append({
             'type': 'stay',
@@ -544,47 +570,41 @@ def trip_workspace_view(request, trip_id):
             'has_code': s.has_confirmation_code,
             'obj': s,
         })
-    for n in navs:
-        nav_location = None
-        if n.origin_address and n.destination_address:
-            nav_location = f"{n.origin_address} ➔ {n.destination_address}"
-        elif n.origin_address:
-            nav_location = n.origin_address
-        elif n.destination_address:
-            nav_location = n.destination_address
 
+    for t in tastes:
         timeline_items.append({
-            'type': 'nav',
-            'id': str(n.id),
-            'title': n.title,
-            'subtitle': f"{n.mode} ({n.get_direction_display() if hasattr(n, 'get_direction_display') else n.direction})",
-            'location': nav_location,
-            'status': n.status,
-            'timestamp': n.departure_time,
-            'end_timestamp': n.arrival_time,
-            'has_time': bool(n.departure_time),
-            'has_end_time': bool(n.arrival_time),
-            'price': n.price,
-            'currency': n.currency,
-            'has_code': n.has_confirmation_code,
-            'obj': n,
+            'type': 'taste',
+            'id': str(t.id),
+            'title': t.title,
+            'subtitle': t.get_taste_type_display() if hasattr(t, 'get_taste_type_display') else t.taste_type,
+            'location': t.address,
+            'status': t.status,
+            'timestamp': t.start_time,
+            'end_timestamp': t.end_time,
+            'has_time': t.is_start_time_set,
+            'has_end_time': t.is_end_time_set,
+            'price': t.price,
+            'currency': t.currency,
+            'has_code': t.has_confirmation_code,
+            'obj': t,
         })
-    for d in dos:
+
+    for p in plays:
         timeline_items.append({
-            'type': 'do',
-            'id': str(d.id),
-            'title': d.title,
-            'subtitle': d.activity_type or 'Activity',
-            'location': d.address,
-            'status': d.status,
-            'timestamp': d.start_time,
-            'end_timestamp': d.end_time,
-            'has_time': bool(d.start_time),
-            'has_end_time': bool(d.end_time),
-            'price': d.price,
-            'currency': d.currency,
-            'has_code': d.has_confirmation_code,
-            'obj': d,
+            'type': 'play',
+            'id': str(p.id),
+            'title': p.title,
+            'subtitle': p.get_play_type_display() if hasattr(p, 'get_play_type_display') else p.play_type,
+            'location': p.address,
+            'status': p.status,
+            'timestamp': p.start_time,
+            'end_timestamp': p.end_time,
+            'has_time': p.is_start_time_set,
+            'has_end_time': p.is_end_time_set,
+            'price': p.price,
+            'currency': p.currency,
+            'has_code': p.has_confirmation_code,
+            'obj': p,
         })
 
     # Sort timeline: dated items first chronologically, undated items at end
@@ -595,13 +615,12 @@ def trip_workspace_view(request, trip_id):
         )
     )
 
-    # Financial totals (include both CONFIRMED and COMPLETE items)
-    total_spend = sum(
-        float(s.total_price or 0) for s in stays if s.status in ('CONFIRMED', 'COMPLETE')
-    ) + sum(
-        float(n.price or 0) for n in navs if n.status in ('CONFIRMED', 'COMPLETE')
-    ) + sum(
-        float(d.price or 0) for d in dos if d.status in ('CONFIRMED', 'COMPLETE')
+    # Financial totals across all elements (include both CONFIRMED and COMPLETE items)
+    total_spend = (
+        sum(float(m.price or 0) for m in moves if m.status in ('CONFIRMED', 'COMPLETE')) +
+        sum(float(s.total_price or 0) for s in stays if s.status in ('CONFIRMED', 'COMPLETE')) +
+        sum(float(t.price or 0) for t in tastes if t.status in ('CONFIRMED', 'COMPLETE')) +
+        sum(float(p.price or 0) for p in plays if p.status in ('CONFIRMED', 'COMPLETE'))
     )
 
     context = {
@@ -613,12 +632,18 @@ def trip_workspace_view(request, trip_id):
         'is_editor': is_editor,
         'is_viewer': is_viewer,
         'can_edit': can_edit,
+        'moves': moves,
         'stays': stays,
-        'navs': navs,
-        'navs_start_end': navs_start_end,
-        'navs_mid_trip': navs_mid_trip,
-        'dos': dos,
-        'recs': recs,
+        'tastes': tastes,
+        'plays': plays,
+        'moves_start_end': moves_start_end,
+        'moves_mid_trip': moves_mid_trip,
+        # Legacy aliases
+        'navs': moves,
+        'navs_start_end': moves_start_end,
+        'navs_mid_trip': moves_mid_trip,
+        'dos': plays,
+        'recs': tastes,
         'attachments': attachments,
         'members': members,
         'timeline_items': timeline_items,
@@ -1026,23 +1051,23 @@ def delete_stay_view(request, trip_id, stay_id):
 
 
 # ==========================================
-# Nav CRUD Operations
+# Move CRUD Operations
 # ==========================================
 
 @require_POST
-def add_nav_view(request, trip_id):
+def add_move_view(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id)
     current_user = get_current_user(request)
 
     if not can_user_edit_trip(current_user, trip):
         messages.error(request, "Permission denied: Only Trip Owners and Editors can add transportation legs.")
-        return redirect(f"/trips/{trip_id}/#navs")
+        return redirect(f"/trips/{trip_id}/#move")
 
     title = request.POST.get('title', '').strip()
     mode = request.POST.get('mode', 'Flight')
     if not title:
         messages.error(request, "Transit leg name is required.")
-        return redirect(f"/trips/{trip_id}/#navs")
+        return redirect(f"/trips/{trip_id}/#move")
 
     dept_raw = request.POST.get('departure_time')
     arr_raw = request.POST.get('arrival_time')
@@ -1055,9 +1080,9 @@ def add_nav_view(request, trip_id):
 
     if dept_dt and arr_dt and arr_dt < dept_dt:
         messages.error(request, "Arrival date/time cannot be before departure date/time.")
-        return redirect(f"/trips/{trip_id}/#navs")
+        return redirect(f"/trips/{trip_id}/#move")
 
-    nav = Nav(
+    move = Move(
         trip=trip,
         title=title,
         mode=mode,
@@ -1081,23 +1106,23 @@ def add_nav_view(request, trip_id):
 
     code = request.POST.get('confirmation_code', '').strip()
     if code:
-        nav.confirmation_code = code
+        move.confirmation_code = code
 
-    nav.save()
-    messages.success(request, f"Transport leg '{nav.title}' added successfully!")
-    return redirect(f"/trips/{trip_id}/#navs")
+    move.save()
+    messages.success(request, f"Transit leg '{move.title}' added successfully!")
+    return redirect(f"/trips/{trip_id}/#move")
 
 
 @require_POST
-def edit_nav_view(request, trip_id, nav_id):
+def edit_move_view(request, trip_id, move_id):
     trip = get_object_or_404(Trip, id=trip_id)
-    nav = get_object_or_404(Nav, id=nav_id, trip=trip)
+    move = get_object_or_404(Move, id=move_id, trip=trip)
     current_user = get_current_user(request)
 
     next_url = request.POST.get('next')
-    fallback_redirect = next_url if (next_url and next_url.startswith('/')) else f"/trips/{trip_id}/#navs"
+    fallback_redirect = next_url if (next_url and next_url.startswith('/')) else f"/trips/{trip_id}/#move"
 
-    if not can_user_edit_item(current_user, trip, nav):
+    if not can_user_edit_item(current_user, trip, move):
         messages.error(request, "Permission denied: You can only edit transportation legs you created or if you are a Trip Editor/Owner.")
         return redirect(fallback_redirect)
 
@@ -1114,74 +1139,79 @@ def edit_nav_view(request, trip_id, nav_id):
         messages.error(request, "Arrival date/time cannot be before departure date/time.")
         return redirect(fallback_redirect)
 
-    nav.title = request.POST.get('title', nav.title).strip()
-    nav.mode = request.POST.get('mode', nav.mode)
-    nav.trip_stage = request.POST.get('trip_stage', nav.trip_stage)
-    nav.direction = request.POST.get('direction', nav.direction)
-    nav.status = _normalize_item_status(request.POST.get('status'), nav.status)
-    nav.passenger_name = request.POST.get('passenger_name', '').strip()
-    nav.origin_address = request.POST.get('origin_address', '').strip()
-    nav.destination_address = request.POST.get('destination_address', '').strip()
+    move.title = request.POST.get('title', move.title).strip()
+    move.mode = request.POST.get('mode', move.mode)
+    move.trip_stage = request.POST.get('trip_stage', move.trip_stage)
+    move.direction = request.POST.get('direction', move.direction)
+    move.status = _normalize_item_status(request.POST.get('status'), move.status)
+    move.passenger_name = request.POST.get('passenger_name', '').strip()
+    move.origin_address = request.POST.get('origin_address', '').strip()
+    move.destination_address = request.POST.get('destination_address', '').strip()
 
-    nav.departure_time = dept_dt
-    nav.arrival_time = arr_dt
+    move.departure_time = dept_dt
+    move.arrival_time = arr_dt
 
-    nav.date_confidence = request.POST.get('date_confidence', nav.date_confidence)
-    nav.time_confidence = request.POST.get('time_confidence', nav.time_confidence)
-    nav.flexibility_notes = request.POST.get('flexibility_notes', '').strip()
-    nav.price = float(request.POST.get('price')) if request.POST.get('price') else None
-    nav.currency = request.POST.get('currency', nav.currency)
-    nav.booking_link = request.POST.get('booking_link', '').strip()
+    move.date_confidence = request.POST.get('date_confidence', move.date_confidence)
+    move.time_confidence = request.POST.get('time_confidence', move.time_confidence)
+    move.flexibility_notes = request.POST.get('flexibility_notes', '').strip()
+    move.price = float(request.POST.get('price')) if request.POST.get('price') else None
+    move.currency = request.POST.get('currency', move.currency)
+    move.booking_link = request.POST.get('booking_link', '').strip()
 
     code = request.POST.get('confirmation_code', '').strip()
     if code:
-        nav.confirmation_code = code
+        move.confirmation_code = code
 
-    nav.updated_by = current_user
-    nav.save()
-    messages.success(request, f"Updated Transit Leg '{nav.title}'!")
-    next_url = request.POST.get('next')
+    move.updated_by = current_user
+    move.save()
+    messages.success(request, f"Updated Transit Leg '{move.title}'!")
     if next_url and next_url.startswith('/'):
         return redirect(next_url)
-    return redirect(f"/trips/{trip_id}/#navs")
+    return redirect(f"/trips/{trip_id}/#move")
 
 
 @require_POST
-def delete_nav_view(request, trip_id, nav_id):
+def delete_move_view(request, trip_id, move_id):
     trip = get_object_or_404(Trip, id=trip_id)
-    nav = get_object_or_404(Nav, id=nav_id, trip=trip)
+    move = get_object_or_404(Move, id=move_id, trip=trip)
     current_user = get_current_user(request)
 
-    if not can_user_edit_item(current_user, trip, nav):
+    if not can_user_edit_item(current_user, trip, move):
         messages.error(request, "Permission denied: You can only delete transportation legs you created or if you are a Trip Editor/Owner.")
-        return redirect(f"/trips/{trip_id}/#navs")
+        return redirect(f"/trips/{trip_id}/#move")
 
-    title = nav.title
-    nav.delete()
+    title = move.title
+    move.delete()
     messages.success(request, f"Transit leg '{title}' deleted.")
     next_url = request.POST.get('next')
     if next_url and next_url.startswith('/'):
         return redirect(next_url)
-    return redirect(f"/trips/{trip_id}/#navs")
+    return redirect(f"/trips/{trip_id}/#move")
+
+
+# Backward compatibility aliases for Nav
+add_nav_view = add_move_view
+edit_nav_view = edit_move_view
+delete_nav_view = delete_move_view
 
 
 # ==========================================
-# Do CRUD Operations
+# Taste CRUD Operations (Food & Drink)
 # ==========================================
 
 @require_POST
-def add_do_view(request, trip_id):
+def add_taste_view(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id)
     current_user = get_current_user(request)
 
     if not can_user_edit_trip(current_user, trip):
-        messages.error(request, "Permission denied: Only Trip Owners and Editors can add activities.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        messages.error(request, "Permission denied: Only Trip Owners and Editors can add food & drink spots.")
+        return redirect(f"/trips/{trip_id}/#taste")
 
     title = request.POST.get('title', '').strip()
     if not title:
-        messages.error(request, "Activity title is required.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        messages.error(request, "Food & drink title is required.")
+        return redirect(f"/trips/{trip_id}/#taste")
 
     s_time = request.POST.get('start_time')
     e_time = request.POST.get('end_time')
@@ -1194,12 +1224,12 @@ def add_do_view(request, trip_id):
 
     if start_dt and end_dt and end_dt < start_dt:
         messages.error(request, "End date/time cannot be before start date/time.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        return redirect(f"/trips/{trip_id}/#taste")
 
-    do_item = Do(
+    taste = Taste(
         trip=trip,
         title=title,
-        activity_type=request.POST.get('activity_type', 'Sightseeing'),
+        taste_type=request.POST.get('taste_type', 'Restaurant'),
         status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
         address=request.POST.get('address', '').strip(),
         start_time=start_dt,
@@ -1208,29 +1238,156 @@ def add_do_view(request, trip_id):
         currency=request.POST.get('currency', 'USD'),
         link=request.POST.get('link', '').strip(),
         description=request.POST.get('description', '').strip(),
+        notes=request.POST.get('notes', '').strip(),
         created_by=current_user,
         updated_by=current_user
     )
 
     code = request.POST.get('confirmation_code', '').strip()
     if code:
-        do_item.confirmation_code = code
+        taste.confirmation_code = code
 
-    do_item.save()
-    messages.success(request, f"Activity '{do_item.title}' added successfully!")
-    return redirect(f"/trips/{trip_id}/#dos")
+    taste.save()
+    messages.success(request, f"Taste '{taste.title}' added successfully!")
+    return redirect(f"/trips/{trip_id}/#taste")
 
 
 @require_POST
-def edit_do_view(request, trip_id, do_id):
+def edit_taste_view(request, trip_id, taste_id):
     trip = get_object_or_404(Trip, id=trip_id)
-    do_item = get_object_or_404(Do, id=do_id, trip=trip)
+    taste = get_object_or_404(Taste, id=taste_id, trip=trip)
     current_user = get_current_user(request)
 
     next_url = request.POST.get('next')
-    fallback_redirect = next_url if (next_url and next_url.startswith('/')) else f"/trips/{trip_id}/#dos"
+    fallback_redirect = next_url if (next_url and next_url.startswith('/')) else f"/trips/{trip_id}/#taste"
 
-    if not can_user_edit_item(current_user, trip, do_item):
+    if not can_user_edit_item(current_user, trip, taste):
+        messages.error(request, "Permission denied: You can only edit dining spots you created or if you are a Trip Editor/Owner.")
+        return redirect(fallback_redirect)
+
+    s_time = request.POST.get('start_time')
+    e_time = request.POST.get('end_time')
+    start_dt = parse_datetime(s_time) if s_time else None
+    end_dt = parse_datetime(e_time) if e_time else None
+    if start_dt and settings.USE_TZ and timezone.is_naive(start_dt):
+        start_dt = timezone.make_aware(start_dt)
+    if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
+        end_dt = timezone.make_aware(end_dt)
+
+    if start_dt and end_dt and end_dt < start_dt:
+        messages.error(request, "End date/time cannot be before start date/time.")
+        return redirect(fallback_redirect)
+
+    taste.title = request.POST.get('title', taste.title).strip()
+    taste.taste_type = request.POST.get('taste_type', taste.taste_type)
+    taste.status = _normalize_item_status(request.POST.get('status'), taste.status)
+    taste.address = request.POST.get('address', '').strip()
+    taste.start_time = start_dt
+    taste.end_time = end_dt
+    taste.price = float(request.POST.get('price')) if request.POST.get('price') else None
+    taste.currency = request.POST.get('currency', taste.currency)
+    taste.link = request.POST.get('link', '').strip()
+    taste.description = request.POST.get('description', '').strip()
+    taste.notes = request.POST.get('notes', '').strip()
+
+    code = request.POST.get('confirmation_code', '').strip()
+    if code:
+        taste.confirmation_code = code
+
+    taste.updated_by = current_user
+    taste.save()
+    messages.success(request, f"Updated '{taste.title}'!")
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
+    return redirect(f"/trips/{trip_id}/#taste")
+
+
+@require_POST
+def delete_taste_view(request, trip_id, taste_id):
+    trip = get_object_or_404(Trip, id=trip_id)
+    taste = get_object_or_404(Taste, id=taste_id, trip=trip)
+    current_user = get_current_user(request)
+
+    if not can_user_edit_item(current_user, trip, taste):
+        messages.error(request, "Permission denied: You can only delete dining spots you created or if you are a Trip Editor/Owner.")
+        return redirect(f"/trips/{trip_id}/#taste")
+
+    title = taste.title
+    taste.delete()
+    messages.success(request, f"'{title}' removed.")
+    next_url = request.POST.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
+    return redirect(f"/trips/{trip_id}/#taste")
+
+
+# ==========================================
+# Play CRUD Operations (Activities, Sights, Tours)
+# ==========================================
+
+@require_POST
+def add_play_view(request, trip_id):
+    trip = get_object_or_404(Trip, id=trip_id)
+    current_user = get_current_user(request)
+
+    if not can_user_edit_trip(current_user, trip):
+        messages.error(request, "Permission denied: Only Trip Owners and Editors can add activities.")
+        return redirect(f"/trips/{trip_id}/#play")
+
+    title = request.POST.get('title', '').strip()
+    if not title:
+        messages.error(request, "Activity title is required.")
+        return redirect(f"/trips/{trip_id}/#play")
+
+    s_time = request.POST.get('start_time')
+    e_time = request.POST.get('end_time')
+    start_dt = parse_datetime(s_time) if s_time else None
+    end_dt = parse_datetime(e_time) if e_time else None
+    if start_dt and settings.USE_TZ and timezone.is_naive(start_dt):
+        start_dt = timezone.make_aware(start_dt)
+    if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
+        end_dt = timezone.make_aware(end_dt)
+
+    if start_dt and end_dt and end_dt < start_dt:
+        messages.error(request, "End date/time cannot be before start date/time.")
+        return redirect(f"/trips/{trip_id}/#play")
+
+    play = Play(
+        trip=trip,
+        title=title,
+        play_type=request.POST.get('play_type', 'Sightseeing'),
+        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
+        address=request.POST.get('address', '').strip(),
+        start_time=start_dt,
+        end_time=end_dt,
+        price=float(request.POST.get('price')) if request.POST.get('price') else None,
+        currency=request.POST.get('currency', 'USD'),
+        link=request.POST.get('link', '').strip(),
+        description=request.POST.get('description', '').strip(),
+        notes=request.POST.get('notes', '').strip(),
+        created_by=current_user,
+        updated_by=current_user
+    )
+
+    code = request.POST.get('confirmation_code', '').strip()
+    if code:
+        play.confirmation_code = code
+
+    play.save()
+    messages.success(request, f"Activity '{play.title}' added successfully!")
+    return redirect(f"/trips/{trip_id}/#play")
+
+
+@require_POST
+def edit_play_view(request, trip_id, play_id):
+    trip = get_object_or_404(Trip, id=trip_id)
+    play = get_object_or_404(Play, id=play_id, trip=trip)
+    current_user = get_current_user(request)
+
+    next_url = request.POST.get('next')
+    fallback_redirect = next_url if (next_url and next_url.startswith('/')) else f"/trips/{trip_id}/#play"
+
+    if not can_user_edit_item(current_user, trip, play):
         messages.error(request, "Permission denied: You can only edit activities you created or if you are a Trip Editor/Owner.")
         return redirect(fallback_redirect)
 
@@ -1247,169 +1404,93 @@ def edit_do_view(request, trip_id, do_id):
         messages.error(request, "End date/time cannot be before start date/time.")
         return redirect(fallback_redirect)
 
-    do_item.title = request.POST.get('title', do_item.title).strip()
-    do_item.activity_type = request.POST.get('activity_type', do_item.activity_type)
-    do_item.status = _normalize_item_status(request.POST.get('status'), do_item.status)
-    do_item.address = request.POST.get('address', '').strip()
-
-    do_item.start_time = start_dt
-    do_item.end_time = end_dt
-
-    do_item.price = float(request.POST.get('price')) if request.POST.get('price') else None
-    do_item.currency = request.POST.get('currency', do_item.currency)
-    do_item.link = request.POST.get('link', '').strip()
-    do_item.description = request.POST.get('description', '').strip()
+    play.title = request.POST.get('title', play.title).strip()
+    play.play_type = request.POST.get('play_type', play.play_type)
+    play.status = _normalize_item_status(request.POST.get('status'), play.status)
+    play.address = request.POST.get('address', '').strip()
+    play.start_time = start_dt
+    play.end_time = end_dt
+    play.price = float(request.POST.get('price')) if request.POST.get('price') else None
+    play.currency = request.POST.get('currency', play.currency)
+    play.link = request.POST.get('link', '').strip()
+    play.description = request.POST.get('description', '').strip()
+    play.notes = request.POST.get('notes', '').strip()
 
     code = request.POST.get('confirmation_code', '').strip()
     if code:
-        do_item.confirmation_code = code
+        play.confirmation_code = code
 
-    do_item.updated_by = current_user
-    do_item.save()
-    messages.success(request, f"Updated Activity '{do_item.title}'!")
-    next_url = request.POST.get('next')
+    play.updated_by = current_user
+    play.save()
+    messages.success(request, f"Updated Activity '{play.title}'!")
     if next_url and next_url.startswith('/'):
         return redirect(next_url)
-    return redirect(f"/trips/{trip_id}/#dos")
+    return redirect(f"/trips/{trip_id}/#play")
 
 
 @require_POST
-def delete_do_view(request, trip_id, do_id):
+def delete_play_view(request, trip_id, play_id):
     trip = get_object_or_404(Trip, id=trip_id)
-    do_item = get_object_or_404(Do, id=do_id, trip=trip)
+    play = get_object_or_404(Play, id=play_id, trip=trip)
     current_user = get_current_user(request)
 
-    if not can_user_edit_item(current_user, trip, do_item):
+    if not can_user_edit_item(current_user, trip, play):
         messages.error(request, "Permission denied: You can only delete activities you created or if you are a Trip Editor/Owner.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        return redirect(f"/trips/{trip_id}/#play")
 
-    title = do_item.title
-    do_item.delete()
+    title = play.title
+    play.delete()
     messages.success(request, f"Activity '{title}' deleted.")
     next_url = request.POST.get('next')
     if next_url and next_url.startswith('/'):
         return redirect(next_url)
-    return redirect(f"/trips/{trip_id}/#dos")
+    return redirect(f"/trips/{trip_id}/#play")
 
 
-# ==========================================
-# Rec CRUD Operations
-# ==========================================
-
-@require_POST
-def add_rec_view(request, trip_id):
-    trip = get_object_or_404(Trip, id=trip_id)
-    current_user = get_current_user(request)
-
-    if not can_user_edit_trip(current_user, trip):
-        messages.error(request, "Permission denied: Only Trip Owners and Editors can add recommendations.")
-        return redirect(f"/trips/{trip_id}/#recs")
-
-    title = request.POST.get('title', '').strip()
-    if not title:
-        messages.error(request, "Recommendation title is required.")
-        return redirect(f"/trips/{trip_id}/#recs")
-
-    Rec.objects.create(
-        trip=trip,
-        title=title,
-        category=request.POST.get('category', 'Food'),
-        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
-        address=request.POST.get('address', '').strip(),
-        link=request.POST.get('link', '').strip(),
-        description=request.POST.get('description', '').strip(),
-        recommended_by=current_user,
-        updated_by=current_user
-    )
-    messages.success(request, f"Recommendation '{title}' added to Recs!")
-    return redirect(f"/trips/{trip_id}/#recs")
-
-
-@require_POST
-def edit_rec_view(request, trip_id, rec_id):
-    trip = get_object_or_404(Trip, id=trip_id)
-    rec = get_object_or_404(Rec, id=rec_id, trip=trip)
-    current_user = get_current_user(request)
-
-    if not can_user_edit_item(current_user, trip, rec):
-        messages.error(request, "Permission denied: You can only edit recommendations you created or if you are a Trip Editor/Owner.")
-        return redirect(f"/trips/{trip_id}/#recs")
-
-    rec.title = request.POST.get('title', rec.title).strip()
-    rec.category = request.POST.get('category', rec.category)
-    rec.status = _normalize_item_status(request.POST.get('status'), rec.status)
-    rec.address = request.POST.get('address', '').strip()
-    rec.link = request.POST.get('link', '').strip()
-    rec.description = request.POST.get('description', '').strip()
-    rec.updated_by = current_user
-    rec.save()
-
-    messages.success(request, f"Updated recommendation '{rec.title}'!")
-    next_url = request.POST.get('next')
-    if next_url and next_url.startswith('/'):
-        return redirect(next_url)
-    return redirect(f"/trips/{trip_id}/#recs")
-
-
-@require_POST
-def delete_rec_view(request, trip_id, rec_id):
-    trip = get_object_or_404(Trip, id=trip_id)
-    rec = get_object_or_404(Rec, id=rec_id, trip=trip)
-    current_user = get_current_user(request)
-
-    if not can_user_edit_item(current_user, trip, rec):
-        messages.error(request, "Permission denied: You can only delete recommendations you created or if you are a Trip Editor/Owner.")
-        return redirect(f"/trips/{trip_id}/#recs")
-
-    title = rec.title
-    rec.delete()
-    messages.success(request, f"Recommendation '{title}' removed.")
-    next_url = request.POST.get('next')
-    if next_url and next_url.startswith('/'):
-        return redirect(next_url)
-    return redirect(f"/trips/{trip_id}/#recs")
+# Backward compatibility aliases for Do & Rec
+add_do_view = add_play_view
+edit_do_view = edit_play_view
+delete_do_view = delete_play_view
+add_rec_view = add_taste_view
+edit_rec_view = edit_taste_view
+delete_rec_view = delete_taste_view
 
 
 @require_POST
 def promote_rec_view(request, trip_id, rec_id):
     """
-    Promotes a recommendation from the Rec pool into a concrete scheduled Do.
+    Promotes a recommendation from Taste or Play into a confirmed booking.
     """
     trip = get_object_or_404(Trip, id=trip_id)
-    rec = get_object_or_404(Rec, id=rec_id, trip=trip)
     current_user = get_current_user(request)
 
     if not can_user_edit_trip(current_user, trip):
         messages.error(request, "Permission denied: Viewers cannot promote recommendations.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        return redirect(f"/trips/{trip_id}/#timeline")
 
-    cat_map = {
-        'Food': 'Dining',
-        'Spot': 'Sightseeing',
-        'Activity': 'Activity',
-        'Tip': 'Tour'
-    }
+    item = Taste.objects.filter(id=rec_id, trip=trip).first()
+    target_tab = 'taste'
+    if not item:
+        item = Play.objects.filter(id=rec_id, trip=trip).first()
+        target_tab = 'play'
+    if not item:
+        item = Rec.objects.filter(id=rec_id, trip=trip).first()
+        target_tab = 'taste'
 
-    recommender_name = rec.guest_name or (f"@{rec.recommended_by.handle}" if rec.recommended_by else "friend")
-    Do.objects.create(
-        trip=trip,
-        title=rec.title,
-        activity_type=cat_map.get(rec.category, 'Activity'),
-        status='CONFIRMED',
-        address=rec.address,
-        link=rec.link,
-        description=f"Promoted from Recs (recommended by {recommender_name}): {rec.description or ''}",
-        created_by=current_user
-    )
-    messages.success(request, f"'{rec.title}' promoted to confirmed itinerary item!")
-    return redirect(f"/trips/{trip_id}/#dos")
+    if item:
+        item.status = 'CONFIRMED'
+        item.updated_by = current_user
+        item.save()
+        messages.success(request, f"'{item.title}' promoted to confirmed itinerary item!")
+
+    return redirect(f"/trips/{trip_id}/#{target_tab}")
 
 
 def public_recommend_view(request, rec_token):
     """
     Public-facing recommendation intake portal for non-trippers / friends.
     No login required. Allows anyone with the trip's unique recommendation link
-    to submit recommendations that instantly populate the Recs element of the TripSpace.
+    to submit recommendations that instantly populate the Taste or Play elements of the TripSpace.
     """
     trip = get_object_or_404(Trip, rec_token=rec_token)
     submitted = request.GET.get('submitted') == '1'
@@ -1422,7 +1503,8 @@ def public_recommend_view(request, rec_token):
 
         guest_name = request.POST.get('guest_name', '').strip()
         title = request.POST.get('title', '').strip()
-        category = request.POST.get('category', 'Food')
+        category = request.POST.get('category', 'Taste')
+        sub_type = request.POST.get('sub_type', '').strip()
         description = request.POST.get('description', '').strip()
         address = request.POST.get('address', '').strip()
         link = request.POST.get('link', '').strip()
@@ -1434,30 +1516,49 @@ def public_recommend_view(request, rec_token):
                 'submitted': False,
                 'form_data': request.POST,
                 'current_user': current_user,
-                'existing_recs': trip.recs.order_by('-created_at')[:10],
+                'existing_tastes': trip.tastes.order_by('-created_at')[:6],
+                'existing_plays': trip.plays.order_by('-created_at')[:6],
             })
 
-        Rec.objects.create(
-            trip=trip,
-            title=title,
-            category=category,
-            status='IDEA',
-            description=description,
-            address=address,
-            link=link,
-            guest_name=guest_name,
-            recommended_by=current_user if current_user else None,
-            updated_by=current_user if current_user else None,
-        )
+        if category == 'Taste' or category in ('Food', 'Dining'):
+            taste_type = sub_type if sub_type else 'Restaurant'
+            Taste.objects.create(
+                trip=trip,
+                title=title,
+                taste_type=taste_type,
+                status='IDEA',
+                description=description,
+                address=address,
+                link=link,
+                guest_name=guest_name,
+                recommended_by=current_user if current_user else None,
+                updated_by=current_user if current_user else None,
+            )
+        else:
+            play_type = sub_type if sub_type else 'Sightseeing'
+            Play.objects.create(
+                trip=trip,
+                title=title,
+                play_type=play_type,
+                status='IDEA',
+                description=description,
+                address=address,
+                link=link,
+                guest_name=guest_name,
+                recommended_by=current_user if current_user else None,
+                updated_by=current_user if current_user else None,
+            )
 
         return redirect(f"{reverse('core:public_recommend', args=[rec_token])}?submitted=1")
 
-    existing_recs = trip.recs.order_by('-created_at')[:12]
+    existing_tastes = trip.tastes.order_by('-created_at')[:6]
+    existing_plays = trip.plays.order_by('-created_at')[:6]
     return render(request, 'public_recommend.html', {
         'trip': trip,
         'submitted': submitted,
         'current_user': current_user,
-        'existing_recs': existing_recs,
+        'existing_tastes': existing_tastes,
+        'existing_plays': existing_plays,
     })
 
 
@@ -1539,8 +1640,9 @@ def upload_attachment_view(request, trip_id):
         storage_path = f"vault/{trip.id}/{uuid.uuid4().hex}.pdf"
 
     stay_id = request.POST.get('stay_id')
-    nav_id = request.POST.get('nav_id')
-    do_id = request.POST.get('do_id')
+    move_id = request.POST.get('move_id') or request.POST.get('nav_id')
+    taste_id = request.POST.get('taste_id')
+    play_id = request.POST.get('play_id') or request.POST.get('do_id')
 
     attachment = Attachment(
         trip=trip,
@@ -1554,10 +1656,14 @@ def upload_attachment_view(request, trip_id):
 
     if stay_id:
         attachment.stay = Stay.objects.filter(id=stay_id, trip=trip).first()
-    if nav_id:
-        attachment.nav = Nav.objects.filter(id=nav_id, trip=trip).first()
-    if do_id:
-        attachment.do = Do.objects.filter(id=do_id, trip=trip).first()
+    if move_id:
+        attachment.move = Move.objects.filter(id=move_id, trip=trip).first()
+        attachment.nav = Nav.objects.filter(id=move_id, trip=trip).first()
+    if taste_id:
+        attachment.taste = Taste.objects.filter(id=taste_id, trip=trip).first()
+    if play_id:
+        attachment.play = Play.objects.filter(id=play_id, trip=trip).first()
+        attachment.do = Do.objects.filter(id=play_id, trip=trip).first()
 
     attachment.save()
     log_security_event(
@@ -1782,7 +1888,15 @@ def remove_member_view(request, trip_id, member_id):
 def toggle_item_status_view(request, item_type, item_id):
     """Cycles or updates trip element status (Idea -> Confirmed -> Complete -> Idea) via AJAX."""
     current_user = get_current_user(request)
-    model_map = {'stay': Stay, 'nav': Nav, 'do': Do, 'rec': Rec}
+    model_map = {
+        'move': Move,
+        'stay': Stay,
+        'taste': Taste,
+        'play': Play,
+        'nav': Nav,
+        'do': Do,
+        'rec': Rec,
+    }
     model = model_map.get(item_type.lower())
     if not model:
         return HttpResponseBadRequest("Invalid item type.")
@@ -1826,7 +1940,14 @@ def reveal_confirmation_code_view(request, item_type, item_id):
             status=403
         )
 
-    model_map = {'stay': Stay, 'nav': Nav, 'do': Do}
+    model_map = {
+        'move': Move,
+        'stay': Stay,
+        'taste': Taste,
+        'play': Play,
+        'nav': Nav,
+        'do': Do,
+    }
     model = model_map.get(item_type.lower())
     if not model:
         return HttpResponseBadRequest("Invalid item type.")

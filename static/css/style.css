@@ -694,9 +694,10 @@ body {
     display: inline-block;
 }
 
+.item-type-move, .item-type-nav { color: #7c3aed; background: #ede9fe; }
 .item-type-stay { color: #0284c7; background: #e0f2fe; }
-.item-type-nav { color: #7c3aed; background: #ede9fe; }
-.item-type-do { color: #059669; background: #ecfdf5; }
+.item-type-taste { color: #ea580c; background: #fff7ed; }
+.item-type-play, .item-type-do { color: #059669; background: #ecfdf5; }
 
 /* ==========================================================================
    WORKSPACE VIEW
@@ -733,13 +734,33 @@ body {
 
 .workspace-hero {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
     width: 100%;
     margin-bottom: 1.5rem;
 }
 
 .workspace-hero-content {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+}
+
+.workspace-hero-actions {
+    display: flex;
+    align-items: flex-start;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+}
+
+.rec-link-btn {
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.45rem 0.95rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s ease;
 }
 
 .workspace-badge-row {
@@ -1125,9 +1146,10 @@ body {
     z-index: 2;
 }
 
+.node-move, .node-nav { border-color: #a78bfa; background: #f5f3ff; }
 .node-stay { border-color: #38bdf8; background: #f0f9ff; }
-.node-nav { border-color: #a78bfa; background: #f5f3ff; }
-.node-do { border-color: #34d399; background: #ecfdf5; }
+.node-taste { border-color: #fb923c; background: #fff7ed; }
+.node-play, .node-do { border-color: #34d399; background: #ecfdf5; }
 
 .timeline-connector {
     width: 2px;

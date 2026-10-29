@@ -112,12 +112,37 @@ class ConfirmationEncryptor:
             decoded = base64.b64decode(b64_payload.encode('utf-8'))
             nonce, ciphertext = decoded[:12], decoded[12:]
             aesgcm = AESGCM(key)
-            try:
-                return aesgcm.decrypt(nonce, ciphertext, aad_bytes).decode('utf-8')
-            except InvalidTag as exc:
-                raise ValueError(
-                    "AES-GCM authentication tag verification failed: ciphertext tampered or AAD context mismatch."
-                ) from exc
+
+            candidate_aads = [aad_bytes]
+            if not strict and isinstance(aad, str):
+                # Cross-model AAD fallback for seamless migration between Nav/Move and Do/Rec/Taste/Play
+                if aad.startswith('move:'):
+                    candidate_aads.append(cls._encode_aad(aad.replace('move:', 'nav:', 1)))
+                elif aad.startswith('nav:'):
+                    candidate_aads.append(cls._encode_aad(aad.replace('nav:', 'move:', 1)))
+                elif aad.startswith('taste:'):
+                    candidate_aads.append(cls._encode_aad(aad.replace('taste:', 'do:', 1)))
+                    candidate_aads.append(cls._encode_aad(aad.replace('taste:', 'rec:', 1)))
+                elif aad.startswith('play:'):
+                    candidate_aads.append(cls._encode_aad(aad.replace('play:', 'do:', 1)))
+                    candidate_aads.append(cls._encode_aad(aad.replace('play:', 'rec:', 1)))
+                elif aad == 'move':
+                    candidate_aads.append(cls._encode_aad('nav'))
+                elif aad in ('taste', 'play'):
+                    candidate_aads.append(cls._encode_aad('do'))
+                    candidate_aads.append(cls._encode_aad('rec'))
+
+            last_exc = None
+            for cand_aad in candidate_aads:
+                try:
+                    return aesgcm.decrypt(nonce, ciphertext, cand_aad).decode('utf-8')
+                except InvalidTag as exc:
+                    last_exc = exc
+                    continue
+
+            raise ValueError(
+                "AES-GCM authentication tag verification failed: ciphertext tampered or AAD context mismatch."
+            ) from last_exc
 
         # Legacy unversioned base64 ciphertext support
         try:

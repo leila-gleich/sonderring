@@ -19,6 +19,13 @@
                     <span class="btn-icon">＋</span> Add Element ▾
                 </button>
                 <div id="addElementDropdownMenu" class="dropdown-menu add-element-dropdown-menu">
+                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('move')">
+                        <span class="element-dropdown-icon">✈️</span>
+                        <div class="element-dropdown-text">
+                            <strong>Add Move</strong>
+                            <small>Flights, drives & transit legs</small>
+                        </div>
+                    </button>
                     <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('stay')">
                         <span class="element-dropdown-icon">🏨</span>
                         <div class="element-dropdown-text">
@@ -26,34 +33,24 @@
                             <small>Accommodations & lodging</small>
                         </div>
                     </button>
-                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('nav')">
-                        <span class="element-dropdown-icon">✈️</span>
+                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('taste')">
+                        <span class="element-dropdown-icon">🍽️</span>
                         <div class="element-dropdown-text">
-                            <strong>Add Nav</strong>
-                            <small>Flights, drives & transit legs</small>
+                            <strong>Add Taste</strong>
+                            <small>Food, drinks & dining</small>
                         </div>
                     </button>
-                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('do')">
+                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('play')">
                         <span class="element-dropdown-icon">🎯</span>
                         <div class="element-dropdown-text">
-                            <strong>Add Do</strong>
-                            <small>Scheduled activities & tours</small>
-                        </div>
-                    </button>
-                    <button type="button" class="dropdown-item add-element-option" onclick="openAddElement('rec')">
-                        <span class="element-dropdown-icon">💡</span>
-                        <div class="element-dropdown-text">
-                            <strong>Add Rec</strong>
-                            <small>Curated spots & suggestions</small>
+                            <strong>Add Play</strong>
+                            <small>Activities, sights & tours</small>
                         </div>
                     </button>
                 </div>
             </div>
             {% endif %}
 
-            <button type="button" class="btn btn-primary-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and nontrippers">
-                <span class="btn-icon">💌</span> Copy Rec Link
-            </button>
             {% if can_edit %}
             <button type="button" class="btn btn-outline" onclick="openModal('editTripModal')">
                 <span class="btn-icon">✏️</span> Edit Trip
@@ -119,21 +116,16 @@
                 <span class="attr-tag attr-editor">· Edited {{ trip.updated_at|timesince }} ago</span>
                 {% endif %}
             </div>
-
-            <!-- Friend Recommendation Invite Link Bar -->
-            <div class="rec-invite-bar" title="Share this link with friends, family, or locals to collect spot recommendations">
-                <div class="rec-invite-label">
-                    <span class="rec-invite-icon">💌</span>
-                    <strong>Friend Rec Link:</strong>
-                    <span class="rec-invite-desc">Share with non-trippers to collect spot recommendations</span>
-                </div>
-                <div class="rec-invite-copy-group">
-                    <input type="text" readonly class="rec-invite-input" value="{{ request.scheme }}://{{ request.get_host }}{% url 'core:public_recommend' trip.rec_token %}" id="recLinkInput" onclick="this.select()" title="Click to select full URL">
-                    <button type="button" class="btn btn-sm btn-outline rec-copy-btn" onclick="copyRecLink(this)">
-                        📋 Copy Link
-                    </button>
-                </div>
-            </div>
+        </div>
+        <div class="workspace-hero-actions">
+            <button type="button"
+                    class="btn btn-outline rec-link-btn"
+                    id="recLinkBtn"
+                    onclick="copyRecLink(this)"
+                    data-rec-url="{{ request.scheme }}://{{ request.get_host }}{% url 'core:public_recommend' trip.rec_token %}"
+                    title="Collect and record recommendations for your trip using this easy form. They will show up in the 'recommendations' section of your trip">
+                Recommendation Link
+            </button>
         </div>
     </div>
 
@@ -191,17 +183,17 @@
         <button class="tab-btn active" onclick="switchTab('timeline', this)">
             ⏱️ Timeline / Itinerary <span class="tab-counter">{{ timeline_items|length }}</span>
         </button>
-        <button class="tab-btn" onclick="switchTab('stays', this)">
-            🏨 Stays <span class="tab-sndr-letter" title="Sonderring S Element: Stays">S</span> <span class="tab-counter">{{ stays.count }}</span>
+        <button class="tab-btn" onclick="switchTab('move', this)">
+            ✈️ Move <span class="tab-counter">{{ moves.count }}</span>
         </button>
-        <button class="tab-btn" onclick="switchTab('navs', this)">
-            ✈️ Navs <span class="tab-sndr-letter" title="Sonderring N Element: Navs">N</span> <span class="tab-counter">{{ navs.count }}</span>
+        <button class="tab-btn" onclick="switchTab('stay', this)">
+            🏨 Stay <span class="tab-counter">{{ stays.count }}</span>
         </button>
-        <button class="tab-btn" onclick="switchTab('dos', this)">
-            🎯 Dos <span class="tab-sndr-letter" title="Sonderring D Element: Dos">D</span> <span class="tab-counter">{{ dos.count }}</span>
+        <button class="tab-btn" onclick="switchTab('taste', this)">
+            🍽️ Taste <span class="tab-counter">{{ tastes.count }}</span>
         </button>
-        <button class="tab-btn" onclick="switchTab('recs', this)">
-            💡 Recs <span class="tab-sndr-letter" title="Sonderring R Element: Recs">R</span> <span class="tab-counter">{{ recs.count }}</span>
+        <button class="tab-btn" onclick="switchTab('play', this)">
+            🎯 Play <span class="tab-counter">{{ plays.count }}</span>
         </button>
         <button class="tab-btn" onclick="switchTab('vault', this)">
             🔒 Vault <span class="tab-counter">{{ attachments.count }}</span>
@@ -232,7 +224,7 @@
         <div class="timeline-entry timeline-status-{{ item.status }}" data-status="{{ item.status }}">
             <div class="timeline-icon-col">
                 <div class="timeline-node node-{{ item.type }}">
-                    {% if item.type == 'stay' %}🏨{% elif item.type == 'nav' %}✈️{% else %}🎯{% endif %}
+                    {% if item.type == 'move' or item.type == 'nav' %}✈️{% elif item.type == 'stay' %}🏨{% elif item.type == 'taste' %}🍽️{% else %}🎯{% endif %}
                 </div>
                 <div class="timeline-connector"></div>
             </div>
@@ -287,10 +279,16 @@
                 {% endif %}
 
                 <div class="card-attribution-bar">
+                    {% if item.obj.guest_name %}
+                    <span class="attr-author">💌 Recommended by <strong>{{ item.obj.guest_name }}</strong> (via Guest Link) · {{ item.obj.created_at|date:"M d, Y" }}</span>
+                    {% elif item.obj.recommended_by %}
+                    <span class="attr-author">Added by <strong>@{{ item.obj.recommended_by.handle }}</strong> · {{ item.obj.created_at|date:"M d, Y" }}</span>
+                    {% else %}
                     <span class="attr-author">Added by <strong>@{{ item.obj.created_by.handle|default:"traveler" }}</strong> · {{ item.obj.created_at|date:"M d, Y" }}</span>
-                    {% if item.obj.updated_by and item.obj.updated_by != item.obj.created_by %}
+                    {% endif %}
+                    {% if item.obj.updated_by and item.obj.updated_by != item.obj.created_by and not item.obj.guest_name %}
                     <span class="attr-editor">· Last edited by <strong>@{{ item.obj.updated_by.handle }}</strong> ({{ item.obj.updated_at|timesince }} ago)</span>
-                    {% elif item.obj.updated_by and item.obj.updated_at != item.obj.created_at %}
+                    {% elif item.obj.updated_by and item.obj.updated_at != item.obj.created_at and not item.obj.guest_name %}
                     <span class="attr-editor">· Edited {{ item.obj.updated_at|timesince }} ago</span>
                     {% endif %}
                 </div>
@@ -308,12 +306,57 @@
 </div>
 
 <!-- ==========================================
-     TAB 2: STAYS (LODGING)
+     TAB 2: MOVE (TRANSPORTATION)
      ========================================== -->
-<div id="tab-stays" class="tab-content">
+<div id="tab-move" class="tab-content">
     <div class="tab-header">
         <div>
-            <h2 class="tab-title">Accommodations (Stays)</h2>
+            <h2 class="tab-title">Transportation (Move)</h2>
+            <p class="tab-desc">Coordinate flights, car rentals, ferries, and train legs.</p>
+        </div>
+        {% if can_edit %}
+        <button type="button" class="btn btn-primary" onclick="openModal('addMoveModal')">
+            <span class="btn-icon">+</span> Add Move
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Section 1: Trip Start & End Legs -->
+    <div class="nav-section-wrap">
+        <h3 class="nav-subhead">🛫 Trip Start & End (Arrivals / Departures)</h3>
+        {% if moves_start_end %}
+        <div class="items-grid">
+            {% for move in moves_start_end %}
+            {% include 'partials/move_card.html' with move=move can_edit=can_edit trip=trip current_user=current_user %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted subhead-empty">No arrival or departure flights logged yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Section 2: Mid-Trip Legs -->
+    <div class="nav-section-wrap">
+        <h3 class="nav-subhead">🚗 Mid-Trip Transit (Ferries, Trains, Road Trips)</h3>
+        {% if moves_mid_trip %}
+        <div class="items-grid">
+            {% for move in moves_mid_trip %}
+            {% include 'partials/move_card.html' with move=move can_edit=can_edit trip=trip current_user=current_user %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted subhead-empty">No internal mid-trip transit recorded.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ==========================================
+     TAB 3: STAY (LODGING)
+     ========================================== -->
+<div id="tab-stay" class="tab-content">
+    <div class="tab-header">
+        <div>
+            <h2 class="tab-title">Accommodations (Stay)</h2>
             <p class="tab-desc">Track confirmed hotel rooms, Airbnb houses, and prospective lodgings.</p>
         </div>
         {% if can_edit %}
@@ -564,233 +607,229 @@
 </div>
 
 <!-- ==========================================
-     TAB 3: NAVS (TRANSPORTATION)
+     TAB 4: TASTE (FOOD & DRINK)
      ========================================== -->
-<div id="tab-navs" class="tab-content">
+<div id="tab-taste" class="tab-content">
     <div class="tab-header">
         <div>
-            <h2 class="tab-title">Transportation (Navs)</h2>
-            <p class="tab-desc">Coordinate flights, carpools, ferries, and train legs.</p>
+            <h2 class="tab-title">Food & Drink (Taste)</h2>
+            <p class="tab-desc">Curate restaurants, bars, cafés, food markets, and dining reservations.</p>
         </div>
-        {% if can_edit %}
-        <button type="button" class="btn btn-primary" onclick="openModal('addNavModal')">
-            <span class="btn-icon">+</span> Add Transit Leg
-        </button>
-        {% endif %}
+        <div class="header-dual-actions">
+            <button type="button" class="btn btn-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and nontrippers">
+                <span class="btn-icon">📋</span> Copy Rec Link
+            </button>
+            {% if can_edit %}
+            <button type="button" class="btn btn-primary" onclick="openModal('addTasteModal')">
+                <span class="btn-icon">🍽️</span> Add Taste
+            </button>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- Section 1: Trip Start & End Legs -->
-    <div class="nav-section-wrap">
-        <h3 class="nav-subhead">🛫 Trip Start & End (Arrivals / Departures)</h3>
-        {% if navs_start_end %}
-        <div class="items-grid">
-            {% for nav in navs_start_end %}
-            {% include 'partials/nav_card.html' with nav=nav can_edit=can_edit trip=trip current_user=current_user %}
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-muted subhead-empty">No arrival or departure flights logged yet.</p>
-        {% endif %}
-    </div>
-
-    <!-- Section 2: Mid-Trip Legs -->
-    <div class="nav-section-wrap">
-        <h3 class="nav-subhead">🚗 Mid-Trip Transit (Ferries, Trains, Road Trips)</h3>
-        {% if navs_mid_trip %}
-        <div class="items-grid">
-            {% for nav in navs_mid_trip %}
-            {% include 'partials/nav_card.html' with nav=nav can_edit=can_edit trip=trip current_user=current_user %}
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-muted subhead-empty">No internal mid-trip transit recorded.</p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- ==========================================
-     TAB 4: DOS (SCHEDULED ACTIVITIES) [D]
-     ========================================== -->
-<div id="tab-dos" class="tab-content">
-    <div class="tab-header">
-        <div>
-            <h2 class="tab-title">Scheduled Activities (Dos)</h2>
-            <p class="tab-desc">Confirmed activities, excursions, and scheduled itinerary items for the group.</p>
-        </div>
-        {% if can_edit %}
-        <button type="button" class="btn btn-primary" onclick="openModal('addDoModal')">
-            <span class="btn-icon">+</span> Add Scheduled Do
-        </button>
-        {% endif %}
-    </div>
-
-    <!-- Sub-Section A: Concrete Scheduled Dos -->
     <div class="dos-group-section">
-        <h3 class="group-title">🎯 Scheduled Activities (Dos)</h3>
-        {% if dos %}
+        <div class="recs-header-wrap">
+            <h3 class="group-title">🍽️ Dining, Cafés & Drinks</h3>
+            <span class="recs-counter">{{ tastes.count }} Taste{{ tastes.count|pluralize }}</span>
+        </div>
+        <p class="recs-desc">Confirmed reservations and delicious recommendations for the group.</p>
+
+        {% if tastes %}
         <div class="items-grid">
-            {% for do_item in dos %}
-            <div class="item-card do-card">
+            {% for taste in tastes %}
+            <div class="item-card do-card taste-card">
                 <div class="item-card-header">
                     <div class="item-card-header-top">
-                        <span class="item-type-badge">{{ do_item.activity_type|default:"Activity" }}</span>
+                        <span class="item-type-badge">{{ taste.get_taste_type_display }}</span>
                         <div class="item-header-actions">
-                            <span class="status-pill status-{{ do_item.status|lower }} status-badge-do-{{ do_item.id }}">
-                                {{ do_item.get_status_display }}
+                            <span class="status-pill status-{{ taste.status|lower }} status-badge-taste-{{ taste.id }}">
+                                {{ taste.get_status_display }}
                             </span>
-                            {% if can_edit or do_item.created_by == current_user %}
-                            <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('do', '{{ do_item.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
-                            <button type="button" class="btn-card-action" onclick="openEditItemModal('do', '{{ do_item.id }}')" title="Edit Activity">✏️</button>
-                            <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('do', '{{ do_item.id }}')" title="Delete Activity">🗑️</button>
+                            {% if can_edit or taste.created_by == current_user or taste.recommended_by == current_user %}
+                            <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('taste', '{{ taste.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
+                            <button type="button" class="btn-card-action" onclick="openEditItemModal('taste', '{{ taste.id }}')" title="Edit Taste">✏️</button>
+                            <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('taste', '{{ taste.id }}')" title="Delete Taste">🗑️</button>
                             {% endif %}
                         </div>
                     </div>
-                    <h4 class="item-title">{{ do_item.title }}</h4>
+                    <h4 class="item-title">{{ taste.title }}</h4>
                 </div>
 
-                {% if do_item.address %}
+                {% if taste.address %}
                 <div class="item-address-row">
                     <span class="icon">📍</span>
-                    <span class="address-text">{{ do_item.address }}</span>
+                    <span class="address-text">{{ taste.address }}</span>
+                    <a href="https://maps.google.com/?q={{ taste.address|urlencode }}" target="_blank" class="maps-link">Map ↗</a>
                 </div>
                 {% endif %}
 
-                {% if do_item.start_time or do_item.end_time %}
+                {% if taste.start_time or taste.end_time %}
                 <div class="item-time-row">
-                    {% if do_item.start_time %}
+                    {% if taste.start_time %}
                     <div>
-                        <small class="time-label">Starts</small>
-                        <div class="time-val">{{ do_item.start_time|date:"M d, g:i A" }}</div>
+                        <small class="time-label">Reservation / Time</small>
+                        <div class="time-val">{{ taste.start_time|date:"M d, g:i A" }}</div>
                     </div>
                     {% endif %}
-                    {% if do_item.start_time and do_item.end_time %}
+                    {% if taste.start_time and taste.end_time %}
                     <div class="time-arrow">➔</div>
                     {% endif %}
-                    {% if do_item.end_time %}
+                    {% if taste.end_time %}
                     <div>
                         <small class="time-label">Ends</small>
-                        <div class="time-val">{{ do_item.end_time|date:"g:i A" }}</div>
+                        <div class="time-val">{{ taste.end_time|date:"g:i A" }}</div>
                     </div>
                     {% endif %}
                 </div>
                 {% endif %}
 
-                {% if do_item.description %}
-                <p class="item-notes">{{ do_item.description }}</p>
+                {% if taste.description %}
+                <p class="item-notes">{{ taste.description }}</p>
                 {% endif %}
 
-                {% if do_item.price or do_item.has_confirmation_code %}
+                {% if taste.notes %}
+                <p class="item-notes"><strong>Notes:</strong> {{ taste.notes }}</p>
+                {% endif %}
+
+                {% if taste.price or taste.has_confirmation_code or taste.link %}
                 <div class="item-footer">
-                    {% if do_item.price %}
+                    {% if taste.price %}
                     <div class="price-box">
-                        <span class="price-val">${{ do_item.price|floatformat:2 }}</span>
+                        <span class="price-val">${{ taste.price|floatformat:2 }}</span>
+                        <span class="price-currency">{{ taste.currency }}</span>
                     </div>
                     {% endif %}
-                    {% if do_item.has_confirmation_code %}
+                    {% if taste.has_confirmation_code %}
                     <div class="code-box-container">
                         <span class="masked-code">••••••••</span>
-                        <button type="button" class="btn btn-sm btn-outline" onclick="revealCode('do', '{{ do_item.id }}', this.parentElement)">Reveal Code</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="revealCode('taste', '{{ taste.id }}', this.parentElement)">Reveal Code</button>
                     </div>
+                    {% endif %}
+                    {% if taste.link %}
+                    <a href="{{ taste.link }}" target="_blank" class="btn btn-sm btn-outline">Link ↗</a>
                     {% endif %}
                 </div>
                 {% endif %}
 
                 <div class="card-attribution-bar">
-                    <span class="attr-author">Added by <strong>@{{ do_item.created_by.handle|default:"traveler" }}</strong> · {{ do_item.created_at|date:"M d, Y" }}</span>
-                    {% if do_item.updated_by and do_item.updated_by != do_item.created_by %}
-                    <span class="attr-editor">· Last edited by <strong>@{{ do_item.updated_by.handle }}</strong> ({{ do_item.updated_at|timesince }} ago)</span>
-                    {% elif do_item.updated_by and do_item.updated_at != do_item.created_at %}
-                    <span class="attr-editor">· Edited {{ do_item.updated_at|timesince }} ago</span>
+                    {% if taste.guest_name %}
+                    <span class="attr-author">💌 Recommended by <strong>{{ taste.guest_name }}</strong> (via Guest Link) · {{ taste.created_at|date:"M d, Y" }}</span>
+                    {% elif taste.recommended_by %}
+                    <span class="attr-author">Added by <strong>@{{ taste.recommended_by.handle }}</strong> · {{ taste.created_at|date:"M d, Y" }}</span>
+                    {% else %}
+                    <span class="attr-author">Added by <strong>@{{ taste.created_by.handle|default:"traveler" }}</strong> · {{ taste.created_at|date:"M d, Y" }}</span>
+                    {% endif %}
+                    {% if taste.updated_by and taste.updated_by != taste.created_by and not taste.guest_name %}
+                    <span class="attr-editor">· Last edited by <strong>@{{ taste.updated_by.handle }}</strong> ({{ taste.updated_at|timesince }} ago)</span>
+                    {% elif taste.updated_by and taste.updated_at != taste.created_at and not taste.guest_name %}
+                    <span class="attr-editor">· Edited {{ taste.updated_at|timesince }} ago</span>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- EDIT DO MODAL -->
-            {% if can_edit or do_item.created_by == current_user %}
-            <div id="editDoModal_{{ do_item.id }}" class="modal-backdrop">
+            <!-- EDIT TASTE MODAL -->
+            {% if can_edit or taste.created_by == current_user or taste.recommended_by == current_user %}
+            <div id="editTasteModal_{{ taste.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">
-                        <h3 class="modal-title">Edit Activity: {{ do_item.title }}</h3>
-                        <button type="button" class="modal-close" onclick="closeModal('editDoModal_{{ do_item.id }}')">×</button>
+                        <h3 class="modal-title">Edit Taste: {{ taste.title }}</h3>
+                        <button type="button" class="modal-close" onclick="closeModal('editTasteModal_{{ taste.id }}')">×</button>
                     </div>
-                    <form method="POST" action="{% url 'core:edit_do' trip.id do_item.id %}" class="modal-form">
+                    <form method="POST" action="{% url 'core:edit_taste' trip.id taste.id %}" class="modal-form">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="">
                         <div class="form-row">
                             <div class="form-col" style="flex: 2;">
-                                <label class="form-label">Activity Title <span class="required">*</span></label>
-                                <input type="text" name="title" class="form-control" value="{{ do_item.title }}" required>
+                                <label class="form-label">Title <span class="required">*</span></label>
+                                <input type="text" name="title" class="form-control" value="{{ taste.title }}" required>
                             </div>
                             <div class="form-col">
                                 <label class="form-label">Type</label>
-                                <select name="activity_type" class="form-control">
-                                    <option value="Sightseeing" {% if do_item.activity_type == 'Sightseeing' %}selected{% endif %}>Sightseeing</option>
-                                    <option value="Dining" {% if do_item.activity_type == 'Dining' %}selected{% endif %}>Dining</option>
-                                    <option value="Activity" {% if do_item.activity_type == 'Activity' %}selected{% endif %}>Activity</option>
-                                    <option value="Tour" {% if do_item.activity_type == 'Tour' %}selected{% endif %}>Tour</option>
-                                    <option value="Outdoor" {% if do_item.activity_type == 'Outdoor' %}selected{% endif %}>Outdoor</option>
-                                    <option value="Nightlife" {% if do_item.activity_type == 'Nightlife' %}selected{% endif %}>Nightlife</option>
+                                <select name="taste_type" class="form-control">
+                                    <option value="Restaurant" {% if taste.taste_type == 'Restaurant' %}selected{% endif %}>Restaurant & Dining</option>
+                                    <option value="Bar & Drinks" {% if taste.taste_type == 'Bar & Drinks' %}selected{% endif %}>Bar & Cocktails</option>
+                                    <option value="Cafe & Bakery" {% if taste.taste_type == 'Cafe & Bakery' %}selected{% endif %}>Café & Bakery</option>
+                                    <option value="Winery & Brewery" {% if taste.taste_type == 'Winery & Brewery' %}selected{% endif %}>Winery & Brewery</option>
+                                    <option value="Food Market" {% if taste.taste_type == 'Food Market' %}selected{% endif %}>Food Market & Street Food</option>
+                                    <option value="Culinary Tour" {% if taste.taste_type == 'Culinary Tour' %}selected{% endif %}>Culinary Tour & Tasting</option>
+                                    <option value="Dessert" {% if taste.taste_type == 'Dessert' %}selected{% endif %}>Dessert & Ice Cream</option>
+                                    <option value="Coffee" {% if taste.taste_type == 'Coffee' %}selected{% endif %}>Coffee & Tea</option>
+                                    <option value="Cooking Class" {% if taste.taste_type == 'Cooking Class' %}selected{% endif %}>Cooking Class & Workshop</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">Location / Address</label>
-                            <input type="text" name="address" class="form-control" value="{{ do_item.address|default:'' }}">
+                            <input type="text" name="address" class="form-control" value="{{ taste.address|default:'' }}">
                         </div>
 
                         <div class="form-row">
                             <div class="form-col">
-                                <label class="form-label">Start Time</label>
-                                <input type="datetime-local" name="start_time" class="form-control" value="{{ do_item.start_time|date:'Y-m-d\TH:i' }}">
+                                <label class="form-label">Reservation Time (Start)</label>
+                                <input type="datetime-local" name="start_time" class="form-control" value="{{ taste.start_time|date:'Y-m-d\TH:i' }}">
                             </div>
                             <div class="form-col">
                                 <label class="form-label">End Time</label>
-                                <input type="datetime-local" name="end_time" class="form-control" value="{{ do_item.end_time|date:'Y-m-d\TH:i' }}">
+                                <input type="datetime-local" name="end_time" class="form-control" value="{{ taste.end_time|date:'Y-m-d\TH:i' }}">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-col">
                                 <label class="form-label">Estimated Cost ($)</label>
-                                <input type="number" step="0.01" name="price" class="form-control" value="{{ do_item.price|default:'' }}">
+                                <input type="number" step="0.01" name="price" class="form-control" value="{{ taste.price|default:'' }}">
                             </div>
                             <div class="form-col">
                                 <label class="form-label">Status</label>
                                 <select name="status" class="form-control">
-                                    <option value="IDEA" {% if do_item.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
-                                    <option value="CONFIRMED" {% if do_item.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
-                                    <option value="COMPLETE" {% if do_item.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
+                                    <option value="IDEA" {% if taste.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
+                                    <option value="CONFIRMED" {% if taste.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                                    <option value="COMPLETE" {% if taste.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
                                 </select>
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">Confirmation Code</label>
+                                <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="2">{{ do_item.description|default:'' }}</textarea>
+                            <label class="form-label">Guide Link</label>
+                            <input type="url" name="link" class="form-control" value="{{ taste.link|default:'' }}" placeholder="https://...">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Description / Recommendations</label>
+                            <textarea name="description" class="form-control" rows="2">{{ taste.description|default:'' }}</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Reservation Notes & Table Requests</label>
+                            <textarea name="notes" class="form-control" rows="2">{{ taste.notes|default:'' }}</textarea>
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" onclick="closeModal('editDoModal_{{ do_item.id }}')">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Activity</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('editTasteModal_{{ taste.id }}')">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Taste</button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- DELETE DO MODAL -->
-            <div id="deleteDoModal_{{ do_item.id }}" class="modal-backdrop">
+            <!-- DELETE TASTE MODAL -->
+            <div id="deleteTasteModal_{{ taste.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">
-                        <h3 class="modal-title text-danger">Delete Activity?</h3>
-                        <button type="button" class="modal-close" onclick="closeModal('deleteDoModal_{{ do_item.id }}')">×</button>
+                        <h3 class="modal-title text-danger">Remove Taste Spot?</h3>
+                        <button type="button" class="modal-close" onclick="closeModal('deleteTasteModal_{{ taste.id }}')">×</button>
                     </div>
-                    <form method="POST" action="{% url 'core:delete_do' trip.id do_item.id %}" class="modal-form">
+                    <form method="POST" action="{% url 'core:delete_taste' trip.id taste.id %}" class="modal-form">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="">
-                        <p>Are you sure you want to delete <strong>"{{ do_item.title }}"</strong>?</p>
+                        <p>Are you sure you want to remove <strong>"{{ taste.title }}"</strong>?</p>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" onclick="closeModal('deleteDoModal_{{ do_item.id }}')">Cancel</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('deleteTasteModal_{{ taste.id }}')">Cancel</button>
                             <button type="submit" class="btn btn-danger">Yes, Delete</button>
                         </div>
                     </form>
@@ -800,166 +839,250 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-muted subhead-empty">No scheduled activities yet.</p>
+        <div class="empty-state recs-empty-state" style="padding: 2.5rem 1rem; text-align: center;">
+            <div class="empty-icon" style="font-size: 2.5rem; margin-bottom: 0.5rem;">🍽️</div>
+            <h3 style="margin-bottom: 0.35rem;">No food & drink spots recorded yet</h3>
+            <p class="text-muted" style="max-width: 480px; margin: 0 auto 1.25rem;">Trippers can add dining spots directly, or copy the recommendation link to collect tips from friends, family, and locals.</p>
+            <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" onclick="copyRecLink(this)">
+                    📋 Copy Rec Link for Friends
+                </button>
+                {% if can_edit %}
+                <button type="button" class="btn btn-outline" onclick="openModal('addTasteModal')">
+                    🍽️ Add a Taste Spot
+                </button>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
     </div>
 </div>
 
 <!-- ==========================================
-     TAB 5: RECS (RECOMMENDATIONS POOL) [R]
+     TAB 5: PLAY (ACTIVITIES & SIGHTS)
      ========================================== -->
-<div id="tab-recs" class="tab-content">
+<div id="tab-play" class="tab-content">
     <div class="tab-header">
         <div>
-            <h2 class="tab-title">Trip Recommendations (Recs)</h2>
-            <p class="tab-desc">Curated recommendations manually added by trippers or submitted via the shared recommendation link.</p>
+            <h2 class="tab-title">Activities & Sights (Play)</h2>
+            <p class="tab-desc">Confirmed excursions, scenic viewpoints, outdoor adventures, culture, and travel tips.</p>
         </div>
         <div class="header-dual-actions">
             <button type="button" class="btn btn-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and nontrippers">
                 <span class="btn-icon">📋</span> Copy Rec Link
             </button>
             {% if can_edit %}
-            <button type="button" class="btn btn-primary" onclick="openModal('addRecModal')">
-                <span class="btn-icon">💡</span> Add Recommendation
+            <button type="button" class="btn btn-primary" onclick="openModal('addPlayModal')">
+                <span class="btn-icon">🎯</span> Add Play
             </button>
             {% endif %}
         </div>
     </div>
 
-    <!-- Recommendations Pool -->
-    <div class="recs-group-section">
+    <div class="dos-group-section">
         <div class="recs-header-wrap">
-            <h3 class="group-title">💡 Curated Recommendations</h3>
-            <span class="recs-counter">{{ recs.count }} Recommendation{{ recs.count|pluralize }}</span>
+            <h3 class="group-title">🎯 Activities, Tours & Tips</h3>
+            <span class="recs-counter">{{ plays.count }} Activity{{ plays.count|pluralize:"ies" }}</span>
         </div>
-        <p class="recs-desc">Curated recommendations and spots. Click <strong>"Promote to Itinerary"</strong> on any card to schedule it as a confirmed Do.</p>
+        <p class="recs-desc">Adventures, tours, cultural highlights, and local spot suggestions.</p>
 
-        {% if recs %}
-        <div class="recs-grid">
-            {% for rec in recs %}
-            <div class="rec-card rec-cat-{{ rec.category|lower }}">
-                <div class="rec-card-header">
-                    <div style="display: flex; align-items: center; gap: 0.4rem;">
-                        <span class="rec-category-badge">{{ rec.get_category_display }}</span>
-                        <span class="status-pill status-{{ rec.status|lower }} status-badge-rec-{{ rec.id }}">
-                            {{ rec.get_status_display }}
-                        </span>
+        {% if plays %}
+        <div class="items-grid">
+            {% for play in plays %}
+            <div class="item-card do-card play-card">
+                <div class="item-card-header">
+                    <div class="item-card-header-top">
+                        <span class="item-type-badge">{{ play.get_play_type_display }}</span>
+                        <div class="item-header-actions">
+                            <span class="status-pill status-{{ play.status|lower }} status-badge-play-{{ play.id }}">
+                                {{ play.get_status_display }}
+                            </span>
+                            {% if can_edit or play.created_by == current_user or play.recommended_by == current_user %}
+                            <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('play', '{{ play.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
+                            <button type="button" class="btn-card-action" onclick="openEditItemModal('play', '{{ play.id }}')" title="Edit Play">✏️</button>
+                            <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('play', '{{ play.id }}')" title="Delete Play">🗑️</button>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="rec-header-actions" style="display: flex; align-items: center; gap: 0.35rem;">
-                        {% if rec.guest_name %}
-                        <span class="rec-guest-tag">💌 from {{ rec.guest_name }}</span>
-                        {% elif rec.recommended_by %}
-                        <span class="rec-recommender">by @{{ rec.recommended_by.handle }}</span>
-                        {% endif %}
-                        {% if can_edit or rec.recommended_by == current_user %}
-                        <button type="button" class="btn-toggle-status" onclick="toggleItemStatus('rec', '{{ rec.id }}', this)" title="Cycle Status: Idea / Confirmed / Complete">⇄</button>
-                        <button type="button" class="btn-card-action" onclick="openEditItemModal('rec', '{{ rec.id }}')" title="Edit Rec">✏️</button>
-                        <button type="button" class="btn-card-action btn-card-delete" onclick="openDeleteItemModal('rec', '{{ rec.id }}')" title="Delete Rec">🗑️</button>
-                        {% endif %}
-                    </div>
+                    <h4 class="item-title">{{ play.title }}</h4>
                 </div>
-                <h4 class="rec-title">{{ rec.title }}</h4>
-                {% if rec.description %}
-                <p class="rec-desc">{{ rec.description }}</p>
-                {% endif %}
-                {% if rec.address %}
-                <div class="rec-address">📍 {{ rec.address }}</div>
+
+                {% if play.address %}
+                <div class="item-address-row">
+                    <span class="icon">📍</span>
+                    <span class="address-text">{{ play.address }}</span>
+                    <a href="https://maps.google.com/?q={{ play.address|urlencode }}" target="_blank" class="maps-link">Map ↗</a>
+                </div>
                 {% endif %}
 
-                {% if can_edit or rec.link %}
-                <div class="rec-actions">
-                    {% if can_edit %}
-                    <form method="POST" action="{% url 'core:promote_rec' trip.id rec.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-promote">
-                            <span>✨</span> Promote to Itinerary
-                        </button>
-                    </form>
+                {% if play.start_time or play.end_time %}
+                <div class="item-time-row">
+                    {% if play.start_time %}
+                    <div>
+                        <small class="time-label">Starts</small>
+                        <div class="time-val">{{ play.start_time|date:"M d, g:i A" }}</div>
+                    </div>
                     {% endif %}
-                    {% if rec.link %}
-                    <a href="{{ rec.link }}" target="_blank" class="btn btn-sm btn-outline">Link ↗</a>
+                    {% if play.start_time and play.end_time %}
+                    <div class="time-arrow">➔</div>
+                    {% endif %}
+                    {% if play.end_time %}
+                    <div>
+                        <small class="time-label">Ends</small>
+                        <div class="time-val">{{ play.end_time|date:"g:i A" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if play.description %}
+                <p class="item-notes">{{ play.description }}</p>
+                {% endif %}
+
+                {% if play.notes %}
+                <p class="item-notes"><strong>Notes:</strong> {{ play.notes }}</p>
+                {% endif %}
+
+                {% if play.price or play.has_confirmation_code or play.link %}
+                <div class="item-footer">
+                    {% if play.price %}
+                    <div class="price-box">
+                        <span class="price-val">${{ play.price|floatformat:2 }}</span>
+                        <span class="price-currency">{{ play.currency }}</span>
+                    </div>
+                    {% endif %}
+                    {% if play.has_confirmation_code %}
+                    <div class="code-box-container">
+                        <span class="masked-code">••••••••</span>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="revealCode('play', '{{ play.id }}', this.parentElement)">Reveal Code</button>
+                    </div>
+                    {% endif %}
+                    {% if play.link %}
+                    <a href="{{ play.link }}" target="_blank" class="btn btn-sm btn-outline">Link ↗</a>
                     {% endif %}
                 </div>
                 {% endif %}
 
                 <div class="card-attribution-bar">
-                    {% if rec.guest_name %}
-                    <span class="attr-author">💌 Recommended by <strong>{{ rec.guest_name }}</strong> (via Guest Link) · {{ rec.created_at|date:"M d, Y" }}</span>
+                    {% if play.guest_name %}
+                    <span class="attr-author">💌 Recommended by <strong>{{ play.guest_name }}</strong> (via Guest Link) · {{ play.created_at|date:"M d, Y" }}</span>
+                    {% elif play.recommended_by %}
+                    <span class="attr-author">Added by <strong>@{{ play.recommended_by.handle }}</strong> · {{ play.created_at|date:"M d, Y" }}</span>
                     {% else %}
-                    <span class="attr-author">Added by <strong>@{{ rec.recommended_by.handle|default:"friend" }}</strong> · {{ rec.created_at|date:"M d, Y" }}</span>
+                    <span class="attr-author">Added by <strong>@{{ play.created_by.handle|default:"traveler" }}</strong> · {{ play.created_at|date:"M d, Y" }}</span>
                     {% endif %}
-                    {% if rec.updated_by and rec.updated_by != rec.recommended_by and not rec.guest_name %}
-                    <span class="attr-editor">· Last edited by <strong>@{{ rec.updated_by.handle }}</strong> ({{ rec.updated_at|timesince }} ago)</span>
-                    {% elif rec.updated_by and rec.updated_at != rec.created_at and not rec.guest_name %}
-                    <span class="attr-editor">· Edited {{ rec.updated_at|timesince }} ago</span>
+                    {% if play.updated_by and play.updated_by != play.created_by and not play.guest_name %}
+                    <span class="attr-editor">· Last edited by <strong>@{{ play.updated_by.handle }}</strong> ({{ play.updated_at|timesince }} ago)</span>
+                    {% elif play.updated_by and play.updated_at != play.created_at and not play.guest_name %}
+                    <span class="attr-editor">· Edited {{ play.updated_at|timesince }} ago</span>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- EDIT REC MODAL -->
-            {% if can_edit or rec.recommended_by == current_user %}
-            <div id="editRecModal_{{ rec.id }}" class="modal-backdrop">
+            <!-- EDIT PLAY MODAL -->
+            {% if can_edit or play.created_by == current_user or play.recommended_by == current_user %}
+            <div id="editPlayModal_{{ play.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">
-                        <h3 class="modal-title">Edit Recommendation</h3>
-                        <button type="button" class="modal-close" onclick="closeModal('editRecModal_{{ rec.id }}')">×</button>
+                        <h3 class="modal-title">Edit Activity: {{ play.title }}</h3>
+                        <button type="button" class="modal-close" onclick="closeModal('editPlayModal_{{ play.id }}')">×</button>
                     </div>
-                    <form method="POST" action="{% url 'core:edit_rec' trip.id rec.id %}" class="modal-form">
+                    <form method="POST" action="{% url 'core:edit_play' trip.id play.id %}" class="modal-form">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="">
-                        <div class="form-group">
-                            <label class="form-label">Title <span class="required">*</span></label>
-                            <input type="text" name="title" class="form-control" value="{{ rec.title }}" required>
+                        <div class="form-row">
+                            <div class="form-col" style="flex: 2;">
+                                <label class="form-label">Activity Title <span class="required">*</span></label>
+                                <input type="text" name="title" class="form-control" value="{{ play.title }}" required>
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">Type</label>
+                                <select name="play_type" class="form-control">
+                                    <option value="Sightseeing" {% if play.play_type == 'Sightseeing' %}selected{% endif %}>Sightseeing & Landmark</option>
+                                    <option value="Outdoor & Hike" {% if play.play_type == 'Outdoor & Hike' %}selected{% endif %}>Outdoor & Hike</option>
+                                    <option value="Tour & Excursion" {% if play.play_type == 'Tour & Excursion' %}selected{% endif %}>Tour & Excursion</option>
+                                    <option value="Culture & Museum" {% if play.play_type == 'Culture & Museum' %}selected{% endif %}>Culture & Museum</option>
+                                    <option value="Water & Boat" {% if play.play_type == 'Water & Boat' %}selected{% endif %}>Water & Boat</option>
+                                    <option value="Nightlife & Music" {% if play.play_type == 'Nightlife & Music' %}selected{% endif %}>Nightlife & Music</option>
+                                    <option value="Event & Show" {% if play.play_type == 'Event & Show' %}selected{% endif %}>Event & Performance</option>
+                                    <option value="Spa & Wellness" {% if play.play_type == 'Spa & Wellness' %}selected{% endif %}>Spa & Wellness</option>
+                                    <option value="Travel Tip" {% if play.play_type == 'Travel Tip' %}selected{% endif %}>Travel Tip & Advice</option>
+                                </select>
+                            </div>
                         </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Location / Address</label>
+                            <input type="text" name="address" class="form-control" value="{{ play.address|default:'' }}">
+                        </div>
+
                         <div class="form-row">
                             <div class="form-col">
-                                <label class="form-label">Category</label>
-                                <select name="category" class="form-control">
-                                    <option value="Food" {% if rec.category == 'Food' %}selected{% endif %}>Food & Dining</option>
-                                    <option value="Spot" {% if rec.category == 'Spot' %}selected{% endif %}>Sight & Spot</option>
-                                    <option value="Activity" {% if rec.category == 'Activity' %}selected{% endif %}>Activity</option>
-                                    <option value="Tip" {% if rec.category == 'Tip' %}selected{% endif %}>Travel Tip</option>
-                                </select>
+                                <label class="form-label">Start Date & Time</label>
+                                <input type="datetime-local" name="start_time" class="form-control" value="{{ play.start_time|date:'Y-m-d\TH:i' }}">
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">End Date & Time</label>
+                                <input type="datetime-local" name="end_time" class="form-control" value="{{ play.end_time|date:'Y-m-d\TH:i' }}">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">Estimated Cost ($)</label>
+                                <input type="number" step="0.01" name="price" class="form-control" value="{{ play.price|default:'' }}">
                             </div>
                             <div class="form-col">
                                 <label class="form-label">Status</label>
                                 <select name="status" class="form-control">
-                                    <option value="IDEA" {% if rec.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
-                                    <option value="CONFIRMED" {% if rec.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
-                                    <option value="COMPLETE" {% if rec.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
+                                    <option value="IDEA" {% if play.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
+                                    <option value="CONFIRMED" {% if play.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                                    <option value="COMPLETE" {% if play.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
                                 </select>
                             </div>
+                            <div class="form-col">
+                                <label class="form-label">Confirmation Code</label>
+                                <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
+                            </div>
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label">Address</label>
-                            <input type="text" name="address" class="form-control" value="{{ rec.address|default:'' }}">
+                            <label class="form-label">Guide / Ticket Link</label>
+                            <input type="url" name="link" class="form-control" value="{{ play.link|default:'' }}" placeholder="https://...">
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="3">{{ rec.description|default:'' }}</textarea>
+                            <label class="form-label">Description / Instructions</label>
+                            <textarea name="description" class="form-control" rows="2">{{ play.description|default:'' }}</textarea>
                         </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Entry Codes & Gear Notes</label>
+                            <textarea name="notes" class="form-control" rows="2">{{ play.notes|default:'' }}</textarea>
+                        </div>
+
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" onclick="closeModal('editRecModal_{{ rec.id }}')">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('editPlayModal_{{ play.id }}')">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Activity</button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- DELETE REC MODAL -->
-            <div id="deleteRecModal_{{ rec.id }}" class="modal-backdrop">
+            <!-- DELETE PLAY MODAL -->
+            <div id="deletePlayModal_{{ play.id }}" class="modal-backdrop">
                 <div class="modal-card">
                     <div class="modal-header">
-                        <h3 class="modal-title text-danger">Remove Recommendation?</h3>
-                        <button type="button" class="modal-close" onclick="closeModal('deleteRecModal_{{ rec.id }}')">×</button>
+                        <h3 class="modal-title text-danger">Delete Activity?</h3>
+                        <button type="button" class="modal-close" onclick="closeModal('deletePlayModal_{{ play.id }}')">×</button>
                     </div>
-                    <form method="POST" action="{% url 'core:delete_rec' trip.id rec.id %}" class="modal-form">
+                    <form method="POST" action="{% url 'core:delete_play' trip.id play.id %}" class="modal-form">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="">
-                        <p>Remove <strong>"{{ rec.title }}"</strong> from the ideas pool?</p>
+                        <p>Are you sure you want to delete <strong>"{{ play.title }}"</strong>?</p>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" onclick="closeModal('deleteRecModal_{{ rec.id }}')">Cancel</button>
-                            <button type="submit" class="btn btn-danger">Yes, Remove</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('deletePlayModal_{{ play.id }}')">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
                         </div>
                     </form>
                 </div>
@@ -969,16 +1092,16 @@
         </div>
         {% else %}
         <div class="empty-state recs-empty-state" style="padding: 2.5rem 1rem; text-align: center;">
-            <div class="empty-icon" style="font-size: 2.5rem; margin-bottom: 0.5rem;">💌</div>
-            <h3 style="margin-bottom: 0.35rem;">No recommendations in the pool yet</h3>
-            <p class="text-muted" style="max-width: 480px; margin: 0 auto 1.25rem;">Trippers can add spots directly, or copy the recommendation link to collect tips from friends, family, and locals.</p>
+            <div class="empty-icon" style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎯</div>
+            <h3 style="margin-bottom: 0.35rem;">No activities or sights recorded yet</h3>
+            <p class="text-muted" style="max-width: 480px; margin: 0 auto 1.25rem;">Trippers can add activities directly, or copy the recommendation link to collect tips from friends, family, and locals.</p>
             <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
                 <button type="button" class="btn btn-primary" onclick="copyRecLink(this)">
                     📋 Copy Rec Link for Friends
                 </button>
                 {% if can_edit %}
-                <button type="button" class="btn btn-outline" onclick="openModal('addRecModal')">
-                    💡 Add a Recommendation
+                <button type="button" class="btn btn-outline" onclick="openModal('addPlayModal')">
+                    🎯 Add an Activity
                 </button>
                 {% endif %}
             </div>
@@ -1090,6 +1213,14 @@
             <button type="button" class="modal-close" onclick="closeModal('addElementModal')">×</button>
         </div>
         <div class="element-chooser-grid">
+            <button type="button" class="element-chooser-card chooser-move" onclick="openAddElement('move')">
+                <span class="chooser-icon">✈️</span>
+                <span class="chooser-letter">M</span>
+                <div class="chooser-info">
+                    <strong>Move</strong>
+                    <span>Flights, Drives & Transit Legs</span>
+                </div>
+            </button>
             <button type="button" class="element-chooser-card chooser-stay" onclick="openAddElement('stay')">
                 <span class="chooser-icon">🏨</span>
                 <span class="chooser-letter">S</span>
@@ -1098,28 +1229,20 @@
                     <span>Accommodations & Lodging</span>
                 </div>
             </button>
-            <button type="button" class="element-chooser-card chooser-nav" onclick="openAddElement('nav')">
-                <span class="chooser-icon">✈️</span>
-                <span class="chooser-letter">N</span>
+            <button type="button" class="element-chooser-card chooser-taste" onclick="openAddElement('taste')">
+                <span class="chooser-icon">🍽️</span>
+                <span class="chooser-letter">T</span>
                 <div class="chooser-info">
-                    <strong>Nav</strong>
-                    <span>Flights, Trains & Transit Legs</span>
+                    <strong>Taste</strong>
+                    <span>Food, Drinks & Dining</span>
                 </div>
             </button>
-            <button type="button" class="element-chooser-card chooser-do" onclick="openAddElement('do')">
+            <button type="button" class="element-chooser-card chooser-play" onclick="openAddElement('play')">
                 <span class="chooser-icon">🎯</span>
-                <span class="chooser-letter">D</span>
+                <span class="chooser-letter">P</span>
                 <div class="chooser-info">
-                    <strong>Do</strong>
-                    <span>Scheduled Activities & Tours</span>
-                </div>
-            </button>
-            <button type="button" class="element-chooser-card chooser-rec" onclick="openAddElement('rec')">
-                <span class="chooser-icon">💡</span>
-                <span class="chooser-letter">R</span>
-                <div class="chooser-info">
-                    <strong>Rec</strong>
-                    <span>Curated Spots & Recommendations</span>
+                    <strong>Play</strong>
+                    <span>Activities, Sights & Tours</span>
                 </div>
             </button>
         </div>
@@ -1406,19 +1529,19 @@
     </div>
 </div>
 
-<!-- 2. ADD NAV MODAL -->
-<div id="addNavModal" class="modal-backdrop">
+<!-- 2. ADD MOVE MODAL -->
+<div id="addMoveModal" class="modal-backdrop">
     <div class="modal-card">
         <div class="modal-header">
-            <h3 class="modal-title">Add Transportation Leg (Nav)</h3>
-            <button type="button" class="modal-close" onclick="closeModal('addNavModal')">×</button>
+            <h3 class="modal-title">Add Transportation Leg (Move)</h3>
+            <button type="button" class="modal-close" onclick="closeModal('addMoveModal')">×</button>
         </div>
-        <form method="POST" action="{% url 'core:add_nav' trip.id %}" class="modal-form">
+        <form method="POST" action="{% url 'core:add_move' trip.id %}" class="modal-form">
             {% csrf_token %}
             <div class="form-row">
                 <div class="form-col" style="flex: 2;">
-                    <label class="form-label">Transport Identifier <span class="required">*</span></label>
-                    <input type="text" name="title" class="form-control" placeholder="e.g., Delta Flight DL 128, KEF 4x4 Campervan" required>
+                    <label class="form-label">Transport Title <span class="required">*</span></label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g., Delta Flight DL 128, KEF 4x4 Campervan, Trenitalia Coastal" required>
                 </div>
                 <div class="form-col">
                     <label class="form-label">Mode</label>
@@ -1461,11 +1584,11 @@
             <div class="form-row">
                 <div class="form-col">
                     <label class="form-label">Origin</label>
-                    <input type="text" name="origin_address" class="form-control" placeholder="Airport code or address">
+                    <input type="text" name="origin_address" class="form-control" placeholder="Airport code, station or address">
                 </div>
                 <div class="form-col">
                     <label class="form-label">Destination</label>
-                    <input type="text" name="destination_address" class="form-control" placeholder="Airport code or address">
+                    <input type="text" name="destination_address" class="form-control" placeholder="Airport code, station or address">
                 </div>
             </div>
 
@@ -1496,48 +1619,148 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Flexibility Notes & Range Details</label>
+                <label class="form-label">Booking Link</label>
+                <input type="url" name="booking_link" class="form-control" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Flexibility Notes & Route Details</label>
                 <textarea name="flexibility_notes" class="form-control" rows="2" placeholder="Layover window, pickup instructions, buffer..."></textarea>
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('addNavModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Transit Leg</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addMoveModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Move</button>
             </div>
         </form>
     </div>
 </div>
+<!-- Legacy alias for addNavModal -->
+<div id="addNavModal" style="display: none;"></div>
 
-<!-- 3. ADD DO MODAL -->
-<div id="addDoModal" class="modal-backdrop">
+<!-- 3. ADD TASTE MODAL -->
+<div id="addTasteModal" class="modal-backdrop">
     <div class="modal-card">
         <div class="modal-header">
-            <h3 class="modal-title">Add Scheduled Activity (Do)</h3>
-            <button type="button" class="modal-close" onclick="closeModal('addDoModal')">×</button>
+            <h3 class="modal-title">Add Food & Drink (Taste)</h3>
+            <button type="button" class="modal-close" onclick="closeModal('addTasteModal')">×</button>
         </div>
-        <form method="POST" action="{% url 'core:add_do' trip.id %}" class="modal-form">
+        <form method="POST" action="{% url 'core:add_taste' trip.id %}" class="modal-form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-col" style="flex: 2;">
+                    <label class="form-label">Venue or Food Title <span class="required">*</span></label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g., Trattoria da Nino, Friðheimar Greenhouse, Bar Raval" required>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Type</label>
+                    <select name="taste_type" class="form-control">
+                        <option value="Restaurant">Restaurant & Dining</option>
+                        <option value="Bar & Drinks">Bar & Cocktails</option>
+                        <option value="Cafe & Bakery">Café & Bakery</option>
+                        <option value="Winery & Brewery">Winery & Brewery</option>
+                        <option value="Food Market">Food Market & Street Food</option>
+                        <option value="Culinary Tour">Culinary Tour & Tasting</option>
+                        <option value="Dessert">Dessert & Ice Cream</option>
+                        <option value="Coffee">Coffee & Tea</option>
+                        <option value="Cooking Class">Cooking Class & Workshop</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Address / Neighborhood</label>
+                <input type="text" name="address" class="form-control" placeholder="Street address or area">
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Reservation / Visit Time (Start)</label>
+                    <input type="datetime-local" name="start_time" class="form-control">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">End Time</label>
+                    <input type="datetime-local" name="end_time" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Estimated Cost ($)</label>
+                    <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="IDEA" selected>Idea (Tentative)</option>
+                        <option value="CONFIRMED">Confirmed (Reservation Made)</option>
+                        <option value="COMPLETE">Complete</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Confirmation Code</label>
+                    <input type="text" name="confirmation_code" class="form-control" placeholder="Resy/booking code">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Guide / Menu Link</label>
+                <input type="url" name="link" class="form-control" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description & What to Order</label>
+                <textarea name="description" class="form-control" rows="2" placeholder="Recommended specialties, chef's tasting, terrace seating..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Reservation Notes & Table Details</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Dietary notes, table request, cancellation window..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addTasteModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Taste</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Legacy alias for addRecModal -->
+<div id="addRecModal" style="display: none;"></div>
+
+<!-- 4. ADD PLAY MODAL -->
+<div id="addPlayModal" class="modal-backdrop">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 class="modal-title">Add Activity or Spot (Play)</h3>
+            <button type="button" class="modal-close" onclick="closeModal('addPlayModal')">×</button>
+        </div>
+        <form method="POST" action="{% url 'core:add_play' trip.id %}" class="modal-form">
             {% csrf_token %}
             <div class="form-row">
                 <div class="form-col" style="flex: 2;">
                     <label class="form-label">Activity Title <span class="required">*</span></label>
-                    <input type="text" name="title" class="form-control" placeholder="e.g., Golden Circle Tour, Dinner at Friðheimar" required>
+                    <input type="text" name="title" class="form-control" placeholder="e.g., Blue Lagoon Soak, Taormina Greek Theatre, Coastal Hike" required>
                 </div>
                 <div class="form-col">
                     <label class="form-label">Type</label>
-                    <select name="activity_type" class="form-control">
-                        <option value="Sightseeing">Sightseeing</option>
-                        <option value="Dining">Dining</option>
-                        <option value="Activity">Activity / Hot Springs</option>
-                        <option value="Tour">Guided Tour</option>
-                        <option value="Outdoor">Hiking / Outdoor</option>
-                        <option value="Nightlife">Nightlife</option>
+                    <select name="play_type" class="form-control">
+                        <option value="Sightseeing">Sightseeing & Landmark</option>
+                        <option value="Outdoor & Hike">Outdoor & Hike</option>
+                        <option value="Tour & Excursion">Tour & Excursion</option>
+                        <option value="Culture & Museum">Culture & Museum</option>
+                        <option value="Water & Boat">Water & Boat</option>
+                        <option value="Nightlife & Music">Nightlife & Music</option>
+                        <option value="Event & Show">Event & Performance</option>
+                        <option value="Spa & Wellness">Spa & Wellness</option>
+                        <option value="Travel Tip">Travel Tip & Advice</option>
                     </select>
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Location / Address</label>
-                <input type="text" name="address" class="form-control" placeholder="Venue name or address">
+                <input type="text" name="address" class="form-control" placeholder="Venue name, trail head or area">
             </div>
 
             <div class="form-row">
@@ -1559,86 +1782,41 @@
                 <div class="form-col">
                     <label class="form-label">Status</label>
                     <select name="status" class="form-control">
-                        <option value="IDEA">Idea (Tentative)</option>
-                        <option value="CONFIRMED" selected>Confirmed</option>
+                        <option value="IDEA" selected>Idea (Tentative)</option>
+                        <option value="CONFIRMED">Confirmed (Booked)</option>
                         <option value="COMPLETE">Complete</option>
                     </select>
                 </div>
                 <div class="form-col">
                     <label class="form-label">Confirmation Code</label>
-                    <input type="text" name="confirmation_code" class="form-control" placeholder="Optional booking code">
+                    <input type="text" name="confirmation_code" class="form-control" placeholder="Ticket/voucher code">
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Description / Instructions</label>
-                <textarea name="description" class="form-control" rows="2" placeholder="Gear needed, booking notes, directions..."></textarea>
+                <label class="form-label">Guide / Ticket Link</label>
+                <input type="url" name="link" class="form-control" placeholder="https://...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Description & Instructions</label>
+                <textarea name="description" class="form-control" rows="2" placeholder="Gear needed, booking notes, directions, tour details..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Entry Codes & Notes</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, meeting point instructions..."></textarea>
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('addDoModal')">Cancel</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addPlayModal')">Cancel</button>
                 <button type="submit" class="btn btn-primary">Save Activity</button>
             </div>
         </form>
     </div>
 </div>
-
-<!-- 4. ADD REC MODAL -->
-<div id="addRecModal" class="modal-backdrop">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h3 class="modal-title">Propose a Recommendation (Rec)</h3>
-            <button type="button" class="modal-close" onclick="closeModal('addRecModal')">×</button>
-        </div>
-        <form method="POST" action="{% url 'core:add_rec' trip.id %}" class="modal-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <label class="form-label">Recommendation Title <span class="required">*</span></label>
-                <input type="text" name="title" class="form-control" placeholder="e.g. Trattoria da Nino, Reynisfjara warning, Secret beach" required>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">Category</label>
-                    <select name="category" class="form-control">
-                        <option value="Food">Food & Dining</option>
-                        <option value="Spot">Sight & Spot</option>
-                        <option value="Activity">Activity & Experience</option>
-                        <option value="Tip">Travel Tip & Advice</option>
-                    </select>
-                </div>
-                <div class="form-col">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-control">
-                        <option value="IDEA" selected>Idea (Tentative)</option>
-                        <option value="CONFIRMED">Confirmed</option>
-                        <option value="COMPLETE">Complete</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Address / Location</label>
-                <input type="text" name="address" class="form-control" placeholder="Neighborhood or address">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Link / Guide URL</label>
-                <input type="url" name="link" class="form-control" placeholder="https://...">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Why do you recommend this?</label>
-                <textarea name="description" class="form-control" rows="3" placeholder="What to order, when to go, tips for the group..."></textarea>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('addRecModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Add to Ideas Pool</button>
-            </div>
-        </form>
-    </div>
-</div>
+<!-- Legacy alias for addDoModal -->
+<div id="addDoModal" style="display: none;"></div>
 
 <!-- 5. INVITE TRIPPERS MODAL -->
 <div id="inviteMemberModal" class="modal-backdrop">
@@ -1703,14 +1881,46 @@
                 <input type="text" name="file_name" class="form-control" placeholder="e.g. BoardingPass_DL128.pdf">
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Attach to Specific Item (Optional)</label>
-                <select name="stay_id" class="form-control">
-                    <option value="">-- Or link to a Stay --</option>
-                    {% for s in stays %}
-                    <option value="{{ s.id }}">Stay: {{ s.title }}</option>
-                    {% endfor %}
-                </select>
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Attach to Move</label>
+                    <select name="move_id" class="form-control">
+                        <option value="">-- None --</option>
+                        {% for m in moves %}
+                        <option value="{{ m.id }}">{{ m.title }} ({{ m.mode }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Attach to Stay</label>
+                    <select name="stay_id" class="form-control">
+                        <option value="">-- None --</option>
+                        {% for s in stays %}
+                        <option value="{{ s.id }}">{{ s.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Attach to Taste</label>
+                    <select name="taste_id" class="form-control">
+                        <option value="">-- None --</option>
+                        {% for t in tastes %}
+                        <option value="{{ t.id }}">{{ t.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Attach to Play</label>
+                    <select name="play_id" class="form-control">
+                        <option value="">-- None --</option>
+                        {% for p in plays %}
+                        <option value="{{ p.id }}">{{ p.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -1795,80 +2005,110 @@
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
-        const target = document.getElementById('tab-' + tabName);
+        let targetName = tabName;
+        if (tabName === 'navs') targetName = 'move';
+        if (tabName === 'stays') targetName = 'stay';
+        if (tabName === 'dos') targetName = 'play';
+        if (tabName === 'recs') targetName = 'taste';
+
+        const target = document.getElementById('tab-' + targetName) || document.getElementById('tab-' + tabName);
         if (target) {
             target.classList.add('active');
         }
-        const activeBtn = btnElement || document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
+        const activeBtn = btnElement || document.querySelector(`.tab-btn[onclick*="${targetName}"]`) || document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
         if (activeBtn) {
             activeBtn.classList.add('active');
         }
-        window.location.hash = tabName;
+        window.location.hash = targetName;
     }
 
     // Direct Add Element from Top Bar / Modal
     function openAddElement(type) {
         closeAllDropdowns();
         closeModal('addElementModal');
-        if (type === 'stay') {
-            switchTab('stays');
+        if (type === 'move' || type === 'nav') {
+            switchTab('move');
+            openModal('addMoveModal');
+        } else if (type === 'stay') {
+            switchTab('stay');
             openModal('addStayModal');
-        } else if (type === 'nav') {
-            switchTab('navs');
-            openModal('addNavModal');
-        } else if (type === 'do') {
-            switchTab('dos');
-            openModal('addDoModal');
+        } else if (type === 'taste') {
+            switchTab('taste');
+            openModal('addTasteModal');
+        } else if (type === 'play' || type === 'do') {
+            switchTab('play');
+            openModal('addPlayModal');
         } else if (type === 'rec') {
-            switchTab('recs');
-            openModal('addRecModal');
+            switchTab('taste');
+            openModal('addTasteModal');
         }
     }
 
     // Universal Edit & Delete Modal Launchers with Contextual Return (Itinerary & Elements)
     function openEditItemModal(type, id) {
         let modalId = '';
-        if (type === 'stay') modalId = 'editStayModal_' + id;
-        else if (type === 'nav') modalId = 'editNavModal_' + id;
-        else if (type === 'do') modalId = 'editDoModal_' + id;
-        else if (type === 'rec') modalId = 'editRecModal_' + id;
+        if (type === 'move') modalId = 'editMoveModal_' + id;
+        else if (type === 'stay') modalId = 'editStayModal_' + id;
+        else if (type === 'taste') modalId = 'editTasteModal_' + id;
+        else if (type === 'play') modalId = 'editPlayModal_' + id;
+        else if (type === 'nav') modalId = 'editNavModal_' + id || 'editMoveModal_' + id;
+        else if (type === 'do') modalId = 'editDoModal_' + id || 'editPlayModal_' + id;
+        else if (type === 'rec') modalId = 'editRecModal_' + id || 'editTasteModal_' + id;
 
         if (modalId) {
-            const modal = document.getElementById(modalId);
+            let modal = document.getElementById(modalId);
+            if (!modal) {
+                // Fallback check between new and legacy names
+                if (type === 'nav' || type === 'move') modal = document.getElementById('editMoveModal_' + id) || document.getElementById('editNavModal_' + id);
+                if (type === 'do' || type === 'play') modal = document.getElementById('editPlayModal_' + id) || document.getElementById('editDoModal_' + id);
+                if (type === 'rec' || type === 'taste') modal = document.getElementById('editTasteModal_' + id) || document.getElementById('editRecModal_' + id);
+            }
             if (modal) {
                 const nextInput = modal.querySelector('input[name="next"]');
                 if (nextInput) {
                     const currentHash = window.location.hash || '#timeline';
                     nextInput.value = window.location.pathname + window.location.search + currentHash;
                 }
+                openModal(modal.id);
             }
-            openModal(modalId);
         }
     }
 
     function openDeleteItemModal(type, id) {
         let modalId = '';
-        if (type === 'stay') modalId = 'deleteStayModal_' + id;
-        else if (type === 'nav') modalId = 'deleteNavModal_' + id;
-        else if (type === 'do') modalId = 'deleteDoModal_' + id;
-        else if (type === 'rec') modalId = 'deleteRecModal_' + id;
+        if (type === 'move') modalId = 'deleteMoveModal_' + id;
+        else if (type === 'stay') modalId = 'deleteStayModal_' + id;
+        else if (type === 'taste') modalId = 'deleteTasteModal_' + id;
+        else if (type === 'play') modalId = 'deletePlayModal_' + id;
+        else if (type === 'nav') modalId = 'deleteNavModal_' + id || 'deleteMoveModal_' + id;
+        else if (type === 'do') modalId = 'deleteDoModal_' + id || 'deletePlayModal_' + id;
+        else if (type === 'rec') modalId = 'deleteRecModal_' + id || 'deleteTasteModal_' + id;
 
         if (modalId) {
-            const modal = document.getElementById(modalId);
+            let modal = document.getElementById(modalId);
+            if (!modal) {
+                if (type === 'nav' || type === 'move') modal = document.getElementById('deleteMoveModal_' + id) || document.getElementById('deleteNavModal_' + id);
+                if (type === 'do' || type === 'play') modal = document.getElementById('deletePlayModal_' + id) || document.getElementById('deleteDoModal_' + id);
+                if (type === 'rec' || type === 'taste') modal = document.getElementById('deleteTasteModal_' + id) || document.getElementById('deleteRecModal_' + id);
+            }
             if (modal) {
                 const nextInput = modal.querySelector('input[name="next"]');
                 if (nextInput) {
                     const currentHash = window.location.hash || '#timeline';
                     nextInput.value = window.location.pathname + window.location.search + currentHash;
                 }
+                openModal(modal.id);
             }
-            openModal(modalId);
         }
     }
 
     // Auto-select tab if hash in URL
     window.addEventListener('DOMContentLoaded', () => {
-        const hash = window.location.hash.replace('#', '');
+        let hash = window.location.hash.replace('#', '');
+        if (hash === 'navs') hash = 'move';
+        if (hash === 'stays') hash = 'stay';
+        if (hash === 'dos') hash = 'play';
+        if (hash === 'recs') hash = 'taste';
         if (hash) {
             const btn = document.querySelector(`.tab-btn[onclick*="${hash}"]`);
             if (btn) {
@@ -1900,29 +2140,50 @@
 
     // Recommendation Share Link Copy Helper
     function copyRecLink(btnElement) {
-        const input = document.getElementById('recLinkInput');
-        const url = input ? input.value : "{{ request.scheme }}://{{ request.get_host }}{% url 'core:public_recommend' trip.rec_token %}";
-        
-        navigator.clipboard.writeText(url).then(() => {
+        const url = (btnElement && btnElement.dataset.recUrl)
+            ? btnElement.dataset.recUrl
+            : "{{ request.scheme }}://{{ request.get_host }}{% url 'core:public_recommend' trip.rec_token %}";
+
+        function onCopied() {
             if (btnElement) {
-                const prevHtml = btnElement.innerHTML;
-                btnElement.innerHTML = '✓ Link Copied!';
+                const prevHtml = btnElement.dataset.originalHtml || btnElement.innerHTML;
+                btnElement.dataset.originalHtml = prevHtml;
+                btnElement.textContent = 'Link copied!';
                 btnElement.classList.add('btn-copied-pulse');
                 setTimeout(() => {
                     btnElement.innerHTML = prevHtml;
                     btnElement.classList.remove('btn-copied-pulse');
                 }, 2500);
             }
-            if (input) {
-                input.select();
-            }
-            showToastNotice('Recommendation link copied! Share it with friends or locals to collect spot ideas.');
-        }).catch(() => {
-            if (input) {
-                input.select();
-            }
-            prompt('Copy this recommendation link to share with friends:', url);
-        });
+            showToastNotice('Link copied!');
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(onCopied).catch(() => {
+                fallbackCopyText(url);
+                onCopied();
+            });
+        } else {
+            fallbackCopyText(url);
+            onCopied();
+        }
+    }
+
+    function fallbackCopyText(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+        } catch (err) {
+            console.error('Fallback copy failed', err);
+        }
+        document.body.removeChild(textArea);
     }
 
     function showToastNotice(msg) {
