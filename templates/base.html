@@ -321,6 +321,9 @@
                 }
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                if (window.initAllDateConstraints) {
+                    window.initAllDateConstraints(modal);
+                }
             }
         }
 
@@ -356,6 +359,252 @@
             if (monthEl) monthEl.style.display = granularity === 'MONTH' ? 'block' : 'none';
             if (yearEl) yearEl.style.display = granularity === 'YEAR' ? 'block' : 'none';
         }
+
+        function setupDateRangePair(startEl, endEl, alertMsg) {
+            if (!startEl || !endEl || startEl._dateRangePairInit) return;
+            startEl._dateRangePairInit = true;
+
+            function sync() {
+                if (startEl.value) {
+                    endEl.min = startEl.value;
+                    if (endEl.value && endEl.value < startEl.value) {
+                        endEl.value = '';
+                    }
+                } else {
+                    endEl.removeAttribute('min');
+                }
+            }
+
+            startEl.addEventListener('change', sync);
+            startEl.addEventListener('input', sync);
+            endEl.addEventListener('focus', sync);
+            endEl.addEventListener('click', sync);
+            endEl.addEventListener('change', function() {
+                sync();
+                if (startEl.value && endEl.value && endEl.value < startEl.value) {
+                    alert(alertMsg || "End date cannot be before start date.");
+                    endEl.value = '';
+                }
+            });
+
+            const form = startEl.closest('form');
+            if (form && !form._dateRangeFormValidated) {
+                form._dateRangeFormValidated = true;
+                form.addEventListener('submit', function(e) {
+                    if (startEl.value && endEl.value && endEl.value < startEl.value) {
+                        e.preventDefault();
+                        alert(alertMsg || "End date cannot be before start date.");
+                        endEl.focus();
+                        return false;
+                    }
+                });
+            }
+
+            sync();
+        }
+
+        function setupDateTimeRangePair(startEl, endEl, alertMsg) {
+            if (!startEl || !endEl || startEl._dtRangePairInit) return;
+            startEl._dtRangePairInit = true;
+
+            function sync() {
+                if (startEl.value) {
+                    endEl.min = startEl.value;
+                    if (endEl.value && endEl.value < startEl.value) {
+                        endEl.value = '';
+                    }
+                } else {
+                    endEl.removeAttribute('min');
+                }
+            }
+
+            startEl.addEventListener('change', sync);
+            startEl.addEventListener('input', sync);
+            endEl.addEventListener('focus', sync);
+            endEl.addEventListener('click', sync);
+            endEl.addEventListener('change', function() {
+                sync();
+                if (startEl.value && endEl.value && endEl.value < startEl.value) {
+                    alert(alertMsg || "End date/time cannot be before start date/time.");
+                    endEl.value = '';
+                }
+            });
+
+            const form = startEl.closest('form');
+            if (form && !form._dtRangeFormValidated) {
+                form._dtRangeFormValidated = true;
+                form.addEventListener('submit', function(e) {
+                    if (startEl.value && endEl.value && endEl.value < startEl.value) {
+                        e.preventDefault();
+                        alert(alertMsg || "End date/time cannot be before start date/time.");
+                        endEl.focus();
+                        return false;
+                    }
+                });
+            }
+
+            sync();
+        }
+
+        function setupStayDateSync(container) {
+            if (!container || container._stayDateSyncInitialized) return;
+            const ciDate = container.querySelector('input[name="check_in_date"]');
+            const coDate = container.querySelector('input[name="check_out_date"]');
+            const ciTime = container.querySelector('input[name="check_in_time"]');
+            const coTime = container.querySelector('input[name="check_out_time"]');
+            const statusSelect = container.querySelector('select[name="status"]');
+            const form = container.tagName === 'FORM' ? container : container.querySelector('form');
+
+            if (!ciDate || !coDate) return;
+            container._stayDateSyncInitialized = true;
+
+            function syncStayConstraints() {
+                if (ciDate.value) {
+                    coDate.min = ciDate.value;
+                    if (coDate.value && coDate.value < ciDate.value) {
+                        coDate.value = '';
+                    }
+                } else {
+                    coDate.removeAttribute('min');
+                }
+
+                if (ciTime && coTime) {
+                    if (ciDate.value && coDate.value && ciDate.value === coDate.value) {
+                        if (ciTime.value) {
+                            coTime.min = ciTime.value;
+                            if (coTime.value && coTime.value < ciTime.value) {
+                                coTime.value = '';
+                            }
+                        } else {
+                            coTime.removeAttribute('min');
+                        }
+                    } else {
+                        coTime.removeAttribute('min');
+                    }
+                }
+            }
+
+            function updateStayRequirements() {
+                if (!statusSelect) return;
+                const isConfirmed = (statusSelect.value === 'CONFIRMED' || statusSelect.value === 'COMPLETE');
+                ciDate.required = isConfirmed;
+                coDate.required = isConfirmed;
+                container.querySelectorAll('.stay-date-required').forEach(el => {
+                    el.style.display = isConfirmed ? 'inline' : 'none';
+                });
+            }
+
+            ciDate.addEventListener('change', syncStayConstraints);
+            ciDate.addEventListener('input', syncStayConstraints);
+            coDate.addEventListener('focus', syncStayConstraints);
+            coDate.addEventListener('click', syncStayConstraints);
+            coDate.addEventListener('change', function() {
+                syncStayConstraints();
+                if (ciDate.value && coDate.value && coDate.value < ciDate.value) {
+                    alert("Check-out date cannot be before check-in date.");
+                    coDate.value = '';
+                }
+            });
+
+            if (ciTime) {
+                ciTime.addEventListener('change', syncStayConstraints);
+                ciTime.addEventListener('input', syncStayConstraints);
+            }
+            if (coTime) {
+                coTime.addEventListener('focus', syncStayConstraints);
+                coTime.addEventListener('click', syncStayConstraints);
+                coTime.addEventListener('change', function() {
+                    syncStayConstraints();
+                    if (ciDate.value && coDate.value && ciDate.value === coDate.value && ciTime && ciTime.value && coTime.value && coTime.value < ciTime.value) {
+                        alert("Check-out time cannot be before check-in time on the same date.");
+                        coTime.value = '';
+                    }
+                });
+            }
+
+            if (statusSelect) {
+                statusSelect.addEventListener('change', updateStayRequirements);
+                updateStayRequirements();
+            }
+
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (statusSelect && (statusSelect.value === 'CONFIRMED' || statusSelect.value === 'COMPLETE')) {
+                        if (!ciDate.value || !coDate.value) {
+                            e.preventDefault();
+                            alert("Confirmed stays require both a start date (check-in) and end date (check-out).");
+                            if (!ciDate.value) ciDate.focus();
+                            else coDate.focus();
+                            return false;
+                        }
+                    }
+                    if (ciDate.value && coDate.value) {
+                        if (coDate.value < ciDate.value) {
+                            e.preventDefault();
+                            alert("Check-out date cannot be before check-in date.");
+                            coDate.focus();
+                            return false;
+                        }
+                        if (ciDate.value === coDate.value && ciTime && coTime && ciTime.value && coTime.value) {
+                            if (coTime.value < ciTime.value) {
+                                e.preventDefault();
+                                alert("Check-out time cannot be before check-in time on the same date.");
+                                coTime.focus();
+                                return false;
+                            }
+                        }
+                    }
+                });
+            }
+
+            syncStayConstraints();
+            updateStayRequirements();
+        }
+
+        function initAllDateConstraints(scope) {
+            const root = scope || document;
+
+            // 1. Trip date ranges
+            const tripStarts = root.querySelectorAll('input[name="start_date"]');
+            tripStarts.forEach(startInput => {
+                const form = startInput.closest('form') || root;
+                const endInput = form.querySelector('input[name="end_date"]');
+                if (endInput) {
+                    setupDateRangePair(startInput, endInput, "Trip end date cannot be before start date.");
+                }
+            });
+
+            // 2. Stays
+            const stayCiDates = root.querySelectorAll('input[name="check_in_date"]');
+            stayCiDates.forEach(ciDate => {
+                const container = ciDate.closest('.modal-backdrop') || ciDate.closest('form') || root;
+                setupStayDateSync(container);
+            });
+
+            // 3. Navs (departure_time and arrival_time)
+            const navDepts = root.querySelectorAll('input[name="departure_time"]');
+            navDepts.forEach(deptInput => {
+                const form = deptInput.closest('form') || root;
+                const arrInput = form.querySelector('input[name="arrival_time"]');
+                if (arrInput) {
+                    setupDateTimeRangePair(deptInput, arrInput, "Arrival date/time cannot be before departure date/time.");
+                }
+            });
+
+            // 4. Dos (start_time and end_time)
+            const doStarts = root.querySelectorAll('input[name="start_time"]');
+            doStarts.forEach(startInput => {
+                const form = startInput.closest('form') || root;
+                const endInput = form.querySelector('input[name="end_time"]');
+                if (endInput) {
+                    setupDateTimeRangePair(startInput, endInput, "End date/time cannot be before start date/time.");
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initAllDateConstraints(document);
+        });
 
         // Close dropdowns when clicking outside
         window.addEventListener('click', function(e) {

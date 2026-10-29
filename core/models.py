@@ -4,6 +4,7 @@ import hashlib
 import secrets
 from django.db import models
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from .encryption import ConfirmationEncryptor, EncryptedCharField, EncryptedTextField
 
 class UserProfile(models.Model):
@@ -207,12 +208,14 @@ class Trip(models.Model):
 
     @property
     def formatted_dates(self):
-        if self.time_granularity == 'EXACT_RANGE' and self.start_date and self.end_date:
-            if self.start_date.year == self.end_date.year:
-                if self.start_date.month == self.end_date.month:
-                    return f"{self.start_date.strftime('%b %d')} – {self.end_date.strftime('%d, %Y')}"
-                return f"{self.start_date.strftime('%b %d')} – {self.end_date.strftime('%b %d, %Y')}"
-            return f"{self.start_date.strftime('%b %d, %Y')} – {self.end_date.strftime('%b %d, %Y')}"
+        s_date = parse_date(self.start_date) if isinstance(self.start_date, str) else self.start_date
+        e_date = parse_date(self.end_date) if isinstance(self.end_date, str) else self.end_date
+        if self.time_granularity == 'EXACT_RANGE' and s_date and e_date:
+            if s_date.year == e_date.year:
+                if s_date.month == e_date.month:
+                    return f"{s_date.strftime('%b %d')} – {e_date.strftime('%d, %Y')}"
+                return f"{s_date.strftime('%b %d')} – {e_date.strftime('%b %d, %Y')}"
+            return f"{s_date.strftime('%b %d, %Y')} – {e_date.strftime('%b %d, %Y')}"
         elif self.time_granularity == 'SEASON_YEAR' and self.season:
             return f"{self.get_season_display()} {self.year}"
         elif self.time_granularity == 'MONTH' and self.start_month:
@@ -300,6 +303,8 @@ class Stay(models.Model):
     address = models.TextField(blank=True, null=True)
     check_in = models.DateTimeField(blank=True, null=True)
     check_out = models.DateTimeField(blank=True, null=True)
+    has_check_in_time = models.BooleanField(default=False)
+    has_check_out_time = models.BooleanField(default=False)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     currency = models.CharField(max_length=3, default='USD')
     booking_link = models.URLField(blank=True, null=True)
@@ -341,6 +346,26 @@ class Stay(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.status})"
+
+    @property
+    def is_check_in_time_set(self):
+        return self.has_check_in_time or (bool(self.check_in) and (self.check_in.hour != 0 or self.check_in.minute != 0))
+
+    @property
+    def is_check_out_time_set(self):
+        return self.has_check_out_time or (bool(self.check_out) and (self.check_out.hour != 0 or self.check_out.minute != 0))
+
+    @property
+    def check_in_time_str(self):
+        if self.check_in and self.is_check_in_time_set:
+            return self.check_in.strftime('%H:%M')
+        return ''
+
+    @property
+    def check_out_time_str(self):
+        if self.check_out and self.is_check_out_time_set:
+            return self.check_out.strftime('%H:%M')
+        return ''
 
 
 class Nav(models.Model):

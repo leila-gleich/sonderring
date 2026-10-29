@@ -77,11 +77,24 @@ def format_stay(stay) -> list[str]:
         lines.append(f"  * **Address**: {stay.address}")
     
     if stay.check_in and stay.check_out:
-        in_str = stay.check_in.strftime('%b %d, %Y, %g:%M %p')
-        out_str = stay.check_out.strftime('%b %d, %Y, %g:%M %p')
+        if stay.is_check_in_time_set and stay.is_check_out_time_set:
+            in_str = stay.check_in.strftime('%b %d, %Y, %I:%M %p')
+            out_str = stay.check_out.strftime('%b %d, %Y, %I:%M %p')
+        elif stay.is_check_in_time_set:
+            in_str = stay.check_in.strftime('%b %d, %Y, %I:%M %p')
+            out_str = stay.check_out.strftime('%b %d, %Y')
+        elif stay.is_check_out_time_set:
+            in_str = stay.check_in.strftime('%b %d, %Y')
+            out_str = stay.check_out.strftime('%b %d, %Y, %I:%M %p')
+        else:
+            in_str = stay.check_in.strftime('%b %d, %Y')
+            out_str = stay.check_out.strftime('%b %d, %Y')
         lines.append(f"  * **Dates**: {in_str} – {out_str}")
     elif stay.check_in:
-        lines.append(f"  * **Check-in**: {stay.check_in.strftime('%b %d, %Y')}")
+        if stay.is_check_in_time_set:
+            lines.append(f"  * **Check-in**: {stay.check_in.strftime('%b %d, %Y, %I:%M %p')}")
+        else:
+            lines.append(f"  * **Check-in**: {stay.check_in.strftime('%b %d, %Y')}")
     
     if stay.total_price is not None:
         lines.append(f"  * **Total Price**: ${stay.total_price:,.2f} {stay.currency}")

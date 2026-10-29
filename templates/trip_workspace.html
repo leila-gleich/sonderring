@@ -261,8 +261,8 @@
                 <div class="timeline-details-row">
                     {% if item.timestamp %}
                     <span class="detail-tag">
-                        🕒 {{ item.timestamp|date:"M j, Y — g:i A" }}
-                        {% if item.end_timestamp %} ➔ {{ item.end_timestamp|date:"M j, g:i A" }}{% endif %}
+                        🕒 {{ item.timestamp|date:"M j, Y" }}{% if item.has_time %} — {{ item.timestamp|date:"g:i A" }}{% endif %}
+                        {% if item.end_timestamp %} ➔ {{ item.end_timestamp|date:"M j" }}{% if item.has_end_time %}, {{ item.end_timestamp|date:"g:i A" }}{% endif %}{% endif %}
                     </span>
                     {% endif %}
 
@@ -368,7 +368,7 @@
                 {% if stay.check_in %}
                 <div>
                     <small class="time-label">Check-in</small>
-                    <div class="time-val">{{ stay.check_in|date:"M d, Y" }} <span class="time-sub">{{ stay.check_in|date:"g:i A" }}</span></div>
+                    <div class="time-val">{{ stay.check_in|date:"M d, Y" }}{% if stay.is_check_in_time_set %} <span class="time-sub">{{ stay.check_in|date:"g:i A" }}</span>{% endif %}</div>
                 </div>
                 {% endif %}
                 {% if stay.check_in and stay.check_out %}
@@ -377,7 +377,7 @@
                 {% if stay.check_out %}
                 <div>
                     <small class="time-label">Check-out</small>
-                    <div class="time-val">{{ stay.check_out|date:"M d, Y" }} <span class="time-sub">{{ stay.check_out|date:"g:i A" }}</span></div>
+                    <div class="time-val">{{ stay.check_out|date:"M d, Y" }}{% if stay.is_check_out_time_set %} <span class="time-sub">{{ stay.check_out|date:"g:i A" }}</span>{% endif %}</div>
                 </div>
                 {% endif %}
             </div>
@@ -475,12 +475,29 @@
 
                     <div class="form-row">
                         <div class="form-col">
-                            <label class="form-label">Check-in</label>
-                            <input type="datetime-local" name="check_in" class="form-control" value="{{ stay.check_in|date:'Y-m-d\TH:i' }}">
+                            <label class="form-label">
+                                Check-in Date (Start)
+                                <span class="stay-date-required text-danger" {% if stay.status != 'CONFIRMED' and stay.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
+                            </label>
+                            <input type="date" name="check_in_date" class="form-control" value="{{ stay.check_in|date:'Y-m-d' }}" {% if stay.status == 'CONFIRMED' or stay.status == 'COMPLETE' %}required{% endif %}>
                         </div>
                         <div class="form-col">
-                            <label class="form-label">Check-out</label>
-                            <input type="datetime-local" name="check_out" class="form-control" value="{{ stay.check_out|date:'Y-m-d\TH:i' }}">
+                            <label class="form-label">
+                                Check-out Date (End)
+                                <span class="stay-date-required text-danger" {% if stay.status != 'CONFIRMED' and stay.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
+                            </label>
+                            <input type="date" name="check_out_date" class="form-control" value="{{ stay.check_out|date:'Y-m-d' }}" {% if stay.status == 'CONFIRMED' or stay.status == 'COMPLETE' %}required{% endif %}>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Check-in Time <small class="text-muted">(Optional)</small></label>
+                            <input type="time" name="check_in_time" class="form-control" value="{{ stay.check_in_time_str }}">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Check-out Time <small class="text-muted">(Optional)</small></label>
+                            <input type="time" name="check_out_time" class="form-control" value="{{ stay.check_out_time_str }}">
                         </div>
                     </div>
 
@@ -1334,12 +1351,29 @@
 
             <div class="form-row">
                 <div class="form-col">
-                    <label class="form-label">Check-in Date & Time</label>
-                    <input type="datetime-local" name="check_in" class="form-control">
+                    <label class="form-label">
+                        Check-in Date (Start)
+                        <span class="stay-date-required text-danger">*</span>
+                    </label>
+                    <input type="date" name="check_in_date" class="form-control" required>
                 </div>
                 <div class="form-col">
-                    <label class="form-label">Check-out Date & Time</label>
-                    <input type="datetime-local" name="check_out" class="form-control">
+                    <label class="form-label">
+                        Check-out Date (End)
+                        <span class="stay-date-required text-danger">*</span>
+                    </label>
+                    <input type="date" name="check_out_date" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Check-in Time <small class="text-muted">(Optional)</small></label>
+                    <input type="time" name="check_in_time" class="form-control">
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Check-out Time <small class="text-muted">(Optional)</small></label>
+                    <input type="time" name="check_out_time" class="form-control">
                 </div>
             </div>
 

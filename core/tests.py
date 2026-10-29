@@ -1,5 +1,7 @@
+import datetime
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from django.template.context import BaseContext
 from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Nav, Do, Rec, Attachment, SecurityAuditLog
 
@@ -1256,6 +1258,286 @@ class TripWorkspaceAddElementAndDisplayTests(TestCase):
         )
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.url, f"/trips/{self.trip.id}/#timeline")
+
+
+class DateRangeValidationAndOptionalStayTimesTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = UserProfile.objects.create(
+            email='dates_tester@example.com',
+            handle='datestester',
+            full_name='Dates Tester',
+            is_active=True
+        )
+        session = self.client.session
+        session['user_id'] = str(self.user.id)
+        session.save()
+
+        self.trip = Trip.objects.create(
+            title='Nordic Adventure',
+            location='Norway',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 11, 1),
+            end_date=datetime.date(2026, 11, 10),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=self.trip, user=self.user, role='OWNER')
+
+    def test_trip_creation_rejects_end_date_before_start_date(self):
+        """User cannot create a trip with end_date before start_date."""
+        resp = self.client.post(reverse('core:create_trip'), {
+            'title': 'Invalid Dates Trip',
+            'location': 'Reykjavik',
+            'time_granularity': 'EXACT_RANGE',
+            'start_date': '2026-12-10',
+            'end_date': '2026-12-05',
+        }, follow=True)
+        self.assertContains(resp, 'Trip end date cannot be before start date.')
+        self.assertFalse(Trip.objects.filter(title='Invalid Dates Trip').exists())
+
+    def test_trip_creation_accepts_valid_date_range(self):
+        """User can create a trip with end_date >= start_date."""
+        resp = self.client.post(reverse('core:create_trip'), {
+            'title': 'Valid Dates Trip',
+            'location': 'Reykjavik',
+            'time_granularity': 'EXACT_RANGE',
+            'start_date': '2026-12-05',
+            'end_date': '2026-12-10',
+        }, follow=True)
+        self.assertTrue(Trip.objects.filter(title='Valid Dates Trip').exists())
+
+    def test_trip_edit_rejects_end_date_before_start_date(self):
+        """User cannot update a trip to have end_date before start_date."""
+        resp = self.client.post(reverse('core:edit_trip', args=[self.trip.id]), {
+            'title': self.trip.title,
+            'location': self.trip.location,
+            'time_granularity': 'EXACT_RANGE',
+            'start_date': '2026-11-15',
+            'end_date': '2026-11-10',
+        }, follow=True)
+        self.assertContains(resp, 'Trip end date cannot be before start date.')
+        self.trip.refresh_from_db()
+        self.assertEqual(str(self.trip.start_date), '2026-11-01')
+
+    def test_confirmed_stay_requires_start_and_end_dates(self):
+        """Confirmed stays must require both check-in (start) and check-out (end) dates."""
+        # Missing both dates
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Missing Dates Hotel',
+            'status': 'CONFIRMED',
+        }, follow=True)
+        self.assertContains(resp, 'Confirmed stays require both a check-in date (start) and check-out date (end).')
+        self.assertFalse(Stay.objects.filter(title='Missing Dates Hotel').exists())
+
+        # Missing check-out date
+        resp2 = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Missing Checkout Hotel',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-02',
+        }, follow=True)
+        self.assertContains(resp2, 'Confirmed stays require both a check-in date (start) and check-out date (end).')
+        self.assertFalse(Stay.objects.filter(title='Missing Checkout Hotel').exists())
+
+    def test_confirmed_stay_accepts_dates_with_optional_times_omitted(self):
+        """Confirmed stays accept start date and end date with check-in/out times omitted (optional)."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Fjord Cabin',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-02',
+            'check_out_date': '2026-11-06',
+            'check_in_time': '',
+            'check_out_time': '',
+        }, follow=True)
+        stay = Stay.objects.get(title='Fjord Cabin')
+        self.assertEqual(stay.status, 'CONFIRMED')
+        self.assertIsNotNone(stay.check_in)
+        self.assertIsNotNone(stay.check_out)
+        self.assertFalse(stay.is_check_in_time_set)
+        self.assertFalse(stay.is_check_out_time_set)
+
+    def test_confirmed_stay_accepts_dates_with_optional_times_provided(self):
+        """Confirmed stays properly record optional check-in and check-out times when provided."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Grand Fjord Hotel',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-02',
+            'check_out_date': '2026-11-06',
+            'check_in_time': '15:00',
+            'check_out_time': '11:00',
+        }, follow=True)
+        stay = Stay.objects.get(title='Grand Fjord Hotel')
+        self.assertEqual(stay.status, 'CONFIRMED')
+        self.assertTrue(stay.is_check_in_time_set)
+        self.assertTrue(stay.is_check_out_time_set)
+        self.assertEqual(stay.check_in_time_str, '15:00')
+        self.assertEqual(stay.check_out_time_str, '11:00')
+
+    def test_idea_stay_allows_blank_dates(self):
+        """Stays marked as IDEA allow dates to be optional / blank."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Tentative Hostel Idea',
+            'status': 'IDEA',
+        }, follow=True)
+        self.assertTrue(Stay.objects.filter(title='Tentative Hostel Idea').exists())
+        stay = Stay.objects.get(title='Tentative Hostel Idea')
+        self.assertIsNone(stay.check_in)
+        self.assertIsNone(stay.check_out)
+
+    def test_stay_rejects_checkout_date_before_checkin_date(self):
+        """Stay rejects check_out_date that is before check_in_date."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Time Travel Lodge',
+            'status': 'IDEA',
+            'check_in_date': '2026-11-05',
+            'check_out_date': '2026-11-02',
+        }, follow=True)
+        self.assertContains(resp, 'Check-out date/time cannot be before check-in date/time.')
+        self.assertFalse(Stay.objects.filter(title='Time Travel Lodge').exists())
+
+    def test_stay_rejects_checkout_time_before_checkin_time_on_same_date(self):
+        """Stay on same date rejects checkout time that is before checkin time."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Dayroom Lounge',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-05',
+            'check_out_date': '2026-11-05',
+            'check_in_time': '14:00',
+            'check_out_time': '10:00',
+        }, follow=True)
+        self.assertContains(resp, 'Check-out date/time cannot be before check-in date/time.')
+        self.assertFalse(Stay.objects.filter(title='Dayroom Lounge').exists())
+
+    def test_edit_stay_rejects_invalid_date_order_and_confirms_valid_update(self):
+        """Editing stay enforces date bounds and updates dates/times."""
+        stay = Stay.objects.create(
+            trip=self.trip,
+            title='Initial Stay',
+            status='IDEA',
+            created_by=self.user
+        )
+
+        # Invalid edit: checkout before checkin
+        resp = self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay.id]), {
+            'title': 'Initial Stay',
+            'status': 'IDEA',
+            'check_in_date': '2026-11-05',
+            'check_out_date': '2026-11-03',
+        }, follow=True)
+        self.assertContains(resp, 'Check-out date/time cannot be before check-in date/time.')
+        stay.refresh_from_db()
+        self.assertIsNone(stay.check_in)
+
+        # Invalid edit: change status to CONFIRMED without dates
+        resp2 = self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay.id]), {
+            'title': 'Initial Stay',
+            'status': 'CONFIRMED',
+            'check_in_date': '',
+            'check_out_date': '',
+        }, follow=True)
+        self.assertContains(resp2, 'Confirmed stays require both a check-in date (start) and check-out date (end).')
+        stay.refresh_from_db()
+        self.assertEqual(stay.status, 'IDEA')
+
+        # Valid edit to CONFIRMED with dates and optional check-in time only
+        resp3 = self.client.post(reverse('core:edit_stay', args=[self.trip.id, stay.id]), {
+            'title': 'Updated Confirmed Stay',
+            'status': 'CONFIRMED',
+            'check_in_date': '2026-11-03',
+            'check_out_date': '2026-11-07',
+            'check_in_time': '16:00',
+            'check_out_time': '',
+        }, follow=True)
+        stay.refresh_from_db()
+        self.assertEqual(stay.status, 'CONFIRMED')
+        self.assertTrue(stay.is_check_in_time_set)
+        self.assertFalse(stay.is_check_out_time_set)
+
+    def test_nav_rejects_arrival_before_departure(self):
+        """Nav rejects arrival_time earlier than departure_time."""
+        resp = self.client.post(reverse('core:add_nav', args=[self.trip.id]), {
+            'title': 'Backward Flight',
+            'mode': 'Flight',
+            'departure_time': '2026-11-02T14:00',
+            'arrival_time': '2026-11-02T10:00',
+        }, follow=True)
+        self.assertContains(resp, 'Arrival date/time cannot be before departure date/time.')
+        self.assertFalse(Nav.objects.filter(title='Backward Flight').exists())
+
+    def test_nav_accepts_valid_arrival_after_departure(self):
+        """Nav accepts arrival_time >= departure_time."""
+        resp = self.client.post(reverse('core:add_nav', args=[self.trip.id]), {
+            'title': 'Forward Flight',
+            'mode': 'Flight',
+            'departure_time': '2026-11-02T10:00',
+            'arrival_time': '2026-11-02T14:00',
+        }, follow=True)
+        self.assertTrue(Nav.objects.filter(title='Forward Flight').exists())
+
+    def test_do_rejects_end_time_before_start_time(self):
+        """Do rejects end_time earlier than start_time."""
+        resp = self.client.post(reverse('core:add_do', args=[self.trip.id]), {
+            'title': 'Rewind Tour',
+            'start_time': '2026-11-03T15:00',
+            'end_time': '2026-11-03T12:00',
+        }, follow=True)
+        self.assertContains(resp, 'End date/time cannot be before start date/time.')
+        self.assertFalse(Do.objects.filter(title='Rewind Tour').exists())
+
+    def test_do_accepts_valid_end_time_after_start_time(self):
+        """Do accepts end_time >= start_time."""
+        resp = self.client.post(reverse('core:add_do', args=[self.trip.id]), {
+            'title': 'Forward Tour',
+            'start_time': '2026-11-03T12:00',
+            'end_time': '2026-11-03T15:00',
+        }, follow=True)
+        self.assertTrue(Do.objects.filter(title='Forward Tour').exists())
+
+    def test_workspace_renders_stay_dates_and_optional_times_correctly(self):
+        """Workspace renders date-only stays without phantom times, and renders times when set."""
+        import datetime
+        now = timezone.now()
+        # Stay 1: Dates only, no times
+        s1 = Stay.objects.create(
+            trip=self.trip,
+            title='No Times Stay',
+            status='CONFIRMED',
+            check_in=datetime.datetime(2026, 11, 2, 0, 0, tzinfo=datetime.timezone.utc),
+            check_out=datetime.datetime(2026, 11, 6, 0, 0, tzinfo=datetime.timezone.utc),
+            has_check_in_time=False,
+            has_check_out_time=False,
+            created_by=self.user
+        )
+
+        # Stay 2: Dates and times
+        s2 = Stay.objects.create(
+            trip=self.trip,
+            title='With Times Stay',
+            status='CONFIRMED',
+            check_in=datetime.datetime(2026, 11, 6, 15, 0, tzinfo=datetime.timezone.utc),
+            check_out=datetime.datetime(2026, 11, 10, 11, 0, tzinfo=datetime.timezone.utc),
+            has_check_in_time=True,
+            has_check_out_time=True,
+            created_by=self.user
+        )
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Check Add Stay modal input fields
+        self.assertContains(resp, 'name="check_in_date"')
+        self.assertContains(resp, 'name="check_out_date"')
+        self.assertContains(resp, 'name="check_in_time"')
+        self.assertContains(resp, 'name="check_out_time"')
+        self.assertContains(resp, 'Check-in Time <small class="text-muted">(Optional)</small>')
+        self.assertContains(resp, 'Check-out Time <small class="text-muted">(Optional)</small>')
+
+        # Base JS date constraint functions
+        self.assertContains(resp, 'initAllDateConstraints')
+        self.assertContains(resp, 'setupStayDateSync')
+        self.assertContains(resp, 'setupDateRangePair')
+        self.assertContains(resp, 'setupDateTimeRangePair')
+
 
 
 

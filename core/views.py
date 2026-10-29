@@ -12,7 +12,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime, parse_date
+from django.utils.dateparse import parse_datetime, parse_date, parse_time
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse
 from django.conf import settings
@@ -537,6 +537,8 @@ def trip_workspace_view(request, trip_id):
             'status': s.status,
             'timestamp': s.check_in,
             'end_timestamp': s.check_out,
+            'has_time': s.is_check_in_time_set,
+            'has_end_time': s.is_check_out_time_set,
             'price': s.total_price,
             'currency': s.currency,
             'has_code': s.has_confirmation_code,
@@ -560,6 +562,8 @@ def trip_workspace_view(request, trip_id):
             'status': n.status,
             'timestamp': n.departure_time,
             'end_timestamp': n.arrival_time,
+            'has_time': bool(n.departure_time),
+            'has_end_time': bool(n.arrival_time),
             'price': n.price,
             'currency': n.currency,
             'has_code': n.has_confirmation_code,
@@ -575,6 +579,8 @@ def trip_workspace_view(request, trip_id):
             'status': d.status,
             'timestamp': d.start_time,
             'end_timestamp': d.end_time,
+            'has_time': bool(d.start_time),
+            'has_end_time': bool(d.end_time),
             'price': d.price,
             'currency': d.currency,
             'has_code': d.has_confirmation_code,
@@ -658,8 +664,13 @@ def create_trip_view(request):
         s_date = request.POST.get('start_date')
         e_date = request.POST.get('end_date')
         if s_date and e_date:
-            trip_data['start_date'] = parse_date(s_date)
-            trip_data['end_date'] = parse_date(e_date)
+            parsed_s = parse_date(s_date)
+            parsed_e = parse_date(e_date)
+            if parsed_s and parsed_e and parsed_e < parsed_s:
+                messages.error(request, "Trip end date cannot be before start date.")
+                return redirect('core:dashboard')
+            trip_data['start_date'] = parsed_s
+            trip_data['end_date'] = parsed_e
             trip_data['year'] = trip_data['start_date'].year if trip_data['start_date'] else timezone.now().year
     elif time_granularity == 'SEASON_YEAR':
         trip_data['season'] = request.POST.get('season', 'SUMMER')
@@ -712,8 +723,13 @@ def edit_trip_view(request, trip_id):
     if time_granularity == 'EXACT_RANGE':
         s_date = request.POST.get('start_date')
         e_date = request.POST.get('end_date')
-        trip.start_date = parse_date(s_date) if s_date else None
-        trip.end_date = parse_date(e_date) if e_date else None
+        parsed_s = parse_date(s_date) if s_date else None
+        parsed_e = parse_date(e_date) if e_date else None
+        if parsed_s and parsed_e and parsed_e < parsed_s:
+            messages.error(request, "Trip end date cannot be before start date.")
+            return redirect('core:trip_workspace', trip_id=trip.id)
+        trip.start_date = parsed_s
+        trip.end_date = parsed_e
         if trip.start_date:
             trip.year = trip.start_date.year
     elif time_granularity == 'SEASON_YEAR':
@@ -796,6 +812,80 @@ def _normalize_item_status(raw_status, default='IDEA') -> str:
     return val if val in ('IDEA', 'CONFIRMED', 'COMPLETE') else default
 
 
+def _parse_stay_datetimes(request):
+    """
+    Parses check_in and check_out dates and optional times from request.POST.
+    Supports both separated date/time fields (check_in_date, check_in_time, check_out_date, check_out_time)
+    and legacy combined datetime fields (check_in, check_out).
+    Returns (check_in_dt, check_out_dt, has_ci_time, has_co_time).
+    """
+    ci_date_raw = request.POST.get('check_in_date', '').strip()
+    ci_time_raw = request.POST.get('check_in_time', '').strip()
+    co_date_raw = request.POST.get('check_out_date', '').strip()
+    co_time_raw = request.POST.get('check_out_time', '').strip()
+
+    check_in_raw = request.POST.get('check_in', '').strip()
+    check_out_raw = request.POST.get('check_out', '').strip()
+
+    check_in_dt = None
+    has_ci_time = False
+    if ci_date_raw:
+        d = parse_date(ci_date_raw)
+        if d:
+            if ci_time_raw:
+                t = parse_time(ci_time_raw)
+                if t is None:
+                    try:
+                        parts = [int(p) for p in ci_time_raw.split(':')]
+                        t = datetime.time(parts[0], parts[1])
+                    except Exception:
+                        t = datetime.time(0, 0)
+                combined = datetime.datetime.combine(d, t)
+                check_in_dt = timezone.make_aware(combined) if settings.USE_TZ else combined
+                has_ci_time = True
+            else:
+                combined = datetime.datetime.combine(d, datetime.time(0, 0))
+                check_in_dt = timezone.make_aware(combined) if settings.USE_TZ else combined
+                has_ci_time = False
+    elif check_in_raw:
+        dt = parse_datetime(check_in_raw)
+        if dt:
+            if settings.USE_TZ and timezone.is_naive(dt):
+                dt = timezone.make_aware(dt)
+            check_in_dt = dt
+            has_ci_time = not (dt.hour == 0 and dt.minute == 0)
+
+    check_out_dt = None
+    has_co_time = False
+    if co_date_raw:
+        d = parse_date(co_date_raw)
+        if d:
+            if co_time_raw:
+                t = parse_time(co_time_raw)
+                if t is None:
+                    try:
+                        parts = [int(p) for p in co_time_raw.split(':')]
+                        t = datetime.time(parts[0], parts[1])
+                    except Exception:
+                        t = datetime.time(0, 0)
+                combined = datetime.datetime.combine(d, t)
+                check_out_dt = timezone.make_aware(combined) if settings.USE_TZ else combined
+                has_co_time = True
+            else:
+                combined = datetime.datetime.combine(d, datetime.time(0, 0))
+                check_out_dt = timezone.make_aware(combined) if settings.USE_TZ else combined
+                has_co_time = False
+    elif check_out_raw:
+        dt = parse_datetime(check_out_raw)
+        if dt:
+            if settings.USE_TZ and timezone.is_naive(dt):
+                dt = timezone.make_aware(dt)
+            check_out_dt = dt
+            has_co_time = not (dt.hour == 0 and dt.minute == 0)
+
+    return check_in_dt, check_out_dt, has_ci_time, has_co_time
+
+
 @require_POST
 def add_stay_view(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id)
@@ -810,20 +900,31 @@ def add_stay_view(request, trip_id):
         messages.error(request, "Stay name is required.")
         return redirect(f"/trips/{trip_id}/#stays")
 
-    check_in_raw = request.POST.get('check_in')
-    check_out_raw = request.POST.get('check_out')
+    status = _normalize_item_status(request.POST.get('status'), 'IDEA')
+    check_in_dt, check_out_dt, has_ci_time, has_co_time = _parse_stay_datetimes(request)
+
+    if status == 'CONFIRMED':
+        if not check_in_dt or not check_out_dt:
+            messages.error(request, "Confirmed stays require both a check-in date (start) and check-out date (end).")
+            return redirect(f"/trips/{trip_id}/#stays")
+
+    if check_in_dt and check_out_dt and check_out_dt < check_in_dt:
+        messages.error(request, "Check-out date/time cannot be before check-in date/time.")
+        return redirect(f"/trips/{trip_id}/#stays")
 
     stay = Stay(
         trip=trip,
         title=title,
-        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
+        status=status,
         place_type=request.POST.get('place_type', 'Hotel Room'),
         num_beds=int(request.POST.get('num_beds')) if request.POST.get('num_beds') else None,
         num_rooms=int(request.POST.get('num_rooms')) if request.POST.get('num_rooms') else None,
         num_guests=int(request.POST.get('num_guests')) if request.POST.get('num_guests') else None,
         address=request.POST.get('address', '').strip(),
-        check_in=parse_datetime(check_in_raw) if check_in_raw else None,
-        check_out=parse_datetime(check_out_raw) if check_out_raw else None,
+        check_in=check_in_dt,
+        check_out=check_out_dt,
+        has_check_in_time=has_ci_time,
+        has_check_out_time=has_co_time,
         total_price=float(request.POST.get('total_price')) if request.POST.get('total_price') else None,
         currency=request.POST.get('currency', 'USD'),
         booking_link=request.POST.get('booking_link', '').strip(),
@@ -847,22 +948,48 @@ def edit_stay_view(request, trip_id, stay_id):
     stay = get_object_or_404(Stay, id=stay_id, trip=trip)
     current_user = get_current_user(request)
 
+    next_url = request.POST.get('next')
+    fallback_redirect = next_url if (next_url and next_url.startswith('/')) else f"/trips/{trip_id}/#stays"
+
     if not can_user_edit_item(current_user, trip, stay):
         messages.error(request, "Permission denied: You can only edit accommodations you created or if you are a Trip Editor/Owner.")
-        return redirect(f"/trips/{trip_id}/#stays")
+        return redirect(fallback_redirect)
 
-    stay.title = request.POST.get('title', stay.title).strip()
-    stay.status = _normalize_item_status(request.POST.get('status'), stay.status)
+    new_title = request.POST.get('title', stay.title).strip()
+    if not new_title:
+        messages.error(request, "Stay title cannot be blank.")
+        return redirect(fallback_redirect)
+
+    new_status = _normalize_item_status(request.POST.get('status'), stay.status)
+    dates_in_form = ('check_in_date' in request.POST or 'check_in' in request.POST or 
+                     'check_out_date' in request.POST or 'check_out' in request.POST)
+
+    if dates_in_form:
+        check_in_dt, check_out_dt, has_ci_time, has_co_time = _parse_stay_datetimes(request)
+        if new_status == 'CONFIRMED' and (not check_in_dt or not check_out_dt):
+            messages.error(request, "Confirmed stays require both a check-in date (start) and check-out date (end).")
+            return redirect(fallback_redirect)
+
+        if check_in_dt and check_out_dt and check_out_dt < check_in_dt:
+            messages.error(request, "Check-out date/time cannot be before check-in date/time.")
+            return redirect(fallback_redirect)
+
+        stay.check_in = check_in_dt
+        stay.check_out = check_out_dt
+        stay.has_check_in_time = has_ci_time
+        stay.has_check_out_time = has_co_time
+    else:
+        if new_status == 'CONFIRMED' and (not stay.check_in or not stay.check_out):
+            messages.error(request, "Confirmed stays require both a check-in date (start) and check-out date (end).")
+            return redirect(fallback_redirect)
+
+    stay.title = new_title
+    stay.status = new_status
     stay.place_type = request.POST.get('place_type', stay.place_type)
     stay.num_beds = int(request.POST.get('num_beds')) if request.POST.get('num_beds') else None
     stay.num_rooms = int(request.POST.get('num_rooms')) if request.POST.get('num_rooms') else None
     stay.num_guests = int(request.POST.get('num_guests')) if request.POST.get('num_guests') else None
     stay.address = request.POST.get('address', '').strip()
-    
-    ci = request.POST.get('check_in')
-    co = request.POST.get('check_out')
-    stay.check_in = parse_datetime(ci) if ci else None
-    stay.check_out = parse_datetime(co) if co else None
     
     stay.total_price = float(request.POST.get('total_price')) if request.POST.get('total_price') else None
     stay.currency = request.POST.get('currency', stay.currency)
@@ -876,10 +1003,7 @@ def edit_stay_view(request, trip_id, stay_id):
     stay.updated_by = current_user
     stay.save()
     messages.success(request, f"Updated Stay '{stay.title}'!")
-    next_url = request.POST.get('next')
-    if next_url and next_url.startswith('/'):
-        return redirect(next_url)
-    return redirect(f"/trips/{trip_id}/#stays")
+    return redirect(fallback_redirect)
 
 
 @require_POST
@@ -922,6 +1046,16 @@ def add_nav_view(request, trip_id):
 
     dept_raw = request.POST.get('departure_time')
     arr_raw = request.POST.get('arrival_time')
+    dept_dt = parse_datetime(dept_raw) if dept_raw else None
+    arr_dt = parse_datetime(arr_raw) if arr_raw else None
+    if dept_dt and settings.USE_TZ and timezone.is_naive(dept_dt):
+        dept_dt = timezone.make_aware(dept_dt)
+    if arr_dt and settings.USE_TZ and timezone.is_naive(arr_dt):
+        arr_dt = timezone.make_aware(arr_dt)
+
+    if dept_dt and arr_dt and arr_dt < dept_dt:
+        messages.error(request, "Arrival date/time cannot be before departure date/time.")
+        return redirect(f"/trips/{trip_id}/#navs")
 
     nav = Nav(
         trip=trip,
@@ -933,8 +1067,8 @@ def add_nav_view(request, trip_id):
         passenger_name=request.POST.get('passenger_name', '').strip(),
         origin_address=request.POST.get('origin_address', '').strip(),
         destination_address=request.POST.get('destination_address', '').strip(),
-        departure_time=parse_datetime(dept_raw) if dept_raw else None,
-        arrival_time=parse_datetime(arr_raw) if arr_raw else None,
+        departure_time=dept_dt,
+        arrival_time=arr_dt,
         date_confidence=request.POST.get('date_confidence', 'CONFIRMED'),
         time_confidence=request.POST.get('time_confidence', 'CONFIRMED'),
         flexibility_notes=request.POST.get('flexibility_notes', '').strip(),
@@ -960,9 +1094,25 @@ def edit_nav_view(request, trip_id, nav_id):
     nav = get_object_or_404(Nav, id=nav_id, trip=trip)
     current_user = get_current_user(request)
 
+    next_url = request.POST.get('next')
+    fallback_redirect = next_url if (next_url and next_url.startswith('/')) else f"/trips/{trip_id}/#navs"
+
     if not can_user_edit_item(current_user, trip, nav):
         messages.error(request, "Permission denied: You can only edit transportation legs you created or if you are a Trip Editor/Owner.")
-        return redirect(f"/trips/{trip_id}/#navs")
+        return redirect(fallback_redirect)
+
+    dept_raw = request.POST.get('departure_time')
+    arr_raw = request.POST.get('arrival_time')
+    dept_dt = parse_datetime(dept_raw) if dept_raw else None
+    arr_dt = parse_datetime(arr_raw) if arr_raw else None
+    if dept_dt and settings.USE_TZ and timezone.is_naive(dept_dt):
+        dept_dt = timezone.make_aware(dept_dt)
+    if arr_dt and settings.USE_TZ and timezone.is_naive(arr_dt):
+        arr_dt = timezone.make_aware(arr_dt)
+
+    if dept_dt and arr_dt and arr_dt < dept_dt:
+        messages.error(request, "Arrival date/time cannot be before departure date/time.")
+        return redirect(fallback_redirect)
 
     nav.title = request.POST.get('title', nav.title).strip()
     nav.mode = request.POST.get('mode', nav.mode)
@@ -973,10 +1123,8 @@ def edit_nav_view(request, trip_id, nav_id):
     nav.origin_address = request.POST.get('origin_address', '').strip()
     nav.destination_address = request.POST.get('destination_address', '').strip()
 
-    dept_raw = request.POST.get('departure_time')
-    arr_raw = request.POST.get('arrival_time')
-    nav.departure_time = parse_datetime(dept_raw) if dept_raw else None
-    nav.arrival_time = parse_datetime(arr_raw) if arr_raw else None
+    nav.departure_time = dept_dt
+    nav.arrival_time = arr_dt
 
     nav.date_confidence = request.POST.get('date_confidence', nav.date_confidence)
     nav.time_confidence = request.POST.get('time_confidence', nav.time_confidence)
@@ -1037,6 +1185,16 @@ def add_do_view(request, trip_id):
 
     s_time = request.POST.get('start_time')
     e_time = request.POST.get('end_time')
+    start_dt = parse_datetime(s_time) if s_time else None
+    end_dt = parse_datetime(e_time) if e_time else None
+    if start_dt and settings.USE_TZ and timezone.is_naive(start_dt):
+        start_dt = timezone.make_aware(start_dt)
+    if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
+        end_dt = timezone.make_aware(end_dt)
+
+    if start_dt and end_dt and end_dt < start_dt:
+        messages.error(request, "End date/time cannot be before start date/time.")
+        return redirect(f"/trips/{trip_id}/#dos")
 
     do_item = Do(
         trip=trip,
@@ -1044,8 +1202,8 @@ def add_do_view(request, trip_id):
         activity_type=request.POST.get('activity_type', 'Sightseeing'),
         status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
         address=request.POST.get('address', '').strip(),
-        start_time=parse_datetime(s_time) if s_time else None,
-        end_time=parse_datetime(e_time) if e_time else None,
+        start_time=start_dt,
+        end_time=end_dt,
         price=float(request.POST.get('price')) if request.POST.get('price') else None,
         currency=request.POST.get('currency', 'USD'),
         link=request.POST.get('link', '').strip(),
@@ -1069,19 +1227,33 @@ def edit_do_view(request, trip_id, do_id):
     do_item = get_object_or_404(Do, id=do_id, trip=trip)
     current_user = get_current_user(request)
 
+    next_url = request.POST.get('next')
+    fallback_redirect = next_url if (next_url and next_url.startswith('/')) else f"/trips/{trip_id}/#dos"
+
     if not can_user_edit_item(current_user, trip, do_item):
         messages.error(request, "Permission denied: You can only edit activities you created or if you are a Trip Editor/Owner.")
-        return redirect(f"/trips/{trip_id}/#dos")
+        return redirect(fallback_redirect)
+
+    s_time = request.POST.get('start_time')
+    e_time = request.POST.get('end_time')
+    start_dt = parse_datetime(s_time) if s_time else None
+    end_dt = parse_datetime(e_time) if e_time else None
+    if start_dt and settings.USE_TZ and timezone.is_naive(start_dt):
+        start_dt = timezone.make_aware(start_dt)
+    if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
+        end_dt = timezone.make_aware(end_dt)
+
+    if start_dt and end_dt and end_dt < start_dt:
+        messages.error(request, "End date/time cannot be before start date/time.")
+        return redirect(fallback_redirect)
 
     do_item.title = request.POST.get('title', do_item.title).strip()
     do_item.activity_type = request.POST.get('activity_type', do_item.activity_type)
     do_item.status = _normalize_item_status(request.POST.get('status'), do_item.status)
     do_item.address = request.POST.get('address', '').strip()
 
-    s_time = request.POST.get('start_time')
-    e_time = request.POST.get('end_time')
-    do_item.start_time = parse_datetime(s_time) if s_time else None
-    do_item.end_time = parse_datetime(e_time) if e_time else None
+    do_item.start_time = start_dt
+    do_item.end_time = end_dt
 
     do_item.price = float(request.POST.get('price')) if request.POST.get('price') else None
     do_item.currency = request.POST.get('currency', do_item.currency)
