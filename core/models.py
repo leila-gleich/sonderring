@@ -3,6 +3,8 @@ import calendar
 import hashlib
 import secrets
 from django.db import models
+from django.db.models import Case, When, Value, IntegerField, F
+from django.db.models.functions import ExtractYear, ExtractMonth, ExtractDay
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from .encryption import ConfirmationEncryptor, EncryptedCharField, EncryptedTextField
@@ -271,6 +273,83 @@ class Trip(models.Model):
     @property
     def recs(self):
         return self.tastes
+
+    @classmethod
+    def get_current_and_upcoming(cls, queryset=None):
+        """Returns active/upcoming trips sorted with CURRENT first (farthest left), then chronological."""
+        if queryset is None:
+            queryset = cls.objects.all()
+        return order_current_and_upcoming_trips(queryset)
+
+
+def order_current_and_upcoming_trips(queryset_or_list):
+    """
+    Filters and orders trips for the 'Current & Upcoming Trips' section:
+    1. CURRENT trip(s) appear first (farthest left in dashboard grid).
+    2. Within CURRENT and UPCOMING statuses, trips are ordered chronologically
+       by year, month, and day (earliest to latest).
+    Supports all 4 hybrid time granularities (EXACT_RANGE, MONTH, SEASON_YEAR, YEAR).
+    """
+    if hasattr(queryset_or_list, 'filter') and hasattr(queryset_or_list, 'annotate'):
+        return queryset_or_list.filter(status__in=['CURRENT', 'UPCOMING']).distinct().annotate(
+            status_priority=Case(
+                When(status='CURRENT', then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField()
+            ),
+            sort_year=Case(
+                When(time_granularity='EXACT_RANGE', start_date__isnull=False, then=ExtractYear('start_date')),
+                When(start_date__isnull=False, then=ExtractYear('start_date')),
+                default=F('year'),
+                output_field=IntegerField()
+            ),
+            sort_month=Case(
+                When(time_granularity='EXACT_RANGE', start_date__isnull=False, then=ExtractMonth('start_date')),
+                When(time_granularity='MONTH', start_month__isnull=False, then=F('start_month')),
+                When(time_granularity='SEASON_YEAR', season='SPRING', then=Value(3)),
+                When(time_granularity='SEASON_YEAR', season='SUMMER', then=Value(6)),
+                When(time_granularity='SEASON_YEAR', season='FALL', then=Value(9)),
+                When(time_granularity='SEASON_YEAR', season='WINTER', then=Value(12)),
+                When(start_date__isnull=False, then=ExtractMonth('start_date')),
+                When(start_month__isnull=False, then=F('start_month')),
+                default=Value(1),
+                output_field=IntegerField()
+            ),
+            sort_day=Case(
+                When(time_granularity='EXACT_RANGE', start_date__isnull=False, then=ExtractDay('start_date')),
+                When(start_date__isnull=False, then=ExtractDay('start_date')),
+                default=Value(1),
+                output_field=IntegerField()
+            )
+        ).order_by('status_priority', 'sort_year', 'sort_month', 'sort_day', 'title', 'id')
+
+    # Python list/iterable fallback
+    season_months = {'SPRING': 3, 'SUMMER': 6, 'FALL': 9, 'WINTER': 12}
+
+    def trip_sort_key(t):
+        prio = 0 if getattr(t, 'status', None) == 'CURRENT' else 1
+        s_date = getattr(t, 'start_date', None)
+        granularity = getattr(t, 'time_granularity', 'YEAR')
+        yr = s_date.year if (s_date and hasattr(s_date, 'year')) else (getattr(t, 'year', None) or 0)
+        
+        if granularity == 'EXACT_RANGE' and s_date and hasattr(s_date, 'month'):
+            mo = s_date.month
+        elif granularity == 'MONTH' and getattr(t, 'start_month', None):
+            mo = t.start_month
+        elif granularity == 'SEASON_YEAR' and getattr(t, 'season', None):
+            mo = season_months.get(t.season, 1)
+        elif s_date and hasattr(s_date, 'month'):
+            mo = s_date.month
+        elif getattr(t, 'start_month', None):
+            mo = t.start_month
+        else:
+            mo = 1
+
+        day = s_date.day if (s_date and hasattr(s_date, 'day')) else 1
+        return (prio, yr, mo, day, getattr(t, 'title', '') or '', str(getattr(t, 'id', '')))
+
+    filtered = [t for t in queryset_or_list if getattr(t, 'status', None) in ('CURRENT', 'UPCOMING')]
+    return sorted(filtered, key=trip_sort_key)
 
 
 class TripMember(models.Model):

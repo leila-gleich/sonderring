@@ -704,6 +704,82 @@
             return cookieValue;
         }
 
+        // Navigates to a trip workspace URL, unless the user clicked an interactive control (status select, button, etc.)
+        function goToTrip(event, url) {
+            if (event.target.closest('.trip-status-select, .trip-status-form, .inline-status-form, select, button, input, a')) {
+                return;
+            }
+            window.location.href = url;
+        }
+
+        // AJAX Update Trip Status without redirecting to individual tripspace
+        async function updateTripStatus(selectElement, tripId) {
+            const newStatus = selectElement.value;
+            const oldStatus = selectElement.dataset.currentStatus || '';
+            const csrftoken = getCookie('csrftoken') || (selectElement.form ? selectElement.form.querySelector('input[name="csrfmiddlewaretoken"]')?.value : '');
+            
+            selectElement.disabled = true;
+            try {
+                const bodyParams = new URLSearchParams();
+                bodyParams.append('status', newStatus);
+                
+                const response = await fetch(`/trips/${tripId}/status/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: bodyParams.toString()
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        const wasPast = (oldStatus.toUpperCase() === 'PAST');
+                        const isPast = (data.new_status.toUpperCase() === 'PAST');
+                        
+                        // If moving between Active (Current/Upcoming) and Past, reload so the trip moves to the correct section and counters update
+                        if (wasPast !== isPast) {
+                            window.location.reload();
+                            return;
+                        }
+                        
+                        // Otherwise update status pill styling in-place without page reload
+                        selectElement.className = `status-pill status-${data.new_status.toLowerCase()} trip-status-select`;
+                        selectElement.dataset.currentStatus = data.new_status;
+
+                        // Synchronize any matching status pills on page (e.g. navbar dropdown)
+                        const matchingPills = document.querySelectorAll(`.status-pill-trip-${tripId}`);
+                        matchingPills.forEach(p => {
+                            p.className = `status-pill status-${data.new_status.toLowerCase()} status-pill-trip-${tripId}`;
+                            p.textContent = data.status_display;
+                        });
+                    } else {
+                        alert(data.error || 'Failed to update trip status');
+                        selectElement.value = oldStatus;
+                    }
+                } else {
+                    // Fall back to standard form submit
+                    if (selectElement.form) {
+                        selectElement.form.submit();
+                    } else {
+                        alert('Failed to update trip status');
+                        selectElement.value = oldStatus;
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to update trip status:", err);
+                if (selectElement.form) {
+                    selectElement.form.submit();
+                } else {
+                    selectElement.value = oldStatus;
+                }
+            } finally {
+                selectElement.disabled = false;
+            }
+        }
+
         // AJAX Cycle/Update Item Status (Idea -> Confirmed -> Complete -> Idea)
         async function toggleItemStatus(itemType, itemId, buttonElement, explicitStatus) {
             const csrftoken = getCookie('csrftoken');

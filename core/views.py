@@ -20,7 +20,7 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Trip, Stay, Move, Taste, Play, Nav, Do, Rec, UserProfile, TripMember, Attachment, OAuthIdentity, SecurityAuditLog
+from .models import Trip, Stay, Move, Taste, Play, Nav, Do, Rec, UserProfile, TripMember, Attachment, OAuthIdentity, SecurityAuditLog, order_current_and_upcoming_trips
 
 
 def get_client_ip(request):
@@ -475,14 +475,22 @@ def dashboard_view(request):
     ).distinct()
 
     # Categorize TripSpaces by Current/Upcoming vs Past
-    upcoming_trips = user_trips.filter(status__in=['CURRENT', 'UPCOMING']).order_by('-year', '-start_date')
+    # For Current & Upcoming Trips: CURRENT is first (farthest left), then chronological order
+    upcoming_trips = order_current_and_upcoming_trips(user_trips)
     past_trips = user_trips.filter(status='PAST').order_by('-year', '-start_date')
+
+    editable_trip_ids = set(
+        user_trips.filter(
+            Q(created_by=current_user) | Q(members__user=current_user, members__role__in=['OWNER', 'EDITOR'])
+        ).values_list('id', flat=True)
+    )
 
     context = {
         'current_user': current_user,
         'all_users': all_users,
         'upcoming_trips': upcoming_trips,
         'past_trips': past_trips,
+        'editable_trip_ids': editable_trip_ids,
         'now_year': timezone.now().year,
     }
     return render(request, 'dashboard.html', context)
@@ -780,18 +788,24 @@ def update_trip_status_view(request, trip_id):
     current_user = get_current_user(request)
     trip = get_object_or_404(Trip, id=trip_id)
 
+    is_ajax = (
+        request.headers.get('x-requested-with') == 'XMLHttpRequest' or
+        'application/json' in request.headers.get('accept', '')
+    )
+    redirect_fallback = request.POST.get('next') or request.META.get('HTTP_REFERER') or reverse('core:trip_workspace', args=[trip.id])
+
     if not can_user_edit_trip(current_user, trip):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if is_ajax:
             return HttpResponseForbidden("Only Trip Owners and Editors can change trip status.")
         messages.error(request, "Permission denied: Only Owners and Editors can change trip status.")
-        return redirect('core:trip_workspace', trip_id=trip.id)
+        return redirect(redirect_fallback)
 
     new_status = request.POST.get('status', '').strip().upper()
     if new_status not in ['UPCOMING', 'CURRENT', 'PAST']:
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if is_ajax:
             return HttpResponseBadRequest("Invalid trip status. Must be UPCOMING, CURRENT, or PAST.")
         messages.error(request, "Invalid trip status selected.")
-        return redirect('core:trip_workspace', trip_id=trip.id)
+        return redirect(redirect_fallback)
 
     trip.status = new_status
     trip.updated_by = current_user
@@ -799,7 +813,7 @@ def update_trip_status_view(request, trip_id):
 
     label = trip.get_status_display()
 
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+    if is_ajax:
         return JsonResponse({
             'success': True,
             'trip_id': str(trip.id),
@@ -808,8 +822,7 @@ def update_trip_status_view(request, trip_id):
         })
 
     messages.success(request, f"Trip '{trip.title}' status updated to {label}!")
-    redirect_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or reverse('core:trip_workspace', args=[trip.id])
-    return redirect(redirect_url)
+    return redirect(redirect_fallback)
 
 
 @require_POST

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
-from core.models import UserProfile, Trip
+from core.models import UserProfile, Trip, order_current_and_upcoming_trips
 
 
 def auth_feature_flags(request):
@@ -14,10 +14,10 @@ def auth_feature_flags(request):
     if user_id:
         user = UserProfile.objects.filter(id=user_id, is_active=True).first()
         if user:
-            nav_active_trips = Trip.objects.filter(
-                Q(created_by=user) | Q(members__user=user),
-                status__in=['CURRENT', 'UPCOMING']
-            ).distinct().order_by('-year', '-start_date', 'title')
+            user_trips = Trip.objects.filter(
+                Q(created_by=user) | Q(members__user=user)
+            ).distinct()
+            nav_active_trips = order_current_and_upcoming_trips(user_trips)
 
     return {
         'ENABLE_GOOGLE_OAUTH': getattr(settings, 'ENABLE_GOOGLE_OAUTH', False),

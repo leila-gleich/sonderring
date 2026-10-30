@@ -31,13 +31,34 @@
     {% if upcoming_trips %}
     <div class="trips-grid">
         {% for trip in upcoming_trips %}
-        <a href="{% url 'core:trip_workspace' trip.id %}" class="trip-card">
+        <div class="trip-card" onclick="goToTrip(event, '{% url 'core:trip_workspace' trip.id %}')">
             <div class="trip-card-header">
                 <span class="trip-location-badge">📍 {{ trip.location }}</span>
+                {% if trip.id in editable_trip_ids %}
+                <form method="POST" action="{% url 'core:update_trip_status' trip.id %}" class="inline-status-form trip-status-form" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'core:dashboard' %}">
+                    <select name="status" 
+                            class="status-pill status-{{ trip.status|lower }} trip-status-select" 
+                            data-current-status="{{ trip.status }}"
+                            data-trip-id="{{ trip.id }}"
+                            onchange="updateTripStatus(this, '{{ trip.id }}')"
+                            onclick="event.stopPropagation();"
+                            onmousedown="event.stopPropagation();"
+                            title="Change TripSpace Status (Upcoming, Current, Past)">
+                        <option value="UPCOMING" {% if trip.status == 'UPCOMING' %}selected{% endif %}>📅 Upcoming</option>
+                        <option value="CURRENT" {% if trip.status == 'CURRENT' %}selected{% endif %}>🔥 Current</option>
+                        <option value="PAST" {% if trip.status == 'PAST' %}selected{% endif %}>🏛️ Past</option>
+                    </select>
+                </form>
+                {% else %}
                 <span class="status-pill status-{{ trip.status|lower }}">{{ trip.get_status_display }}</span>
+                {% endif %}
             </div>
             
-            <h3 class="trip-card-title">{{ trip.title }}</h3>
+            <h3 class="trip-card-title">
+                <a href="{% url 'core:trip_workspace' trip.id %}" class="trip-card-title-link" onclick="event.stopPropagation();">{{ trip.title }}</a>
+            </h3>
             <div class="trip-date-row">
                 <span class="calendar-icon">📅</span>
                 <span class="trip-dates">{{ trip.formatted_dates }}</span>
@@ -70,7 +91,7 @@
                     <span class="stat-pill" title="Play (Activities)">🎯 {{ trip.plays.count }}</span>
                 </div>
             </div>
-        </a>
+        </div>
         {% endfor %}
     </div>
     {% else %}
@@ -97,16 +118,40 @@
 
     <div class="past-trips-grid">
         {% for trip in past_trips %}
-        <a href="{% url 'core:trip_workspace' trip.id %}" class="past-trip-card">
+        <div class="past-trip-card" onclick="goToTrip(event, '{% url 'core:trip_workspace' trip.id %}')">
             <div class="past-trip-content">
-                <h4 class="past-trip-title">{{ trip.title }}</h4>
+                <h4 class="past-trip-title">
+                    <a href="{% url 'core:trip_workspace' trip.id %}" class="trip-card-title-link" onclick="event.stopPropagation();">{{ trip.title }}</a>
+                </h4>
                 <div class="past-trip-meta">
                     <span class="past-trip-location">📍 {{ trip.location }}</span>
                     <span class="past-trip-date">{{ trip.formatted_dates }}</span>
                 </div>
             </div>
-            <span class="past-trip-arrow">➔</span>
-        </a>
+            <div class="past-trip-actions" onclick="event.stopPropagation();" style="display: flex; align-items: center; gap: 0.6rem;">
+                {% if trip.id in editable_trip_ids %}
+                <form method="POST" action="{% url 'core:update_trip_status' trip.id %}" class="inline-status-form trip-status-form" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'core:dashboard' %}">
+                    <select name="status" 
+                            class="status-pill status-{{ trip.status|lower }} trip-status-select" 
+                            data-current-status="{{ trip.status }}"
+                            data-trip-id="{{ trip.id }}"
+                            onchange="updateTripStatus(this, '{{ trip.id }}')"
+                            onclick="event.stopPropagation();"
+                            onmousedown="event.stopPropagation();"
+                            title="Change TripSpace Status (Upcoming, Current, Past)">
+                        <option value="UPCOMING" {% if trip.status == 'UPCOMING' %}selected{% endif %}>📅 Upcoming</option>
+                        <option value="CURRENT" {% if trip.status == 'CURRENT' %}selected{% endif %}>🔥 Current</option>
+                        <option value="PAST" {% if trip.status == 'PAST' %}selected{% endif %}>🏛️ Past</option>
+                    </select>
+                </form>
+                {% else %}
+                <span class="status-pill status-{{ trip.status|lower }}">{{ trip.get_status_display }}</span>
+                {% endif %}
+                <span class="past-trip-arrow">➔</span>
+            </div>
+        </div>
         {% empty %}
         <p class="text-muted">No past trips archived yet.</p>
         {% endfor %}

@@ -89,7 +89,12 @@
                 {% if can_edit %}
                 <form method="POST" action="{% url 'core:update_trip_status' trip.id %}" class="inline-status-form" style="display: inline-flex; align-items: center;">
                     {% csrf_token %}
-                    <select name="status" onchange="this.form.submit()" class="status-pill status-{{ trip.status|lower }} trip-status-select" title="Change TripSpace Status (Upcoming, Current, Past)">
+                    <select name="status" 
+                            class="status-pill status-{{ trip.status|lower }} trip-status-select" 
+                            data-current-status="{{ trip.status }}"
+                            data-trip-id="{{ trip.id }}"
+                            onchange="updateTripStatus(this, '{{ trip.id }}')" 
+                            title="Change TripSpace Status (Upcoming, Current, Past)">
                         <option value="UPCOMING" {% if trip.status == 'UPCOMING' %}selected{% endif %}>📅 Upcoming</option>
                         <option value="CURRENT" {% if trip.status == 'CURRENT' %}selected{% endif %}>🔥 Current</option>
                         <option value="PAST" {% if trip.status == 'PAST' %}selected{% endif %}>🏛️ Past</option>

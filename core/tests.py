@@ -3,7 +3,7 @@ from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.template.context import BaseContext
-from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Move, Taste, Play, Nav, Do, Rec, Attachment, SecurityAuditLog
+from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Move, Taste, Play, Nav, Do, Rec, Attachment, SecurityAuditLog, order_current_and_upcoming_trips
 
 # Patch BaseContext.__copy__ for Python 3.14 compatibility with Django 4.2 test runner
 def _patched_copy(self):
@@ -309,6 +309,102 @@ class TripAndElementStatusTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.trip.refresh_from_db()
         self.assertEqual(self.trip.status, 'UPCOMING')
+
+    def test_dashboard_home_page_shows_editable_status_for_owner_and_editor_and_static_for_viewer(self):
+        """Home page trip cards show interactive status select for owners/editors and static pill for viewers."""
+        # 1. As owner: should see editable status select with onchange="updateTripStatus(...)"
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, f'action="{reverse("core:update_trip_status", args=[self.trip.id])}"')
+        self.assertContains(resp, 'class="status-pill status-upcoming trip-status-select"')
+        self.assertContains(resp, f"updateTripStatus(this, '{self.trip.id}')")
+        self.assertContains(resp, 'onclick="goToTrip(event')
+
+        # 2. As viewer: should see read-only status pill and no form
+        session['user_id'] = str(self.viewer.id)
+        session.save()
+
+        resp = self.client.get(reverse('core:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, f'action="{reverse("core:update_trip_status", args=[self.trip.id])}"')
+        self.assertContains(resp, '<span class="status-pill status-upcoming">Upcoming</span>')
+
+    def test_dashboard_status_update_via_ajax_does_not_redirect(self):
+        """Updating status via AJAX returns JSON payload without redirecting."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.post(
+            reverse('core:update_trip_status', args=[self.trip.id]),
+            {'status': 'CURRENT'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(resp.status_code, 200)
+        json_data = resp.json()
+        self.assertTrue(json_data['success'])
+        self.assertEqual(json_data['new_status'], 'CURRENT')
+        self.assertEqual(json_data['status_display'], 'Current')
+
+        self.trip.refresh_from_db()
+        self.assertEqual(self.trip.status, 'CURRENT')
+
+    def test_dashboard_status_update_with_next_redirects_to_dashboard_not_workspace(self):
+        """Updating status with next=/ redirects to dashboard, NOT individual tripspace."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        resp = self.client.post(
+            reverse('core:update_trip_status', args=[self.trip.id]),
+            {'status': 'PAST', 'next': reverse('core:dashboard')}
+        )
+        self.assertRedirects(resp, reverse('core:dashboard'))
+        self.trip.refresh_from_db()
+        self.assertEqual(self.trip.status, 'PAST')
+
+    def test_dashboard_status_update_to_past_moves_trip_between_sections(self):
+        """Changing status to PAST moves trip into Your Past Trips section, and back to UPCOMING moves it to Active."""
+        session = self.client.session
+        session['user_id'] = str(self.owner.id)
+        session.save()
+
+        # Initially trip is UPCOMING
+        resp = self.client.get(reverse('core:dashboard'))
+        self.assertIn(self.trip, resp.context['upcoming_trips'])
+        self.assertNotIn(self.trip, resp.context['past_trips'])
+
+        # Update to PAST
+        self.client.post(
+            reverse('core:update_trip_status', args=[self.trip.id]),
+            {'status': 'PAST'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.trip.refresh_from_db()
+        self.assertEqual(self.trip.status, 'PAST')
+
+        # Dashboard now lists trip in past_trips
+        resp = self.client.get(reverse('core:dashboard'))
+        self.assertNotIn(self.trip, resp.context['upcoming_trips'])
+        self.assertIn(self.trip, resp.context['past_trips'])
+
+        # Update back to CURRENT
+        self.client.post(
+            reverse('core:update_trip_status', args=[self.trip.id]),
+            {'status': 'CURRENT'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.trip.refresh_from_db()
+        self.assertEqual(self.trip.status, 'CURRENT')
+
+        # Dashboard now lists trip in upcoming_trips
+        resp = self.client.get(reverse('core:dashboard'))
+        self.assertIn(self.trip, resp.context['upcoming_trips'])
+        self.assertNotIn(self.trip, resp.context['past_trips'])
 
     def test_trip_element_status_cycle_idea_confirmed_complete(self):
         """Verify Stay, Nav, Do, and Rec elements cycle through IDEA -> CONFIRMED -> COMPLETE -> IDEA."""
@@ -2323,6 +2419,245 @@ class SeedDataAndFixtureSyncTests(TestCase):
                     data = json.load(f)
                     titles = [item['fields'].get('title') for item in data if item['model'] == 'core.trip']
                     self.assertIn('Fixture Sync Test Trip', titles)
+
+
+class CurrentAndUpcomingTripsOrderingTests(TestCase):
+    """
+    Tests for the requirement:
+    'for Current & Upcoming Trips, if the trip is current it should be the first (farthest left),
+    then trips should display in the chronological order'
+    """
+
+    def setUp(self):
+        self.client = Client()
+        self.user = UserProfile.objects.create(
+            email='tripper@example.com',
+            handle='tripper',
+            full_name='Tripper User',
+            is_active=True
+        )
+        session = self.client.session
+        session['user_id'] = str(self.user.id)
+        session.save()
+
+    def test_current_trip_is_first_farthest_left_and_upcoming_trips_in_chronological_order(self):
+        """CURRENT trip is placed at the front (farthest left), followed by upcoming trips in chronological order."""
+        # Trip with dates in late October 2026, marked CURRENT
+        trip_current_oct = Trip.objects.create(
+            title='Current Autumn in Paris',
+            location='Paris, France',
+            status='CURRENT',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 10, 20),
+            end_date=datetime.date(2026, 10, 28),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_current_oct, user=self.user, role='OWNER')
+
+        # Upcoming trip in May 2026 (earlier date than the current trip)
+        trip_upcoming_may = Trip.objects.create(
+            title='Upcoming Spring Tokyo',
+            location='Tokyo, Japan',
+            status='UPCOMING',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 5, 1),
+            end_date=datetime.date(2026, 5, 10),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_upcoming_may, user=self.user, role='OWNER')
+
+        # Upcoming trip in Summer 2026 (June 2026)
+        trip_upcoming_summer = Trip.objects.create(
+            title='Upcoming Summer Rome',
+            location='Rome, Italy',
+            status='UPCOMING',
+            time_granularity='SEASON_YEAR',
+            season='SUMMER',
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_upcoming_summer, user=self.user, role='OWNER')
+
+        # Upcoming trip in August 2026 (Month span)
+        trip_upcoming_aug = Trip.objects.create(
+            title='Upcoming August Berlin',
+            location='Berlin, Germany',
+            status='UPCOMING',
+            time_granularity='MONTH',
+            start_month=8,
+            end_month=8,
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_upcoming_aug, user=self.user, role='OWNER')
+
+        # Upcoming trip in 2027 (Year granularity)
+        trip_upcoming_2027 = Trip.objects.create(
+            title='Upcoming 2027 Oslo',
+            location='Oslo, Norway',
+            status='UPCOMING',
+            time_granularity='YEAR',
+            year=2027,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_upcoming_2027, user=self.user, role='OWNER')
+
+        # Past trip (should not be in upcoming_trips)
+        trip_past = Trip.objects.create(
+            title='Past Kyoto 2024',
+            location='Kyoto, Japan',
+            status='PAST',
+            year=2024,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_past, user=self.user, role='OWNER')
+
+        response = self.client.get(reverse('core:dashboard'))
+        self.assertEqual(response.status_code, 200)
+
+        upcoming_trips = list(response.context['upcoming_trips'])
+        expected_trips = [
+            trip_current_oct,      # CURRENT is first (farthest left), even though date is in October
+            trip_upcoming_may,     # May 2026 (chronological start)
+            trip_upcoming_summer,  # Summer (June) 2026
+            trip_upcoming_aug,     # August 2026
+            trip_upcoming_2027,    # Year 2027
+        ]
+        self.assertEqual([t.id for t in upcoming_trips], [t.id for t in expected_trips])
+
+        # Verify HTML layout: CURRENT card appears earliest in the HTML (farthest left in .trips-grid)
+        html = response.content.decode('utf-8')
+        pos_current = html.index('Current Autumn in Paris')
+        pos_may = html.index('Upcoming Spring Tokyo')
+        pos_summer = html.index('Upcoming Summer Rome')
+        pos_aug = html.index('Upcoming August Berlin')
+        pos_2027 = html.index('Upcoming 2027 Oslo')
+
+        self.assertTrue(pos_current < pos_may < pos_summer < pos_aug < pos_2027)
+
+    def test_no_current_trip_displays_in_chronological_order(self):
+        """When no trip has CURRENT status, all upcoming trips display in chronological order."""
+        trip_may = Trip.objects.create(
+            title='May Trip',
+            location='Tokyo',
+            status='UPCOMING',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 5, 1),
+            end_date=datetime.date(2026, 5, 10),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_may, user=self.user, role='OWNER')
+
+        trip_oct = Trip.objects.create(
+            title='October Trip',
+            location='Paris',
+            status='UPCOMING',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 10, 1),
+            end_date=datetime.date(2026, 10, 10),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_oct, user=self.user, role='OWNER')
+
+        trip_aug = Trip.objects.create(
+            title='August Trip',
+            location='Berlin',
+            status='UPCOMING',
+            time_granularity='MONTH',
+            start_month=8,
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_aug, user=self.user, role='OWNER')
+
+        trip_2027 = Trip.objects.create(
+            title='2027 Trip',
+            location='Oslo',
+            status='UPCOMING',
+            time_granularity='YEAR',
+            year=2027,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=trip_2027, user=self.user, role='OWNER')
+
+        response = self.client.get(reverse('core:dashboard'))
+        self.assertEqual(response.status_code, 200)
+
+        upcoming_trips = list(response.context['upcoming_trips'])
+        expected_trips = [trip_may, trip_aug, trip_oct, trip_2027]
+        self.assertEqual([t.id for t in upcoming_trips], [t.id for t in expected_trips])
+
+    def test_multiple_current_trips_current_first_in_chronological_order(self):
+        """When multiple trips are CURRENT, they appear first and are chronologically ordered among themselves."""
+        curr_oct = Trip.objects.create(
+            title='Current Oct Trip',
+            location='Paris',
+            status='CURRENT',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 10, 1),
+            end_date=datetime.date(2026, 10, 10),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=curr_oct, user=self.user, role='OWNER')
+
+        curr_june = Trip.objects.create(
+            title='Current June Trip',
+            location='Nice',
+            status='CURRENT',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 6, 1),
+            end_date=datetime.date(2026, 6, 10),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=curr_june, user=self.user, role='OWNER')
+
+        up_may = Trip.objects.create(
+            title='Upcoming May Trip',
+            location='Tokyo',
+            status='UPCOMING',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 5, 1),
+            end_date=datetime.date(2026, 5, 10),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=up_may, user=self.user, role='OWNER')
+
+        up_nov = Trip.objects.create(
+            title='Upcoming Nov Trip',
+            location='London',
+            status='UPCOMING',
+            time_granularity='EXACT_RANGE',
+            start_date=datetime.date(2026, 11, 1),
+            end_date=datetime.date(2026, 11, 10),
+            year=2026,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=up_nov, user=self.user, role='OWNER')
+
+        response = self.client.get(reverse('core:dashboard'))
+        self.assertEqual(response.status_code, 200)
+
+        upcoming_trips = list(response.context['upcoming_trips'])
+        # Both current trips are first (June then Oct), then upcoming trips (May then Nov)
+        expected_trips = [curr_june, curr_oct, up_may, up_nov]
+        self.assertEqual([t.id for t in upcoming_trips], [t.id for t in expected_trips])
+
+    def test_python_list_fallback_order_current_and_upcoming_trips(self):
+        """order_current_and_upcoming_trips also supports standard Python lists."""
+        t1 = Trip(title='Nov Trip', status='UPCOMING', time_granularity='MONTH', start_month=11, year=2026)
+        t2 = Trip(title='Current Dec Trip', status='CURRENT', time_granularity='MONTH', start_month=12, year=2026)
+        t3 = Trip(title='Feb Trip', status='UPCOMING', time_granularity='MONTH', start_month=2, year=2026)
+        t4 = Trip(title='Past Trip', status='PAST', time_granularity='MONTH', start_month=1, year=2025)
+
+        sorted_list = order_current_and_upcoming_trips([t1, t2, t3, t4])
+        self.assertEqual(sorted_list, [t2, t3, t1])
 
 
 
