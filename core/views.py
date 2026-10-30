@@ -515,7 +515,7 @@ def trip_workspace_view(request, trip_id):
     can_edit = is_editor
 
     moves = trip.moves.select_related('created_by', 'updated_by').all().order_by('departure_time', 'created_at')
-    stays = trip.stays.select_related('created_by', 'updated_by').all().order_by('check_in', 'created_at')
+    stays = trip.stays.select_related('created_by', 'updated_by').prefetch_related('attachments').all().order_by('check_in', 'created_at')
     tastes = trip.tastes.select_related('recommended_by', 'created_by', 'updated_by').all().order_by('start_time', 'created_at')
     plays = trip.plays.select_related('recommended_by', 'created_by', 'updated_by').all().order_by('start_time', 'created_at')
     attachments = trip.attachments.select_related('move', 'stay', 'taste', 'play', 'uploaded_by', 'updated_by').all().order_by('-created_at')
@@ -544,9 +544,9 @@ def trip_workspace_view(request, trip_id):
             'location': move_location,
             'status': m.status,
             'timestamp': m.departure_time,
-            'end_timestamp': m.arrival_time,
+            'end_timestamp': None,
             'has_time': m.is_departure_time_set,
-            'has_end_time': m.is_arrival_time_set,
+            'has_end_time': False,
             'price': m.price,
             'currency': m.currency,
             'has_code': m.has_confirmation_code,
@@ -580,9 +580,9 @@ def trip_workspace_view(request, trip_id):
             'location': t.address,
             'status': t.status,
             'timestamp': t.start_time,
-            'end_timestamp': t.end_time,
+            'end_timestamp': None,
             'has_time': t.is_start_time_set,
-            'has_end_time': t.is_end_time_set,
+            'has_end_time': False,
             'price': t.price,
             'currency': t.currency,
             'has_code': t.has_confirmation_code,
@@ -598,9 +598,9 @@ def trip_workspace_view(request, trip_id):
             'location': p.address,
             'status': p.status,
             'timestamp': p.start_time,
-            'end_timestamp': p.end_time,
+            'end_timestamp': None,
             'has_time': p.is_start_time_set,
-            'has_end_time': p.is_end_time_set,
+            'has_end_time': False,
             'price': p.price,
             'currency': p.currency,
             'has_code': p.has_confirmation_code,
@@ -911,6 +911,73 @@ def _parse_stay_datetimes(request):
     return check_in_dt, check_out_dt, has_ci_time, has_co_time
 
 
+def _parse_element_datetime(request, date_names=('date',), time_names=('time',), legacy_names=()):
+    """
+    Parses a single date and optional time from request.POST for Move, Taste, or Play.
+    Supports:
+      1. Separated date and optional time fields (e.g. date + time)
+      2. Legacy combined datetime/date field (e.g. departure_time or start_time)
+    Returns (dt, has_time).
+    """
+    date_raw = ''
+    for dn in date_names:
+        val = request.POST.get(dn, '').strip()
+        if val:
+            date_raw = val
+            break
+
+    time_raw = ''
+    for tn in time_names:
+        val = request.POST.get(tn, '').strip()
+        if val:
+            time_raw = val
+            break
+
+    legacy_raw = ''
+    for ln in legacy_names:
+        val = request.POST.get(ln, '').strip()
+        if val:
+            legacy_raw = val
+            break
+
+    dt = None
+    has_time = False
+
+    if date_raw:
+        d = parse_date(date_raw)
+        if d:
+            if time_raw:
+                t = parse_time(time_raw)
+                if t is None:
+                    try:
+                        parts = [int(p) for p in time_raw.split(':')]
+                        t = datetime.time(parts[0], parts[1])
+                    except Exception:
+                        t = datetime.time(0, 0)
+                combined = datetime.datetime.combine(d, t)
+                dt = timezone.make_aware(combined) if settings.USE_TZ else combined
+                has_time = True
+            else:
+                combined = datetime.datetime.combine(d, datetime.time(0, 0))
+                dt = timezone.make_aware(combined) if settings.USE_TZ else combined
+                has_time = False
+    elif legacy_raw:
+        parsed_dt = parse_datetime(legacy_raw)
+        if parsed_dt:
+            if settings.USE_TZ and timezone.is_naive(parsed_dt):
+                parsed_dt = timezone.make_aware(parsed_dt)
+            dt = parsed_dt
+            has_time = not (parsed_dt.hour == 0 and parsed_dt.minute == 0)
+        else:
+            d = parse_date(legacy_raw)
+            if d:
+                combined = datetime.datetime.combine(d, datetime.time(0, 0))
+                dt = timezone.make_aware(combined) if settings.USE_TZ else combined
+                has_time = False
+
+    return dt, has_time
+
+
 @require_POST
 def add_stay_view(request, trip_id):
     trip = get_object_or_404(Trip, id=trip_id)
@@ -941,7 +1008,7 @@ def add_stay_view(request, trip_id):
         trip=trip,
         title=title,
         status=status,
-        place_type=request.POST.get('place_type', 'Hotel Room'),
+        place_type=request.POST.get('place_type', 'Hotel Room') or 'Hotel Room',
         num_beds=int(request.POST.get('num_beds')) if request.POST.get('num_beds') else None,
         num_rooms=int(request.POST.get('num_rooms')) if request.POST.get('num_rooms') else None,
         num_guests=int(request.POST.get('num_guests')) if request.POST.get('num_guests') else None,
@@ -959,11 +1026,53 @@ def add_stay_view(request, trip_id):
     )
 
     code = request.POST.get('confirmation_code', '').strip()
-    if code:
+    is_confirmed_hotel = (status == 'CONFIRMED' and 'hotel' in (stay.place_type or '').lower())
+    if code and is_confirmed_hotel:
         stay.confirmation_code = code
 
     stay.save()
-    messages.success(request, f"Stay '{stay.title}' added successfully!")
+
+    # Process attached documents
+    uploaded_files = request.FILES.getlist('documents') or request.FILES.getlist('document') or request.FILES.getlist('file')
+    uploaded_count = 0
+    for file_obj in uploaded_files:
+        if not file_obj:
+            continue
+        is_valid, err_msg, detected_mime, safe_ext = validate_and_sanitize_vault_file(file_obj)
+        if not is_valid:
+            messages.warning(request, f"Document '{file_obj.name}' skipped: {err_msg}")
+            continue
+
+        orig_filename = sanitize_display_filename(file_obj.name or 'Document')
+        randomized_name = f"{uuid.uuid4().hex}{safe_ext}"
+        file_obj.name = randomized_name
+        storage_path = f"vault/{trip.id}/{randomized_name}"
+
+        attachment = Attachment.objects.create(
+            trip=trip,
+            stay=stay,
+            file_name=orig_filename,
+            file_type=detected_mime,
+            file=file_obj,
+            storage_path=storage_path,
+            uploaded_by=current_user,
+            updated_by=current_user
+        )
+        log_security_event(
+            request,
+            action='VAULT_DOCUMENT_UPLOADED',
+            resource_type='ATTACHMENT',
+            resource_id=attachment.id,
+            trip=trip,
+            user=current_user,
+            metadata={'file_name': attachment.file_name, 'file_type': attachment.file_type, 'stay_id': str(stay.id)}
+        )
+        uploaded_count += 1
+
+    if uploaded_count > 0:
+        messages.success(request, f"Stay '{stay.title}' added with {uploaded_count} uploaded document{'s' if uploaded_count > 1 else ''}!")
+    else:
+        messages.success(request, f"Stay '{stay.title}' added successfully!")
     return redirect(f"/trips/{trip_id}/#stays")
 
 
@@ -1027,7 +1136,48 @@ def edit_stay_view(request, trip_id, stay_id):
 
     stay.updated_by = current_user
     stay.save()
-    messages.success(request, f"Updated Stay '{stay.title}'!")
+
+    # Process attached documents
+    uploaded_files = request.FILES.getlist('documents') or request.FILES.getlist('document') or request.FILES.getlist('file')
+    uploaded_count = 0
+    for file_obj in uploaded_files:
+        if not file_obj:
+            continue
+        is_valid, err_msg, detected_mime, safe_ext = validate_and_sanitize_vault_file(file_obj)
+        if not is_valid:
+            messages.warning(request, f"Document '{file_obj.name}' skipped: {err_msg}")
+            continue
+
+        orig_filename = sanitize_display_filename(file_obj.name or 'Document')
+        randomized_name = f"{uuid.uuid4().hex}{safe_ext}"
+        file_obj.name = randomized_name
+        storage_path = f"vault/{trip.id}/{randomized_name}"
+
+        attachment = Attachment.objects.create(
+            trip=trip,
+            stay=stay,
+            file_name=orig_filename,
+            file_type=detected_mime,
+            file=file_obj,
+            storage_path=storage_path,
+            uploaded_by=current_user,
+            updated_by=current_user
+        )
+        log_security_event(
+            request,
+            action='VAULT_DOCUMENT_UPLOADED',
+            resource_type='ATTACHMENT',
+            resource_id=attachment.id,
+            trip=trip,
+            user=current_user,
+            metadata={'file_name': attachment.file_name, 'file_type': attachment.file_type, 'stay_id': str(stay.id)}
+        )
+        uploaded_count += 1
+
+    if uploaded_count > 0:
+        messages.success(request, f"Updated Stay '{stay.title}' with {uploaded_count} new document{'s' if uploaded_count > 1 else ''}!")
+    else:
+        messages.success(request, f"Updated Stay '{stay.title}'!")
     return redirect(fallback_redirect)
 
 
@@ -1069,15 +1219,23 @@ def add_move_view(request, trip_id):
         messages.error(request, "Transit leg name is required.")
         return redirect(f"/trips/{trip_id}/#move")
 
-    dept_raw = request.POST.get('departure_time')
+    dept_dt, has_dept_time = _parse_element_datetime(
+        request,
+        date_names=('date', 'departure_date'),
+        time_names=('time', 'departure_time_only'),
+        legacy_names=('departure_time',)
+    )
+    status = _normalize_item_status(request.POST.get('status'), 'IDEA')
+
+    if status == 'CONFIRMED' and not dept_dt:
+        messages.error(request, "Confirmed moves require a date.")
+        return redirect(f"/trips/{trip_id}/#move")
+
+    # If legacy tests explicitly pass arrival_time, ensure chronological order if present
     arr_raw = request.POST.get('arrival_time')
-    dept_dt = parse_datetime(dept_raw) if dept_raw else None
     arr_dt = parse_datetime(arr_raw) if arr_raw else None
-    if dept_dt and settings.USE_TZ and timezone.is_naive(dept_dt):
-        dept_dt = timezone.make_aware(dept_dt)
     if arr_dt and settings.USE_TZ and timezone.is_naive(arr_dt):
         arr_dt = timezone.make_aware(arr_dt)
-
     if dept_dt and arr_dt and arr_dt < dept_dt:
         messages.error(request, "Arrival date/time cannot be before departure date/time.")
         return redirect(f"/trips/{trip_id}/#move")
@@ -1088,12 +1246,14 @@ def add_move_view(request, trip_id):
         mode=mode,
         trip_stage=request.POST.get('trip_stage', 'START_END'),
         direction=request.POST.get('direction', 'ARRIVING'),
-        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
+        status=status,
         passenger_name=request.POST.get('passenger_name', '').strip(),
         origin_address=request.POST.get('origin_address', '').strip(),
         destination_address=request.POST.get('destination_address', '').strip(),
         departure_time=dept_dt,
-        arrival_time=arr_dt,
+        arrival_time=None,
+        has_departure_time=has_dept_time,
+        has_arrival_time=False,
         date_confidence=request.POST.get('date_confidence', 'CONFIRMED'),
         time_confidence=request.POST.get('time_confidence', 'CONFIRMED'),
         flexibility_notes=request.POST.get('flexibility_notes', '').strip(),
@@ -1126,30 +1286,45 @@ def edit_move_view(request, trip_id, move_id):
         messages.error(request, "Permission denied: You can only edit transportation legs you created or if you are a Trip Editor/Owner.")
         return redirect(fallback_redirect)
 
-    dept_raw = request.POST.get('departure_time')
-    arr_raw = request.POST.get('arrival_time')
-    dept_dt = parse_datetime(dept_raw) if dept_raw else None
-    arr_dt = parse_datetime(arr_raw) if arr_raw else None
-    if dept_dt and settings.USE_TZ and timezone.is_naive(dept_dt):
-        dept_dt = timezone.make_aware(dept_dt)
-    if arr_dt and settings.USE_TZ and timezone.is_naive(arr_dt):
-        arr_dt = timezone.make_aware(arr_dt)
+    new_status = _normalize_item_status(request.POST.get('status'), move.status)
+    dates_in_form = any(k in request.POST for k in ('date', 'departure_date', 'departure_time'))
 
-    if dept_dt and arr_dt and arr_dt < dept_dt:
-        messages.error(request, "Arrival date/time cannot be before departure date/time.")
-        return redirect(fallback_redirect)
+    if dates_in_form:
+        dept_dt, has_dept_time = _parse_element_datetime(
+            request,
+            date_names=('date', 'departure_date'),
+            time_names=('time', 'departure_time_only'),
+            legacy_names=('departure_time',)
+        )
+        if new_status == 'CONFIRMED' and not dept_dt:
+            messages.error(request, "Confirmed moves require a date.")
+            return redirect(fallback_redirect)
+
+        arr_raw = request.POST.get('arrival_time')
+        arr_dt = parse_datetime(arr_raw) if arr_raw else None
+        if arr_dt and settings.USE_TZ and timezone.is_naive(arr_dt):
+            arr_dt = timezone.make_aware(arr_dt)
+        if dept_dt and arr_dt and arr_dt < dept_dt:
+            messages.error(request, "Arrival date/time cannot be before departure date/time.")
+            return redirect(fallback_redirect)
+
+        move.departure_time = dept_dt
+        move.has_departure_time = has_dept_time
+    else:
+        if new_status == 'CONFIRMED' and not move.departure_time:
+            messages.error(request, "Confirmed moves require a date.")
+            return redirect(fallback_redirect)
 
     move.title = request.POST.get('title', move.title).strip()
     move.mode = request.POST.get('mode', move.mode)
     move.trip_stage = request.POST.get('trip_stage', move.trip_stage)
     move.direction = request.POST.get('direction', move.direction)
-    move.status = _normalize_item_status(request.POST.get('status'), move.status)
+    move.status = new_status
     move.passenger_name = request.POST.get('passenger_name', '').strip()
     move.origin_address = request.POST.get('origin_address', '').strip()
     move.destination_address = request.POST.get('destination_address', '').strip()
-
-    move.departure_time = dept_dt
-    move.arrival_time = arr_dt
+    move.arrival_time = None
+    move.has_arrival_time = False
 
     move.date_confidence = request.POST.get('date_confidence', move.date_confidence)
     move.time_confidence = request.POST.get('time_confidence', move.time_confidence)

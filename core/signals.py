@@ -8,8 +8,9 @@ Provides bidirectional sync between legacy models (Nav, Do, Rec) and modern mode
 import sys
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from .models import Trip, Stay, Move, Taste, Play, Nav, Do, Rec, TripMember, Attachment
+from .models import Trip, Stay, Move, Taste, Play, Nav, Do, Rec, TripMember, Attachment, UserProfile
 from .md_sync import sync_trip_to_markdown, delete_trip_markdown
+from .fixture_sync import queue_seed_data_export
 
 _in_model_sync = False
 
@@ -22,20 +23,28 @@ def _should_sync_md() -> bool:
 def on_trip_save(sender, instance, **kwargs):
     if _should_sync_md():
         sync_trip_to_markdown(instance)
+    queue_seed_data_export()
 
 
 @receiver(post_delete, sender=Trip)
 def on_trip_delete(sender, instance, **kwargs):
     if _should_sync_md():
         delete_trip_markdown(instance)
+    queue_seed_data_export()
 
 
 # ==========================================
-# Markdown Synchronizers
+# Markdown & Fixture Synchronizers
 # ==========================================
+
+@receiver([post_save, post_delete], sender=UserProfile)
+def on_user_change(sender, instance, **kwargs):
+    queue_seed_data_export()
+
 
 @receiver([post_save, post_delete], sender=Move)
 def on_move_change(sender, instance, **kwargs):
+    queue_seed_data_export()
     if not _should_sync_md():
         return
     try:
@@ -47,6 +56,7 @@ def on_move_change(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=Stay)
 def on_stay_change(sender, instance, **kwargs):
+    queue_seed_data_export()
     if not _should_sync_md():
         return
     try:
@@ -58,6 +68,7 @@ def on_stay_change(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=Taste)
 def on_taste_change(sender, instance, **kwargs):
+    queue_seed_data_export()
     if not _should_sync_md():
         return
     try:
@@ -69,6 +80,7 @@ def on_taste_change(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=Play)
 def on_play_change(sender, instance, **kwargs):
+    queue_seed_data_export()
     if not _should_sync_md():
         return
     try:
@@ -80,6 +92,7 @@ def on_play_change(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=Nav)
 def on_nav_change(sender, instance, **kwargs):
+    queue_seed_data_export()
     if not _should_sync_md():
         return
     try:
@@ -91,6 +104,7 @@ def on_nav_change(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=Do)
 def on_do_change(sender, instance, **kwargs):
+    queue_seed_data_export()
     if not _should_sync_md():
         return
     try:
@@ -102,6 +116,7 @@ def on_do_change(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=Rec)
 def on_rec_change(sender, instance, **kwargs):
+    queue_seed_data_export()
     if not _should_sync_md():
         return
     try:
@@ -113,6 +128,7 @@ def on_rec_change(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=TripMember)
 def on_member_change(sender, instance, **kwargs):
+    queue_seed_data_export()
     if not _should_sync_md():
         return
     try:
@@ -124,6 +140,7 @@ def on_member_change(sender, instance, **kwargs):
 
 @receiver([post_save, post_delete], sender=Attachment)
 def on_attachment_change(sender, instance, **kwargs):
+    queue_seed_data_export()
     if not _should_sync_md():
         return
     try:

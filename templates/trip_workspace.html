@@ -430,6 +430,23 @@
             <p class="item-notes"><strong>Notes:</strong> {{ stay.notes }}</p>
             {% endif %}
 
+            {% if stay.attachments.all %}
+            <div class="stay-attachments-bar" style="margin: 0.5rem 0; padding: 0.5rem 0.75rem; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                    <span>📎</span> <span>Documents ({{ stay.attachments.count }})</span>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                    {% for att in stay.attachments.all %}
+                    <a href="{% url 'core:download_attachment' trip.id att.id %}" class="btn btn-sm btn-outline" style="font-size: 0.78rem; padding: 0.2rem 0.55rem; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="Download {{ att.file_name }}">
+                        <span>📄</span>
+                        <span style="max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ att.file_name }}</span>
+                        <span style="font-size: 0.7rem; opacity: 0.7;">↓</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             {% if stay.total_price or stay.has_confirmation_code or stay.booking_link %}
             <div class="item-footer">
                 {% if stay.total_price %}
@@ -470,7 +487,7 @@
                     <h3 class="modal-title">Edit Stay: {{ stay.title }}</h3>
                     <button type="button" class="modal-close" onclick="closeModal('editStayModal_{{ stay.id }}')">×</button>
                 </div>
-                <form method="POST" action="{% url 'core:edit_stay' trip.id stay.id %}" class="modal-form">
+                <form method="POST" action="{% url 'core:edit_stay' trip.id stay.id %}" enctype="multipart/form-data" class="modal-form">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="">
                     <div class="form-row">
@@ -563,6 +580,18 @@
                     <div class="form-group">
                         <label class="form-label">Notes & Instructions</label>
                         <textarea name="notes" class="form-control" rows="2">{{ stay.notes|default:'' }}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                            <span>📎</span>
+                            <span>Upload Documents</span>
+                            <small class="text-muted">(PDF, PNG, JPG)</small>
+                        </label>
+                        <input type="file" name="documents" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
+                        <small class="text-muted" style="display: block; margin-top: 0.35rem; font-size: 0.8rem;">
+                            Upload additional booking confirmations or tickets to the Secure Vault.
+                        </small>
                     </div>
 
                     <div class="modal-footer">
@@ -1427,16 +1456,17 @@
             <h3 class="modal-title">Add Lodging (Stay)</h3>
             <button type="button" class="modal-close" onclick="closeModal('addStayModal')">×</button>
         </div>
-        <form method="POST" action="{% url 'core:add_stay' trip.id %}" class="modal-form">
+        <form method="POST" action="{% url 'core:add_stay' trip.id %}" enctype="multipart/form-data" class="modal-form" id="addStayForm">
             {% csrf_token %}
+            <!-- Primary Inputs (Name, Status) -->
             <div class="form-row">
                 <div class="form-col" style="flex: 2;">
-                    <label class="form-label">Property Name <span class="required">*</span></label>
+                    <label class="form-label">Stay Name <span class="required">*</span></label>
                     <input type="text" name="title" class="form-control" placeholder="e.g., Saga Hotel Reykjavik, Villa Bellini" required>
                 </div>
                 <div class="form-col">
                     <label class="form-label">Status</label>
-                    <select name="status" class="form-control">
+                    <select name="status" id="addStayStatus" class="form-control">
                         <option value="IDEA">Idea (Tentative)</option>
                         <option value="CONFIRMED" selected>Confirmed (Booked)</option>
                         <option value="COMPLETE">Complete</option>
@@ -1444,81 +1474,108 @@
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">Type of Place</label>
-                    <select name="place_type" class="form-control">
-                        <option value="Hotel Room">Hotel Room</option>
-                        <option value="Entire Place">Entire Place (House / Apt)</option>
-                        <option value="Shared Room/Guest House">Shared Room / Guest House</option>
-                    </select>
-                </div>
-                <div class="form-col">
-                    <label class="form-label">Beds</label>
-                    <input type="number" name="num_beds" class="form-control" placeholder="e.g. 2">
-                </div>
-                <div class="form-col">
-                    <label class="form-label">Rooms</label>
-                    <input type="number" name="num_rooms" class="form-control" placeholder="e.g. 1">
-                </div>
-                <div class="form-col">
-                    <label class="form-label">Guests</label>
-                    <input type="number" name="num_guests" class="form-control" placeholder="e.g. 4">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Physical Address / Area</label>
-                <input type="text" name="address" class="form-control" placeholder="Street address, neighborhood or city">
-            </div>
-
+            <!-- Start Date & End Date -->
             <div class="form-row">
                 <div class="form-col">
                     <label class="form-label">
-                        Check-in Date (Start)
+                        Start Date (Check-in)
                         <span class="stay-date-required text-danger">*</span>
                     </label>
                     <input type="date" name="check_in_date" class="form-control" required>
                 </div>
                 <div class="form-col">
                     <label class="form-label">
-                        Check-out Date (End)
+                        End Date (Check-out)
                         <span class="stay-date-required text-danger">*</span>
                     </label>
                     <input type="date" name="check_out_date" class="form-control" required>
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">Check-in Time <small class="text-muted">(Optional)</small></label>
-                    <input type="time" name="check_in_time" class="form-control">
-                </div>
-                <div class="form-col">
-                    <label class="form-label">Check-out Time <small class="text-muted">(Optional)</small></label>
-                    <input type="time" name="check_out_time" class="form-control">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">Total Cost ($)</label>
+            <!-- Price & Confirmation Code (Only available for confirmed hotel) -->
+            <div class="form-row" id="addStayPriceAndCodeRow">
+                <div class="form-col" id="addStayPriceCol">
+                    <label class="form-label">Price ($)</label>
                     <input type="number" step="0.01" name="total_price" class="form-control" placeholder="e.g. 890.00">
                 </div>
-                <div class="form-col">
-                    <label class="form-label">Confirmation Code (AES-256 Encrypted)</label>
-                    <input type="text" name="confirmation_code" class="form-control" placeholder="e.g. SAGA-44012-IS">
+                <div class="form-col" id="addStayConfirmationCol">
+                    <label class="form-label">Confirmation Code (AES-256)</label>
+                    <input type="text" name="confirmation_code" id="addStayConfirmationCode" class="form-control" placeholder="e.g. SAGA-44012-IS">
                 </div>
             </div>
 
+            <!-- Notes -->
             <div class="form-group">
-                <label class="form-label">Booking Link</label>
-                <input type="url" name="booking_link" class="form-control" placeholder="https://...">
+                <label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, parking instructions, WiFi password..."></textarea>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Check-in Instructions & Door Codes</label>
-                <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, parking instructions, WiFi password..."></textarea>
+            <!-- More Options Toggle Button -->
+            <div class="form-group" style="margin: 0.85rem 0;">
+                <button type="button" class="btn btn-outline" id="btnToggleStayMoreOptions" onclick="toggleStayMoreOptions()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                    <span id="moreOptionsIcon">⚙️</span>
+                    <span id="moreOptionsText">More Options</span>
+                    <span id="moreOptionsChevron">▾</span>
+                </button>
+            </div>
+
+            <!-- More Options Expandable Section (Other Attributes & Document Upload) -->
+            <div id="stayMoreOptionsContent" style="display: none; border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">Type of Place</label>
+                        <select name="place_type" id="addStayPlaceType" class="form-control">
+                            <option value="Hotel Room" selected>Hotel Room</option>
+                            <option value="Entire Place">Entire Place (House / Apt)</option>
+                            <option value="Shared Room/Guest House">Shared Room / Guest House</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Beds</label>
+                        <input type="number" name="num_beds" class="form-control" placeholder="e.g. 2">
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Rooms</label>
+                        <input type="number" name="num_rooms" class="form-control" placeholder="e.g. 1">
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Guests</label>
+                        <input type="number" name="num_guests" class="form-control" placeholder="e.g. 4">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Physical Address / Area</label>
+                    <input type="text" name="address" class="form-control" placeholder="Street address, neighborhood or city">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">Check-in Time <small class="text-muted">(Optional)</small></label>
+                        <input type="time" name="check_in_time" class="form-control">
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Check-out Time <small class="text-muted">(Optional)</small></label>
+                        <input type="time" name="check_out_time" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Booking Link</label>
+                    <input type="url" name="booking_link" class="form-control" placeholder="https://...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span>📎</span>
+                        <span>Upload Documents</span>
+                        <small class="text-muted">(PDF, PNG, JPG)</small>
+                    </label>
+                    <input type="file" name="documents" id="addStayDocuments" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
+                    <small class="text-muted" style="display: block; margin-top: 0.35rem; font-size: 0.8rem;">
+                        Upload booking confirmations, tickets, or receipts. Files are encrypted and saved to the trip's Secure Vault linked to this stay.
+                    </small>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -2000,6 +2057,50 @@
 
 {% block extra_js %}
 <script>
+    // Toggle More Options for Add Stay Modal
+    function toggleStayMoreOptions() {
+        const content = document.getElementById('stayMoreOptionsContent');
+        const btn = document.getElementById('btnToggleStayMoreOptions');
+        if (!content || !btn) return;
+        const isExpanded = (content.style.display !== 'none');
+        if (isExpanded) {
+            content.style.display = 'none';
+            const label = btn.querySelector('#moreOptionsText');
+            const chevron = btn.querySelector('#moreOptionsChevron');
+            if (label) label.textContent = 'More Options';
+            if (chevron) chevron.textContent = '▾';
+        } else {
+            content.style.display = 'block';
+            const label = btn.querySelector('#moreOptionsText');
+            const chevron = btn.querySelector('#moreOptionsChevron');
+            if (label) label.textContent = 'Fewer Options';
+            if (chevron) chevron.textContent = '▴';
+        }
+    }
+
+    // Confirmation code only available for confirmed hotel
+    function updateStayConfirmationCode(container) {
+        const scope = container || document.getElementById('addStayModal') || document;
+        const statusSelect = scope.querySelector('select[name="status"]');
+        const placeTypeSelect = scope.querySelector('select[name="place_type"]');
+        const codeCol = scope.querySelector('#addStayConfirmationCol');
+        const codeInput = scope.querySelector('#addStayConfirmationCode') || scope.querySelector('input[name="confirmation_code"]');
+
+        if (!statusSelect || !codeCol || !codeInput) return;
+
+        const status = statusSelect.value;
+        const placeType = placeTypeSelect ? placeTypeSelect.value : 'Hotel Room';
+        const isConfirmedHotel = (status === 'CONFIRMED') && (placeType.toLowerCase().includes('hotel'));
+
+        if (isConfirmedHotel) {
+            codeCol.style.display = '';
+            codeInput.disabled = false;
+        } else {
+            codeCol.style.display = 'none';
+            codeInput.disabled = true;
+        }
+    }
+
     // Tab switching logic
     function switchTab(tabName, btnElement) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -2032,6 +2133,7 @@
         } else if (type === 'stay') {
             switchTab('stay');
             openModal('addStayModal');
+            updateStayConfirmationCode();
         } else if (type === 'taste') {
             switchTab('taste');
             openModal('addTasteModal');
@@ -2102,8 +2204,21 @@
         }
     }
 
-    // Auto-select tab if hash in URL
+    // Auto-select tab if hash in URL and initialize stay confirmation code logic
     window.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('addStayModal');
+        if (modal) {
+            const statusSelect = modal.querySelector('select[name="status"]');
+            const placeTypeSelect = modal.querySelector('select[name="place_type"]');
+            if (statusSelect) {
+                statusSelect.addEventListener('change', () => updateStayConfirmationCode(modal));
+            }
+            if (placeTypeSelect) {
+                placeTypeSelect.addEventListener('change', () => updateStayConfirmationCode(modal));
+            }
+            updateStayConfirmationCode(modal);
+        }
+
         let hash = window.location.hash.replace('#', '');
         if (hash === 'navs') hash = 'move';
         if (hash === 'stays') hash = 'stay';

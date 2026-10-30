@@ -465,6 +465,10 @@ class Move(models.Model):
         return f"{self.title} - {self.mode} ({self.status})"
 
     @property
+    def date(self):
+        return self.departure_time.date() if self.departure_time else None
+
+    @property
     def is_departure_time_set(self):
         return self.has_departure_time or (bool(self.departure_time) and (self.departure_time.hour != 0 or self.departure_time.minute != 0))
 
@@ -560,6 +564,10 @@ class Taste(models.Model):
         return f"{self.title} ({self.taste_type} - {self.status})"
 
     @property
+    def date(self):
+        return self.start_time.date() if self.start_time else None
+
+    @property
     def is_start_time_set(self):
         return self.has_start_time or (bool(self.start_time) and (self.start_time.hour != 0 or self.start_time.minute != 0))
 
@@ -653,6 +661,10 @@ class Play(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.play_type} - {self.status})"
+
+    @property
+    def date(self):
+        return self.start_time.date() if self.start_time else None
 
     @property
     def is_start_time_set(self):
@@ -753,6 +765,10 @@ class Nav(models.Model):
     def __str__(self):
         return f"{self.title} - {self.mode} ({self.status})"
 
+    @property
+    def date(self):
+        return self.departure_time.date() if self.departure_time else None
+
 
 class Do(models.Model):
     STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
@@ -801,6 +817,10 @@ class Do(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.status})"
+
+    @property
+    def date(self):
+        return self.start_time.date() if self.start_time else None
 
 
 class Rec(models.Model):

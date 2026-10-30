@@ -1458,6 +1458,163 @@ class DateRangeValidationAndOptionalStayTimesTests(TestCase):
         self.assertTrue(stay.is_check_in_time_set)
         self.assertFalse(stay.is_check_out_time_set)
 
+    def test_add_stay_modal_rendered_with_simplified_inputs_and_more_options(self):
+        """Workspace renders the Add Stay modal with primary inputs, confirmation code container, more options button, and document upload."""
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Primary fields: title, status, check_in_date, check_out_date, total_price, notes
+        self.assertContains(resp, 'name="title"')
+        self.assertContains(resp, 'id="addStayStatus"')
+        self.assertContains(resp, 'name="check_in_date"')
+        self.assertContains(resp, 'name="check_out_date"')
+        self.assertContains(resp, 'name="total_price"')
+        self.assertContains(resp, 'name="notes"')
+
+        # Confirmation code conditional container
+        self.assertContains(resp, 'id="addStayConfirmationCol"')
+        self.assertContains(resp, 'id="addStayConfirmationCode"')
+
+        # More options toggle button and expandable details section
+        self.assertContains(resp, 'id="btnToggleStayMoreOptions"')
+        self.assertContains(resp, 'onclick="toggleStayMoreOptions()"')
+        self.assertContains(resp, 'id="stayMoreOptionsContent"')
+
+        # Additional attributes in expandable section: place_type, num_beds, num_rooms, num_guests, address, check_in_time, check_out_time, booking_link, documents
+        self.assertContains(resp, 'id="addStayPlaceType"')
+        self.assertContains(resp, 'name="num_beds"')
+        self.assertContains(resp, 'name="num_rooms"')
+        self.assertContains(resp, 'name="num_guests"')
+        self.assertContains(resp, 'name="address"')
+        self.assertContains(resp, 'name="check_in_time"')
+        self.assertContains(resp, 'name="check_out_time"')
+        self.assertContains(resp, 'name="booking_link"')
+        self.assertContains(resp, 'name="documents"')
+
+    def test_add_stay_confirmation_code_saved_for_confirmed_hotel(self):
+        """Confirmation code is saved when status is CONFIRMED and accommodation is a hotel."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Reykjavik Grand Hotel',
+            'status': 'CONFIRMED',
+            'place_type': 'Hotel Room',
+            'check_in_date': '2026-11-10',
+            'check_out_date': '2026-11-14',
+            'total_price': '650.00',
+            'notes': 'Quiet room on upper floor',
+            'confirmation_code': 'HTL-REY-9988',
+        }, follow=True)
+
+        stay = Stay.objects.get(title='Reykjavik Grand Hotel')
+        self.assertEqual(stay.status, 'CONFIRMED')
+        self.assertTrue(stay.has_confirmation_code)
+        self.assertEqual(stay.confirmation_code, 'HTL-REY-9988')
+        self.assertEqual(float(stay.total_price), 650.0)
+        self.assertEqual(stay.notes, 'Quiet room on upper floor')
+
+    def test_add_stay_confirmation_code_not_saved_for_unconfirmed_stay(self):
+        """Confirmation code is not saved when stay status is IDEA."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Tentative Hotel Idea',
+            'status': 'IDEA',
+            'place_type': 'Hotel Room',
+            'total_price': '400.00',
+            'confirmation_code': 'SHOULD-NOT-SAVE-1',
+        }, follow=True)
+
+        stay = Stay.objects.get(title='Tentative Hotel Idea')
+        self.assertEqual(stay.status, 'IDEA')
+        self.assertFalse(stay.has_confirmation_code)
+
+    def test_add_stay_confirmation_code_not_saved_for_non_hotel(self):
+        """Confirmation code is not saved when stay is not a hotel (e.g. Entire Place / House)."""
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Countryside Cottage',
+            'status': 'CONFIRMED',
+            'place_type': 'Entire Place',
+            'check_in_date': '2026-11-10',
+            'check_out_date': '2026-11-14',
+            'total_price': '850.00',
+            'confirmation_code': 'AIRBNB-SECRET-99',
+        }, follow=True)
+
+        stay = Stay.objects.get(title='Countryside Cottage')
+        self.assertEqual(stay.status, 'CONFIRMED')
+        self.assertFalse(stay.has_confirmation_code)
+
+    def test_add_stay_uploads_documents_to_vault_and_links_to_stay(self):
+        """Adding a stay with uploaded documents securely attaches them to the Stay in the Vault."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        pdf_file = SimpleUploadedFile(
+            "Booking_Confirmation.pdf",
+            b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
+            content_type="application/pdf"
+        )
+
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Harbor View Hotel',
+            'status': 'CONFIRMED',
+            'place_type': 'Hotel Room',
+            'check_in_date': '2026-11-12',
+            'check_out_date': '2026-11-15',
+            'total_price': '520.00',
+            'confirmation_code': 'HARBOR-7722',
+            'documents': [pdf_file],
+        }, follow=True)
+
+        stay = Stay.objects.get(title='Harbor View Hotel')
+        self.assertEqual(stay.confirmation_code, 'HARBOR-7722')
+
+        # Verify Attachment exists and is linked to the stay and trip
+        att = Attachment.objects.filter(trip=self.trip, stay=stay).first()
+        self.assertIsNotNone(att)
+        self.assertEqual(att.file_name, 'Booking_Confirmation.pdf')
+        self.assertEqual(att.file_type, 'application/pdf')
+        self.assertEqual(att.uploaded_by, self.user)
+
+        # Verify Security Audit Log
+        audit_log = SecurityAuditLog.objects.filter(
+            trip=self.trip,
+            action='VAULT_DOCUMENT_UPLOADED',
+            resource_id=att.id
+        ).first()
+        self.assertIsNotNone(audit_log)
+
+        # Verify attachment appears on workspace page
+        ws_resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertContains(ws_resp, 'Booking_Confirmation.pdf')
+
+    def test_add_stay_uploads_multiple_documents(self):
+        """Adding a stay with multiple uploaded documents attaches all valid documents."""
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        doc1 = SimpleUploadedFile(
+            "Receipt.pdf",
+            b"%PDF-1.5\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
+            content_type="application/pdf"
+        )
+        doc2 = SimpleUploadedFile(
+            "KeyCard.png",
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82",
+            content_type="image/png"
+        )
+
+        resp = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Nordic Suites',
+            'status': 'CONFIRMED',
+            'place_type': 'Hotel Room',
+            'check_in_date': '2026-11-20',
+            'check_out_date': '2026-11-25',
+            'documents': [doc1, doc2],
+        }, follow=True)
+
+        stay = Stay.objects.get(title='Nordic Suites')
+        attachments = Attachment.objects.filter(trip=self.trip, stay=stay).order_by('file_name')
+        self.assertEqual(attachments.count(), 2)
+        filenames = [a.file_name for a in attachments]
+        self.assertIn('Receipt.pdf', filenames)
+        self.assertIn('KeyCard.png', filenames)
+
     def test_nav_rejects_arrival_before_departure(self):
         """Nav rejects arrival_time earlier than departure_time."""
         resp = self.client.post(reverse('core:add_nav', args=[self.trip.id]), {
@@ -1804,6 +1961,52 @@ class MoveStayTastePlayWorkflowTests(TestCase):
         play = Play.objects.filter(trip=self.trip, title='Floibanen Funicular').first()
         self.assertIsNotNone(play)
         self.assertEqual(play.guest_name, 'Explorer Friend')
+
+
+class SeedDataAndFixtureSyncTests(TestCase):
+    """Tests verifying seed data execution, export, and auto-syncing."""
+
+    def test_seed_data_command_execution(self):
+        """Verify python manage.py seed_data runs and populates database."""
+        from django.core.management import call_command
+        from core.models import Trip, UserProfile
+
+        call_command('seed_data')
+        self.assertGreaterEqual(Trip.objects.count(), 1)
+        self.assertTrue(UserProfile.objects.filter(email='leila@sonderring.com').exists())
+
+    def test_export_and_load_seed_fixture(self):
+        """Verify export_seed_data_immediate dumps data that can be inspected."""
+        import json
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from core.models import UserProfile, Trip
+        from core.fixture_sync import export_seed_data_immediate
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_fixture_file = Path(tmpdir) / 'test_seed_data.json'
+            with patch('core.fixture_sync.get_fixture_path', return_value=test_fixture_file):
+                user = UserProfile.objects.create(
+                    email='sync_tester@sonderring.com',
+                    handle='synctester',
+                    full_name='Sync Tester',
+                    is_active=True
+                )
+                Trip.objects.create(
+                    title='Fixture Sync Test Trip',
+                    location='Test Location',
+                    year=2026,
+                    created_by=user
+                )
+                success = export_seed_data_immediate(force=True)
+                self.assertTrue(success)
+                self.assertTrue(test_fixture_file.exists())
+
+                with open(test_fixture_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    titles = [item['fields'].get('title') for item in data if item['model'] == 'core.trip']
+                    self.assertIn('Fixture Sync Test Trip', titles)
 
 
 
