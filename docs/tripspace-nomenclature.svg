@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 680" width="100%" height="100%" style="background:#ffffff; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="grad-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#f1f5f9"/>
+    </linearGradient>
+    <linearGradient id="grad-tripspace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="grad-dim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="grad-item" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.07"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1050" height="680" fill="url(#grad-bg)" rx="16" />
+  <rect x="1.5" y="1.5" width="1047" height="677" fill="none" stroke="#e2e8f0" stroke-width="3" rx="15" />
+
+  <!-- Title & Header -->
+  <text x="525" y="46" text-anchor="middle" font-size="24" font-weight="700" fill="#0f172a" letter-spacing="-0.5">TripSpace Nomenclature Architecture</text>
+  <text x="525" y="72" text-anchor="middle" font-size="14" font-weight="400" fill="#64748b">Official domain model, hierarchy, and system boundaries for Sonderring</text>
+
+  <!-- Connectors -->
+  <!-- TripSpace to Dimension -->
+  <line x1="525" y1="155" x2="525" y2="185" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#arrow)" />
+
+  <!-- Dimension to Item -->
+  <line x1="525" y1="290" x2="525" y2="325" stroke="#94a3b8" stroke-width="2.5" marker-end="url(#arrow)" />
+
+  <!-- Item to Children Branches -->
+  <!-- Branch 1: Left to Category -->
+  <path d="M 420 375 C 330 375, 230 410, 230 455" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrow)" />
+
+  <!-- Branch 2: Center to Readiness State -->
+  <line x1="525" y1="410" x2="525" y2="455" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Branch 3: Right to Input & Attribute -->
+  <path d="M 630 375 C 720 375, 830 410, 830 455" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- LEVEL 1: TripSpace -->
+  <g transform="translate(350, 95)" filter="url(#card-shadow)">
+    <rect width="350" height="60" rx="12" fill="url(#grad-tripspace)" />
+    <text x="175" y="27" text-anchor="middle" font-size="11" font-weight="700" fill="#38bdf8" letter-spacing="1.5">TOP-LEVEL WORKSPACE</text>
+    <text x="175" y="48" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff">TripSpace <tspan font-size="14" font-weight="400" fill="#94a3b8">(e.g., Iceland 26)</tspan></text>
+  </g>
+
+  <!-- LEVEL 2: Dimension -->
+  <g transform="translate(150, 190)" filter="url(#card-shadow)">
+    <rect width="750" height="100" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="12" y="12" width="130" height="24" rx="6" fill="#eff6ff" />
+    <text x="77" y="28" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4ed8" letter-spacing="0.8">THE 4 DIMENSIONS</text>
+    <text x="738" y="28" text-anchor="end" font-size="12" font-weight="500" fill="#64748b">UI: <tspan font-weight="600" fill="#0f172a">Dimension View</tspan> &amp; <tspan font-weight="600" fill="#0f172a">Dimension Names</tspan></text>
+
+    <!-- 4 Dimension Badges -->
+    <g transform="translate(20, 46)">
+      <rect width="165" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="15" y="26" font-size="18">✈️</text>
+      <text x="44" y="22" font-size="14" font-weight="700" fill="#0f172a">Move</text>
+      <text x="44" y="36" font-size="10" font-weight="400" fill="#64748b">Transit / Routes</text>
+    </g>
+    <g transform="translate(200, 46)">
+      <rect width="165" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="15" y="26" font-size="18">🏨</text>
+      <text x="44" y="22" font-size="14" font-weight="700" fill="#0f172a">Stay</text>
+      <text x="44" y="36" font-size="10" font-weight="400" fill="#64748b">Lodging / Stays</text>
+    </g>
+    <g transform="translate(380, 46)">
+      <rect width="165" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="15" y="26" font-size="18">🍽️</text>
+      <text x="44" y="22" font-size="14" font-weight="700" fill="#0f172a">Taste</text>
+      <text x="44" y="36" font-size="10" font-weight="400" fill="#64748b">Food &amp; Dining</text>
+    </g>
+    <g transform="translate(560, 46)">
+      <rect width="165" height="42" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="15" y="26" font-size="18">🎭</text>
+      <text x="44" y="22" font-size="14" font-weight="700" fill="#0f172a">Play</text>
+      <text x="44" y="36" font-size="10" font-weight="400" fill="#64748b">Activities / Sights</text>
+    </g>
+  </g>
+
+  <!-- LEVEL 3: Item (Center Hub) -->
+  <g transform="translate(325, 330)" filter="url(#card-shadow)">
+    <rect width="400" height="80" rx="14" fill="url(#grad-item)" />
+    <text x="200" y="28" text-anchor="middle" font-size="11" font-weight="700" fill="#c4b5fd" letter-spacing="1.5">DIMENSION INSTANCE</text>
+    <text x="200" y="51" text-anchor="middle" font-size="20" font-weight="700" fill="#ffffff">Trip Item <tspan font-size="14" font-weight="400" fill="#e9d5ff">(Move, Stay, Taste, Play)</tspan></text>
+    <text x="200" y="68" text-anchor="middle" font-size="11" font-weight="500" fill="#ddd6fe">Rule: Every item MUST belong to a Dimension</text>
+  </g>
+
+  <!-- BOTTOM LEVEL: 3 Functional Columns -->
+
+  <!-- Column 1: Category (Left) -->
+  <g transform="translate(70, 465)" filter="url(#card-shadow)">
+    <rect width="300" height="175" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="16" y="14" width="100" height="22" rx="6" fill="#f3e8ff" />
+    <text x="66" y="29" text-anchor="middle" font-size="11" font-weight="700" fill="#7e22ce">CATEGORY</text>
+    <text x="16" y="58" font-size="14" font-weight="700" fill="#0f172a">Optional Sub-classification</text>
+    <text x="16" y="78" font-size="12" font-weight="400" fill="#475569">Classifies items within a dimension:</text>
+    <text x="26" y="100" font-size="12" font-weight="600" fill="#6d28d9">• Play <tspan font-weight="400" fill="#64748b">categorized as</tspan> Tour</text>
+    <text x="26" y="118" font-size="12" font-weight="600" fill="#6d28d9">• Taste <tspan font-weight="400" fill="#64748b">categorized as</tspan> Wine Bar</text>
+    <text x="26" y="136" font-size="12" font-weight="600" fill="#6d28d9">• Move <tspan font-weight="400" fill="#64748b">categorized as</tspan> Car Rental</text>
+    <rect x="14" y="148" width="272" height="18" rx="4" fill="#faf5ff" />
+    <text x="150" y="161" text-anchor="middle" font-size="10" font-weight="600" fill="#9333ea">Rule: A tour is always a Play item</text>
+  </g>
+
+  <!-- Column 2: Readiness State (Center) -->
+  <g transform="translate(390, 465)" filter="url(#card-shadow)">
+    <rect width="270" height="175" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="16" y="14" width="125" height="22" rx="6" fill="#ecfdf5" />
+    <text x="78" y="29" text-anchor="middle" font-size="11" font-weight="700" fill="#047857">READINESS STATE</text>
+    <text x="16" y="58" font-size="14" font-weight="700" fill="#0f172a">Item Lifecycle Status</text>
+
+    <g transform="translate(16, 70)">
+      <rect width="238" height="26" rx="6" fill="#fef9c3" stroke="#fef08a" stroke-width="1" />
+      <text x="10" y="17" font-size="11" font-weight="700" fill="#854d0e">IDEA</text>
+      <text x="48" y="17" font-size="11" font-weight="400" fill="#713f12">Optional date · Brainstorm</text>
+    </g>
+
+    <g transform="translate(16, 103)">
+      <rect width="238" height="26" rx="6" fill="#dcfce7" stroke="#bbf7d0" stroke-width="1" />
+      <text x="10" y="17" font-size="11" font-weight="700" fill="#166534">CONFIRMED</text>
+      <text x="88" y="17" font-size="11" font-weight="400" fill="#14532d">Required date · Booked</text>
+    </g>
+
+    <g transform="translate(16, 136)">
+      <rect width="238" height="26" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="17" font-size="11" font-weight="700" fill="#475569">COMPLETE</text>
+      <text x="82" y="17" font-size="11" font-weight="400" fill="#334155">Archived trip memory</text>
+    </g>
+  </g>
+
+  <!-- Column 3: Input vs Attribute (Right) -->
+  <g transform="translate(680, 465)" filter="url(#card-shadow)">
+    <rect width="300" height="175" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" />
+    <rect x="16" y="14" width="155" height="22" rx="6" fill="#fff7ed" />
+    <text x="93" y="29" text-anchor="middle" font-size="11" font-weight="700" fill="#c2410c">UI vs DATA BOUNDARY</text>
+
+    <!-- Item Input Card -->
+    <g transform="translate(14, 48)">
+      <rect width="272" height="52" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="10" y="20" font-size="12" font-weight="700" fill="#0284c7">Item Input <tspan font-weight="400" fill="#64748b">(Frontend)</tspan></text>
+      <text x="10" y="34" font-size="11" font-weight="400" fill="#475569">Modal &amp; form controls (e.g. date picker).</text>
+      <text x="10" y="46" font-size="10" font-style="italic" fill="#64748b">Can be removed from UI without altering DB.</text>
+    </g>
+
+    <!-- Item Attribute Card -->
+    <g transform="translate(14, 108)">
+      <rect width="272" height="52" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+      <text x="10" y="20" font-size="12" font-weight="700" fill="#dc2626">Item Attribute <tspan font-weight="400" fill="#64748b">(Backend/DB)</tspan></text>
+      <text x="10" y="34" font-size="11" font-weight="400" fill="#475569">Database schema column / model field.</text>
+      <text x="10" y="46" font-size="10" font-style="italic" fill="#64748b">Removing this drops/modifies the DB schema.</text>
+    </g>
+  </g>
+
+</svg>
