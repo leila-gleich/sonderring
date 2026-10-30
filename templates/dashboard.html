@@ -120,17 +120,17 @@
         {% for trip in past_trips %}
         <div class="past-trip-card" onclick="goToTrip(event, '{% url 'core:trip_workspace' trip.id %}')">
             <div class="past-trip-content">
-                <h4 class="past-trip-title">
+                <h4 class="past-trip-title" title="{{ trip.title }}">
                     <a href="{% url 'core:trip_workspace' trip.id %}" class="trip-card-title-link" onclick="event.stopPropagation();">{{ trip.title }}</a>
                 </h4>
                 <div class="past-trip-meta">
-                    <span class="past-trip-location">📍 {{ trip.location }}</span>
+                    <span class="past-trip-location" title="{{ trip.location }}">📍 {{ trip.location }}</span>
                     <span class="past-trip-date">{{ trip.formatted_dates }}</span>
                 </div>
             </div>
-            <div class="past-trip-actions" onclick="event.stopPropagation();" style="display: flex; align-items: center; gap: 0.6rem;">
+            <div class="past-trip-actions" onclick="event.stopPropagation();">
                 {% if trip.id in editable_trip_ids %}
-                <form method="POST" action="{% url 'core:update_trip_status' trip.id %}" class="inline-status-form trip-status-form" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; margin: 0;">
+                <form method="POST" action="{% url 'core:update_trip_status' trip.id %}" class="inline-status-form trip-status-form" onclick="event.stopPropagation();">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'core:dashboard' %}">
                     <select name="status" 

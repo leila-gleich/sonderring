@@ -585,21 +585,22 @@ body {
 
 /* Past Trips Section */
 .past-trips-section {
-    padding-top: 1.5rem;
+    padding-top: 1.25rem;
     border-top: 1px solid var(--border-color);
 }
 
 .past-trips-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+    align-items: start;
 }
 
 .past-trip-card {
     background: #ffffff;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 1rem 1.25rem;
+    padding: 0.55rem 0.8rem;
     text-decoration: none;
     color: inherit;
     display: flex;
@@ -607,6 +608,7 @@ body {
     align-items: center;
     transition: background 0.15s ease, border-color 0.15s ease;
     cursor: pointer;
+    margin: 0;
 }
 
 .past-trip-card:hover {
@@ -614,11 +616,26 @@ body {
     border-color: #cbd5e1;
 }
 
+.past-trip-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+}
+
 .past-trip-title {
     font-family: var(--font-heading);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    margin-bottom: 0.2rem;
+    margin: 0 0 0.15rem 0;
+    padding: 0;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .past-trip-meta {
@@ -626,11 +643,48 @@ body {
     flex-direction: column;
     font-size: 0.75rem;
     color: var(--text-muted);
+    line-height: 1.25;
+    gap: 0.1rem;
+    margin: 0;
+    padding: 0;
+}
+
+.past-trip-location {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.past-trip-date {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.past-trip-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    margin: 0 0 0 0.6rem;
+    padding: 0;
+}
+
+.past-trip-actions .inline-status-form {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
 }
 
 .past-trip-arrow {
     color: var(--text-light);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
 }
 
 /* ==========================================================================

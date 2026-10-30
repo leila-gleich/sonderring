@@ -2659,6 +2659,29 @@ class CurrentAndUpcomingTripsOrderingTests(TestCase):
         sorted_list = order_current_and_upcoming_trips([t1, t2, t3, t4])
         self.assertEqual(sorted_list, [t2, t3, t1])
 
+    def test_past_trips_preview_div_structure_and_styling(self):
+        """Past trip preview divs include compact metadata, tooltips, and actions."""
+        past_trip = Trip.objects.create(
+            title='Historic Edinburgh 2023',
+            location='Edinburgh, Old Town, Scotland, United Kingdom',
+            status='PAST',
+            time_granularity='MONTH',
+            start_month=7,
+            year=2023,
+            created_by=self.user
+        )
+        TripMember.objects.create(trip=past_trip, user=self.user, role='OWNER')
+
+        response = self.client.get(reverse('core:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'past-trip-card')
+        self.assertContains(response, 'past-trip-content')
+        self.assertContains(response, 'past-trip-title')
+        self.assertContains(response, 'past-trip-location')
+        self.assertContains(response, 'past-trip-actions')
+        self.assertContains(response, 'Historic Edinburgh 2023')
+        self.assertContains(response, 'Edinburgh, Old Town, Scotland, United Kingdom')
+
 
 
 
