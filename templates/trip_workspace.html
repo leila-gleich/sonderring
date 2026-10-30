@@ -650,7 +650,7 @@
             <p class="tab-desc">Curate restaurants, bars, cafés, food markets, and dining reservations.</p>
         </div>
         <div class="header-dual-actions">
-            <button type="button" class="btn btn-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and nontrippers">
+            <button type="button" class="btn btn-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and non-trippers">
                 <span class="btn-icon">📋</span> Copy Rec Link
             </button>
             {% if can_edit %}
@@ -894,7 +894,7 @@
             <p class="tab-desc">Confirmed excursions, scenic viewpoints, outdoor adventures, culture, and travel tips.</p>
         </div>
         <div class="header-dual-actions">
-            <button type="button" class="btn btn-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and nontrippers">
+            <button type="button" class="btn btn-outline" onclick="copyRecLink(this)" title="Copy recommendation link for friends and non-trippers">
                 <span class="btn-icon">📋</span> Copy Rec Link
             </button>
             {% if can_edit %}
@@ -908,7 +908,7 @@
     <div class="dos-group-section">
         <div class="recs-header-wrap">
             <h3 class="group-title">🎯 Activities, Tours & Tips</h3>
-            <span class="recs-counter">{{ plays.count }} Activity{{ plays.count|pluralize:"ies" }}</span>
+            <span class="recs-counter">{{ plays.count }} Activit{{ plays.count|pluralize:"y,ies" }}</span>
         </div>
         <p class="recs-desc">Adventures, tours, cultural highlights, and local spot suggestions.</p>
 

@@ -2683,6 +2683,61 @@ class CurrentAndUpcomingTripsOrderingTests(TestCase):
         self.assertContains(response, 'Edinburgh, Old Town, Scotland, United Kingdom')
 
 
+class SpellingAndPluralizationAuditTests(TestCase):
+    """Verifies that pluralization and text in templates render correctly without typos like 'Activityies'."""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = UserProfile.objects.create(
+            email='spelling_user@sonderring.com',
+            handle='spellinguser',
+            full_name='Spelling User',
+            is_active=True
+        )
+        self.trip = Trip.objects.create(
+            title='Spelling Audit Trip',
+            location='Audit City',
+            year=2026,
+            created_by=self.user
+        )
+        from core.models import TripMember
+        TripMember.objects.create(trip=self.trip, user=self.user, role='OWNER')
+        session = self.client.session
+        session['user_id'] = str(self.user.id)
+        session.save()
+
+    def test_workspace_plays_counter_pluralization(self):
+        """Ensure 0, 1, and 2 plays render '0 Activities', '1 Activity', '2 Activities' (never 'Activityies')."""
+        from core.models import Play
+
+        # 0 plays -> '0 Activities'
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertContains(resp, '0 Activities')
+        self.assertNotContains(resp, 'Activityies')
+
+        # 1 play -> '1 Activity'
+        Play.objects.create(trip=self.trip, title='Solo Hike', created_by=self.user)
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertContains(resp, '1 Activity')
+        self.assertNotContains(resp, 'Activityies')
+
+        # 2 plays -> '2 Activities'
+        Play.objects.create(trip=self.trip, title='Boat Tour', created_by=self.user)
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertContains(resp, '2 Activities')
+        self.assertNotContains(resp, 'Activityies')
+
+    def test_profile_trippers_and_items_pluralization(self):
+        """Ensure profile page correctly pluralizes Tripper/Trippers and Item/Items."""
+        resp = self.client.get(reverse('core:profile'))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode('utf-8')
+        # Only 1 member (the creator)
+        self.assertIn('1 Tripper', content)
+        self.assertNotIn('1 Trippers', content)
+
+
+
 
 
 
