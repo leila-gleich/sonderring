@@ -85,7 +85,7 @@
         <div class="existing-recs-section">
             <div class="existing-recs-header">
                 <h3 class="existing-recs-title">Recommendations Added So Far</h3>
-                <span class="existing-recs-count">{{ existing_tastes|length|add:existing_plays|length }} items</span>
+                <span class="existing-recs-count">{{ existing_tastes|length|add:existing_plays|length }} item{{ existing_tastes|length|add:existing_plays|length|pluralize }}</span>
             </div>
             <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.25rem;">See what others have recommended so far for {{ trip.title }}.</p>
             <div class="recs-grid">

@@ -96,8 +96,8 @@
                         <span>📅 {{ trip.formatted_dates }}</span>
                     </div>
                     <div class="profile-trip-footer">
-                        <span>{{ trip.members.count }} Trippers</span>
-                        <span>{{ trip.total_items_count }} Itinerary items</span>
+                        <span>{{ trip.members.count }} Tripper{{ trip.members.count|pluralize }}</span>
+                        <span>{{ trip.total_items_count }} Itinerary item{{ trip.total_items_count|pluralize }}</span>
                     </div>
                 </a>
                 {% endfor %}
@@ -133,7 +133,7 @@
                     </div>
                     <div class="profile-trip-footer">
                         <span>Organized by @{{ trip.created_by.handle }}</span>
-                        <span>{{ trip.total_items_count }} Items</span>
+                        <span>{{ trip.total_items_count }} Item{{ trip.total_items_count|pluralize }}</span>
                     </div>
                 </a>
                 {% endfor %}
