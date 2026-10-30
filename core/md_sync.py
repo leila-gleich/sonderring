@@ -71,12 +71,11 @@ def format_move(move) -> list[str]:
     if move.destination_address:
         lines.append(f"  * **Destination Address**: {move.destination_address}")
     
-    if move.departure_time and move.arrival_time:
-        dep_str = move.departure_time.strftime('%b %d, %Y, %I:%M %p')
-        arr_str = move.arrival_time.strftime('%b %d, %Y, %I:%M %p')
-        lines.append(f"  * **Schedule**: {dep_str} ➔ {arr_str}")
-    elif move.departure_time:
-        lines.append(f"  * **Departure**: {move.departure_time.strftime('%b %d, %Y, %I:%M %p')}")
+    if move.departure_time:
+        if move.is_departure_time_set:
+            lines.append(f"  * **Departure**: {move.departure_time.strftime('%b %d, %Y, %I:%M %p')}")
+        else:
+            lines.append(f"  * **Departure**: {move.departure_time.strftime('%b %d, %Y')}")
     
     lines.append(f"  * **Confidence**: Date: `{move.date_confidence}` · Time: `{move.time_confidence}`")
     
@@ -171,12 +170,11 @@ def format_taste(taste) -> list[str]:
     if taste.address:
         lines.append(f"  * **Address / Venue**: {taste.address}")
     
-    if taste.start_time and taste.end_time:
-        st_str = taste.start_time.strftime('%b %d, %I:%M %p')
-        et_str = taste.end_time.strftime('%I:%M %p')
-        lines.append(f"  * **Schedule**: {st_str} – {et_str}")
-    elif taste.start_time:
-        lines.append(f"  * **Schedule**: {taste.start_time.strftime('%b %d, %I:%M %p')}")
+    if taste.start_time:
+        if taste.is_start_time_set:
+            lines.append(f"  * **Schedule**: {taste.start_time.strftime('%b %d, %I:%M %p')}")
+        else:
+            lines.append(f"  * **Date**: {taste.start_time.strftime('%b %d, %Y')}")
     
     if taste.price is not None:
         lines.append(f"  * **Price**: ${taste.price:,.2f} {taste.currency}" if taste.price > 0 else "  * **Price**: $0.00 USD (Complimentary)")
@@ -210,12 +208,11 @@ def format_play(play) -> list[str]:
     if play.address:
         lines.append(f"  * **Address / Venue**: {play.address}")
     
-    if play.start_time and play.end_time:
-        st_str = play.start_time.strftime('%b %d, %I:%M %p')
-        et_str = play.end_time.strftime('%I:%M %p')
-        lines.append(f"  * **Schedule**: {st_str} – {et_str}")
-    elif play.start_time:
-        lines.append(f"  * **Schedule**: {play.start_time.strftime('%b %d, %I:%M %p')}")
+    if play.start_time:
+        if play.is_start_time_set:
+            lines.append(f"  * **Schedule**: {play.start_time.strftime('%b %d, %I:%M %p')}")
+        else:
+            lines.append(f"  * **Date**: {play.start_time.strftime('%b %d, %Y')}")
     
     if play.price is not None:
         lines.append(f"  * **Price**: ${play.price:,.2f} {play.currency}" if play.price > 0 else "  * **Price**: $0.00 USD (Free admission)")

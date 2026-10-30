@@ -254,7 +254,7 @@
                     {% if item.timestamp %}
                     <span class="detail-tag">
                         🕒 {{ item.timestamp|date:"M j, Y" }}{% if item.has_time %} — {{ item.timestamp|date:"g:i A" }}{% endif %}
-                        {% if item.end_timestamp %} ➔ {{ item.end_timestamp|date:"M j" }}{% if item.has_end_time %}, {{ item.end_timestamp|date:"g:i A" }}{% endif %}{% endif %}
+                        {% if item.type == 'stay' and item.end_timestamp %} ➔ {{ item.end_timestamp|date:"M j" }}{% if item.has_end_time %}, {{ item.end_timestamp|date:"g:i A" }}{% endif %}{% endif %}
                     </span>
                     {% endif %}
 
@@ -692,23 +692,12 @@
                 </div>
                 {% endif %}
 
-                {% if taste.start_time or taste.end_time %}
+                {% if taste.start_time %}
                 <div class="item-time-row">
-                    {% if taste.start_time %}
                     <div>
-                        <small class="time-label">Reservation / Time</small>
-                        <div class="time-val">{{ taste.start_time|date:"M d, g:i A" }}</div>
+                        <small class="time-label">Date</small>
+                        <div class="time-val">{{ taste.start_time|date:"M d, Y" }}{% if taste.is_start_time_set %} • {{ taste.start_time|date:"g:i A" }}{% endif %}</div>
                     </div>
-                    {% endif %}
-                    {% if taste.start_time and taste.end_time %}
-                    <div class="time-arrow">➔</div>
-                    {% endif %}
-                    {% if taste.end_time %}
-                    <div>
-                        <small class="time-label">Ends</small>
-                        <div class="time-val">{{ taste.end_time|date:"g:i A" }}</div>
-                    </div>
-                    {% endif %}
                 </div>
                 {% endif %}
 
@@ -795,12 +784,15 @@
 
                         <div class="form-row">
                             <div class="form-col">
-                                <label class="form-label">Reservation Time (Start)</label>
-                                <input type="datetime-local" name="start_time" class="form-control" value="{{ taste.start_time|date:'Y-m-d\TH:i' }}">
+                                <label class="form-label">
+                                    Date
+                                    <span class="taste-date-required text-danger" {% if taste.status != 'CONFIRMED' and taste.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
+                                </label>
+                                <input type="date" name="date" class="form-control" value="{{ taste.start_time|date:'Y-m-d' }}" {% if taste.status == 'CONFIRMED' or taste.status == 'COMPLETE' %}required{% endif %}>
                             </div>
                             <div class="form-col">
-                                <label class="form-label">End Time</label>
-                                <input type="datetime-local" name="end_time" class="form-control" value="{{ taste.end_time|date:'Y-m-d\TH:i' }}">
+                                <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
+                                <input type="time" name="time" class="form-control" value="{{ taste.start_time_str }}">
                             </div>
                         </div>
 
@@ -944,23 +936,12 @@
                 </div>
                 {% endif %}
 
-                {% if play.start_time or play.end_time %}
+                {% if play.start_time %}
                 <div class="item-time-row">
-                    {% if play.start_time %}
                     <div>
-                        <small class="time-label">Starts</small>
-                        <div class="time-val">{{ play.start_time|date:"M d, g:i A" }}</div>
+                        <small class="time-label">Date</small>
+                        <div class="time-val">{{ play.start_time|date:"M d, Y" }}{% if play.is_start_time_set %} • {{ play.start_time|date:"g:i A" }}{% endif %}</div>
                     </div>
-                    {% endif %}
-                    {% if play.start_time and play.end_time %}
-                    <div class="time-arrow">➔</div>
-                    {% endif %}
-                    {% if play.end_time %}
-                    <div>
-                        <small class="time-label">Ends</small>
-                        <div class="time-val">{{ play.end_time|date:"g:i A" }}</div>
-                    </div>
-                    {% endif %}
                 </div>
                 {% endif %}
 
@@ -1019,11 +1000,24 @@
                     <form method="POST" action="{% url 'core:edit_play' trip.id play.id %}" class="modal-form">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="">
+                        <!-- Primary Inputs (Name, Status) -->
                         <div class="form-row">
                             <div class="form-col" style="flex: 2;">
                                 <label class="form-label">Activity Title <span class="required">*</span></label>
                                 <input type="text" name="title" class="form-control" value="{{ play.title }}" required>
                             </div>
+                            <div class="form-col">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-control">
+                                    <option value="IDEA" {% if play.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
+                                    <option value="CONFIRMED" {% if play.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                                    <option value="COMPLETE" {% if play.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Type & Location -->
+                        <div class="form-row">
                             <div class="form-col">
                                 <label class="form-label">Type</label>
                                 <select name="play_type" class="form-control">
@@ -1038,56 +1032,63 @@
                                     <option value="Travel Tip" {% if play.play_type == 'Travel Tip' %}selected{% endif %}>Travel Tip & Advice</option>
                                 </select>
                             </div>
+                            <div class="form-col" style="flex: 2;">
+                                <label class="form-label">Location / Address</label>
+                                <input type="text" name="address" class="form-control" value="{{ play.address|default:'' }}" placeholder="Venue name, trail head or area">
+                            </div>
                         </div>
 
+                        <!-- Notes -->
                         <div class="form-group">
-                            <label class="form-label">Location / Address</label>
-                            <input type="text" name="address" class="form-control" value="{{ play.address|default:'' }}">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, meeting point instructions...">{{ play.notes|default:'' }}</textarea>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Start Date & Time</label>
-                                <input type="datetime-local" name="start_time" class="form-control" value="{{ play.start_time|date:'Y-m-d\TH:i' }}">
-                            </div>
-                            <div class="form-col">
-                                <label class="form-label">End Date & Time</label>
-                                <input type="datetime-local" name="end_time" class="form-control" value="{{ play.end_time|date:'Y-m-d\TH:i' }}">
-                            </div>
+                        <!-- More Options Toggle Button -->
+                        <div class="form-group" style="margin: 0.85rem 0;">
+                            <button type="button" class="btn btn-outline" id="btnToggleEditPlayMoreOptions_{{ play.id }}" onclick="toggleEditPlayMoreOptions('{{ play.id }}')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                                <span>⚙️</span>
+                                <span class="more-options-text">{% if play.start_time or play.price or play.has_confirmation_code or play.link or play.description %}Fewer Options{% else %}More Options{% endif %}</span>
+                                <span class="more-options-chevron">{% if play.start_time or play.price or play.has_confirmation_code or play.link or play.description %}▴{% else %}▾{% endif %}</span>
+                            </button>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Estimated Cost ($)</label>
-                                <input type="number" step="0.01" name="price" class="form-control" value="{{ play.price|default:'' }}">
+                        <!-- More Options Expandable Section -->
+                        <div id="editPlayMoreOptionsContent_{{ play.id }}" style="{% if play.start_time or play.price or play.has_confirmation_code or play.link or play.description %}display: block;{% else %}display: none;{% endif %} border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label class="form-label">
+                                        Date
+                                        <span class="play-date-required text-danger" {% if play.status != 'CONFIRMED' and play.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
+                                    </label>
+                                    <input type="date" name="date" class="form-control" value="{{ play.start_time|date:'Y-m-d' }}" {% if play.status == 'CONFIRMED' or play.status == 'COMPLETE' %}required{% endif %}>
+                                </div>
+                                <div class="form-col">
+                                    <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
+                                    <input type="time" name="time" class="form-control" value="{{ play.start_time_str }}">
+                                </div>
                             </div>
-                            <div class="form-col">
-                                <label class="form-label">Status</label>
-                                <select name="status" class="form-control">
-                                    <option value="IDEA" {% if play.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
-                                    <option value="CONFIRMED" {% if play.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
-                                    <option value="COMPLETE" {% if play.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
-                                </select>
+
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label class="form-label">Estimated Cost ($)</label>
+                                    <input type="number" step="0.01" name="price" class="form-control" value="{{ play.price|default:'' }}">
+                                </div>
+                                <div class="form-col">
+                                    <label class="form-label">Confirmation Code</label>
+                                    <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
+                                </div>
                             </div>
-                            <div class="form-col">
-                                <label class="form-label">Confirmation Code</label>
-                                <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
+
+                            <div class="form-group">
+                                <label class="form-label">Guide / Ticket Link</label>
+                                <input type="url" name="link" class="form-control" value="{{ play.link|default:'' }}" placeholder="https://...">
                             </div>
-                        </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Guide / Ticket Link</label>
-                            <input type="url" name="link" class="form-control" value="{{ play.link|default:'' }}" placeholder="https://...">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Description / Instructions</label>
-                            <textarea name="description" class="form-control" rows="2">{{ play.description|default:'' }}</textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Entry Codes & Gear Notes</label>
-                            <textarea name="notes" class="form-control" rows="2">{{ play.notes|default:'' }}</textarea>
+                            <div class="form-group">
+                                <label class="form-label">Description / Instructions</label>
+                                <textarea name="description" class="form-control" rows="2" placeholder="Gear needed, booking notes, directions, tour details...">{{ play.description|default:'' }}</textarea>
+                            </div>
                         </div>
 
                         <div class="modal-footer">
@@ -1651,12 +1652,15 @@
 
             <div class="form-row">
                 <div class="form-col">
-                    <label class="form-label">Departure Date & Time</label>
-                    <input type="datetime-local" name="departure_time" class="form-control">
+                    <label class="form-label">
+                        Date
+                        <span class="move-date-required text-danger">*</span>
+                    </label>
+                    <input type="date" name="date" class="form-control" required>
                 </div>
                 <div class="form-col">
-                    <label class="form-label">Arrival Date & Time</label>
-                    <input type="datetime-local" name="arrival_time" class="form-control">
+                    <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
+                    <input type="time" name="time" class="form-control">
                 </div>
             </div>
 
@@ -1732,12 +1736,15 @@
 
             <div class="form-row">
                 <div class="form-col">
-                    <label class="form-label">Reservation / Visit Time (Start)</label>
-                    <input type="datetime-local" name="start_time" class="form-control">
+                    <label class="form-label">
+                        Date
+                        <span class="taste-date-required text-danger" style="display: none;">*</span>
+                    </label>
+                    <input type="date" name="date" class="form-control">
                 </div>
                 <div class="form-col">
-                    <label class="form-label">End Time</label>
-                    <input type="datetime-local" name="end_time" class="form-control">
+                    <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
+                    <input type="time" name="time" class="form-control">
                 </div>
             </div>
 
@@ -1794,11 +1801,24 @@
         </div>
         <form method="POST" action="{% url 'core:add_play' trip.id %}" class="modal-form">
             {% csrf_token %}
+            <!-- Primary Inputs (Name, Status) -->
             <div class="form-row">
                 <div class="form-col" style="flex: 2;">
                     <label class="form-label">Activity Title <span class="required">*</span></label>
                     <input type="text" name="title" class="form-control" placeholder="e.g., Blue Lagoon Soak, Taormina Greek Theatre, Coastal Hike" required>
                 </div>
+                <div class="form-col">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="IDEA" selected>Idea (Tentative)</option>
+                        <option value="CONFIRMED">Confirmed (Booked)</option>
+                        <option value="COMPLETE">Complete</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Type & Location -->
+            <div class="form-row">
                 <div class="form-col">
                     <label class="form-label">Type</label>
                     <select name="play_type" class="form-control">
@@ -1813,56 +1833,63 @@
                         <option value="Travel Tip">Travel Tip & Advice</option>
                     </select>
                 </div>
+                <div class="form-col" style="flex: 2;">
+                    <label class="form-label">Location / Address</label>
+                    <input type="text" name="address" class="form-control" placeholder="Venue name, trail head or area">
+                </div>
             </div>
 
+            <!-- Notes -->
             <div class="form-group">
-                <label class="form-label">Location / Address</label>
-                <input type="text" name="address" class="form-control" placeholder="Venue name, trail head or area">
+                <label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, meeting point instructions, booking notes..."></textarea>
             </div>
 
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">Start Date & Time</label>
-                    <input type="datetime-local" name="start_time" class="form-control">
-                </div>
-                <div class="form-col">
-                    <label class="form-label">End Date & Time</label>
-                    <input type="datetime-local" name="end_time" class="form-control">
-                </div>
+            <!-- More Options Toggle Button -->
+            <div class="form-group" style="margin: 0.85rem 0;">
+                <button type="button" class="btn btn-outline" id="btnTogglePlayMoreOptions" onclick="togglePlayMoreOptions()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                    <span id="playMoreOptionsIcon">⚙️</span>
+                    <span id="playMoreOptionsText">More Options</span>
+                    <span id="playMoreOptionsChevron">▾</span>
+                </button>
             </div>
 
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">Estimated Cost ($)</label>
-                    <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00">
+            <!-- More Options Expandable Section (Other Attributes) -->
+            <div id="playMoreOptionsContent" style="display: none; border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">
+                            Date
+                            <span class="play-date-required text-danger" style="display: none;">*</span>
+                        </label>
+                        <input type="date" name="date" class="form-control">
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
+                        <input type="time" name="time" class="form-control">
+                    </div>
                 </div>
-                <div class="form-col">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-control">
-                        <option value="IDEA" selected>Idea (Tentative)</option>
-                        <option value="CONFIRMED">Confirmed (Booked)</option>
-                        <option value="COMPLETE">Complete</option>
-                    </select>
+
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">Estimated Cost ($)</label>
+                        <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00">
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Confirmation Code</label>
+                        <input type="text" name="confirmation_code" class="form-control" placeholder="Ticket/voucher code">
+                    </div>
                 </div>
-                <div class="form-col">
-                    <label class="form-label">Confirmation Code</label>
-                    <input type="text" name="confirmation_code" class="form-control" placeholder="Ticket/voucher code">
+
+                <div class="form-group">
+                    <label class="form-label">Guide / Ticket Link</label>
+                    <input type="url" name="link" class="form-control" placeholder="https://...">
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label class="form-label">Guide / Ticket Link</label>
-                <input type="url" name="link" class="form-control" placeholder="https://...">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Description & Instructions</label>
-                <textarea name="description" class="form-control" rows="2" placeholder="Gear needed, booking notes, directions, tour details..."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Entry Codes & Notes</label>
-                <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, meeting point instructions..."></textarea>
+                <div class="form-group">
+                    <label class="form-label">Description & Instructions</label>
+                    <textarea name="description" class="form-control" rows="2" placeholder="Gear needed, directions, tour details..."></textarea>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -2073,6 +2100,48 @@
             content.style.display = 'block';
             const label = btn.querySelector('#moreOptionsText');
             const chevron = btn.querySelector('#moreOptionsChevron');
+            if (label) label.textContent = 'Fewer Options';
+            if (chevron) chevron.textContent = '▴';
+        }
+    }
+
+    // Toggle More Options for Add Play Modal
+    function togglePlayMoreOptions() {
+        const content = document.getElementById('playMoreOptionsContent');
+        const btn = document.getElementById('btnTogglePlayMoreOptions');
+        if (!content || !btn) return;
+        const isExpanded = (content.style.display !== 'none');
+        if (isExpanded) {
+            content.style.display = 'none';
+            const label = btn.querySelector('#playMoreOptionsText');
+            const chevron = btn.querySelector('#playMoreOptionsChevron');
+            if (label) label.textContent = 'More Options';
+            if (chevron) chevron.textContent = '▾';
+        } else {
+            content.style.display = 'block';
+            const label = btn.querySelector('#playMoreOptionsText');
+            const chevron = btn.querySelector('#playMoreOptionsChevron');
+            if (label) label.textContent = 'Fewer Options';
+            if (chevron) chevron.textContent = '▴';
+        }
+    }
+
+    // Toggle More Options for Edit Play Modal
+    function toggleEditPlayMoreOptions(playId) {
+        const content = document.getElementById('editPlayMoreOptionsContent_' + playId);
+        const btn = document.getElementById('btnToggleEditPlayMoreOptions_' + playId);
+        if (!content || !btn) return;
+        const isExpanded = (content.style.display !== 'none');
+        if (isExpanded) {
+            content.style.display = 'none';
+            const label = btn.querySelector('.more-options-text');
+            const chevron = btn.querySelector('.more-options-chevron');
+            if (label) label.textContent = 'More Options';
+            if (chevron) chevron.textContent = '▾';
+        } else {
+            content.style.display = 'block';
+            const label = btn.querySelector('.more-options-text');
+            const chevron = btn.querySelector('.more-options-chevron');
             if (label) label.textContent = 'Fewer Options';
             if (chevron) chevron.textContent = '▴';
         }

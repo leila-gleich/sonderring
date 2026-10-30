@@ -572,6 +572,43 @@
             updateStayRequirements();
         }
 
+        function setupSingleDateElementSync(container, elementType, alertMsg) {
+            if (!container || container._singleDateSyncInitialized) return;
+            const dateInput = container.querySelector('input[name="date"]') || container.querySelector('input[name="departure_date"]') || container.querySelector('input[name="departure_time"]') || container.querySelector('input[name="start_time"]');
+            const statusSelect = container.querySelector('select[name="status"]');
+            const form = container.tagName === 'FORM' ? container : container.querySelector('form');
+
+            if (!dateInput) return;
+            container._singleDateSyncInitialized = true;
+
+            function updateRequirements() {
+                if (!statusSelect) return;
+                const isConfirmed = (statusSelect.value === 'CONFIRMED' || statusSelect.value === 'COMPLETE');
+                dateInput.required = isConfirmed;
+                container.querySelectorAll(`.${elementType}-date-required`).forEach(el => {
+                    el.style.display = isConfirmed ? 'inline' : 'none';
+                });
+            }
+
+            if (statusSelect) {
+                statusSelect.addEventListener('change', updateRequirements);
+                updateRequirements();
+            }
+
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (statusSelect && (statusSelect.value === 'CONFIRMED' || statusSelect.value === 'COMPLETE')) {
+                        if (!dateInput.value) {
+                            e.preventDefault();
+                            alert(alertMsg || `Confirmed ${elementType}s require a date.`);
+                            dateInput.focus();
+                            return false;
+                        }
+                    }
+                });
+            }
+        }
+
         function initAllDateConstraints(scope) {
             const root = scope || document;
 
@@ -585,14 +622,29 @@
                 }
             });
 
-            // 2. Stays
+            // 2. Stays (Only Stays have start and end dates)
             const stayCiDates = root.querySelectorAll('input[name="check_in_date"]');
             stayCiDates.forEach(ciDate => {
                 const container = ciDate.closest('.modal-backdrop') || ciDate.closest('form') || root;
                 setupStayDateSync(container);
             });
 
-            // 3. Navs (departure_time and arrival_time)
+            // 3. Moves (single date, required if confirmed)
+            root.querySelectorAll('.modal-backdrop#addMoveModal, [id^="editMoveModal_"], .modal-backdrop#addNavModal, [id^="editNavModal_"]').forEach(container => {
+                setupSingleDateElementSync(container, 'move', 'Confirmed moves require a date.');
+            });
+
+            // 4. Tastes (single date, required if confirmed)
+            root.querySelectorAll('.modal-backdrop#addTasteModal, [id^="editTasteModal_"], .modal-backdrop#addRecModal, [id^="editRecModal_"]').forEach(container => {
+                setupSingleDateElementSync(container, 'taste', 'Confirmed food & drink reservations require a date.');
+            });
+
+            // 5. Plays (single date, required if confirmed)
+            root.querySelectorAll('.modal-backdrop#addPlayModal, [id^="editPlayModal_"], .modal-backdrop#addDoModal, [id^="editDoModal_"]').forEach(container => {
+                setupSingleDateElementSync(container, 'play', 'Confirmed activities require a date.');
+            });
+
+            // Fallback for legacy dual-input forms if both inputs exist
             const navDepts = root.querySelectorAll('input[name="departure_time"]');
             navDepts.forEach(deptInput => {
                 const form = deptInput.closest('form') || root;
@@ -601,8 +653,6 @@
                     setupDateTimeRangePair(deptInput, arrInput, "Arrival date/time cannot be before departure date/time.");
                 }
             });
-
-            // 4. Dos (start_time and end_time)
             const doStarts = root.querySelectorAll('input[name="start_time"]');
             doStarts.forEach(startInput => {
                 const form = startInput.closest('form') || root;

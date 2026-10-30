@@ -36,38 +36,35 @@
     </div>
     {% endif %}
 
-    {% if nav.origin_address or nav.departure_time or nav.destination_address or nav.arrival_time %}
+    {% if nav.origin_address or nav.departure_time or nav.destination_address %}
     <div class="nav-route-box">
         {% if nav.origin_address or nav.departure_time %}
         <div class="route-point">
             <span class="route-dot origin-dot"></span>
             <div class="route-info">
-                <small class="route-label">Departure</small>
+                <small class="route-label">Origin / Departure</small>
                 {% if nav.origin_address %}<div class="route-place">{{ nav.origin_address }}</div>{% endif %}
                 {% if nav.departure_time %}
-                <div class="route-time">{{ nav.departure_time|date:"M d, Y • g:i A" }}</div>
+                <div class="route-time">{{ nav.departure_time|date:"M d, Y" }}{% if nav.is_departure_time_set %} • {{ nav.departure_time|date:"g:i A" }}{% endif %}</div>
                 {% endif %}
             </div>
         </div>
         {% endif %}
         
         {% if nav.origin_address or nav.departure_time %}
-            {% if nav.destination_address or nav.arrival_time %}
+            {% if nav.destination_address %}
             <div class="route-connector-line">
                 <span class="connector-arrow">➔</span>
             </div>
             {% endif %}
         {% endif %}
 
-        {% if nav.destination_address or nav.arrival_time %}
+        {% if nav.destination_address %}
         <div class="route-point">
             <span class="route-dot dest-dot"></span>
             <div class="route-info">
-                <small class="route-label">Arrival</small>
-                {% if nav.destination_address %}<div class="route-place">{{ nav.destination_address }}</div>{% endif %}
-                {% if nav.arrival_time %}
-                <div class="route-time">{{ nav.arrival_time|date:"M d, Y • g:i A" }}</div>
-                {% endif %}
+                <small class="route-label">Destination</small>
+                <div class="route-place">{{ nav.destination_address }}</div>
             </div>
         </div>
         {% endif %}
@@ -75,7 +72,7 @@
     {% endif %}
 
     <!-- Confidence Badges -->
-    {% if nav.departure_time or nav.arrival_time %}
+    {% if nav.departure_time %}
     <div class="confidence-row">
         {% if nav.date_confidence == 'TENTATIVE' %}
         <span class="confidence-pill pill-warning">⚠️ Date Tentative</span>
@@ -192,12 +189,15 @@
 
             <div class="form-row">
                 <div class="form-col">
-                    <label class="form-label">Departure Time</label>
-                    <input type="datetime-local" name="departure_time" class="form-control" value="{{ nav.departure_time|date:'Y-m-d\TH:i' }}">
+                    <label class="form-label">
+                        Date
+                        <span class="move-date-required text-danger" {% if nav.status != 'CONFIRMED' and nav.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
+                    </label>
+                    <input type="date" name="date" class="form-control" value="{{ nav.departure_time|date:'Y-m-d' }}" {% if nav.status == 'CONFIRMED' or nav.status == 'COMPLETE' %}required{% endif %}>
                 </div>
                 <div class="form-col">
-                    <label class="form-label">Arrival Time</label>
-                    <input type="datetime-local" name="arrival_time" class="form-control" value="{{ nav.arrival_time|date:'Y-m-d\TH:i' }}">
+                    <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
+                    <input type="time" name="time" class="form-control" value="{{ nav.departure_time_str }}">
                 </div>
             </div>
 

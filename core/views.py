@@ -1539,16 +1539,23 @@ def add_play_view(request, trip_id):
         messages.error(request, "Activity title is required.")
         return redirect(f"/trips/{trip_id}/#play")
 
-    s_time = request.POST.get('start_time')
+    status = _normalize_item_status(request.POST.get('status'), 'IDEA')
+    play_dt, has_play_time = _parse_element_datetime(
+        request,
+        date_names=('date', 'play_date'),
+        time_names=('time', 'play_time'),
+        legacy_names=('start_time',)
+    )
+
+    if status == 'CONFIRMED' and not play_dt:
+        messages.error(request, "Confirmed activities require a date.")
+        return redirect(f"/trips/{trip_id}/#play")
+
     e_time = request.POST.get('end_time')
-    start_dt = parse_datetime(s_time) if s_time else None
     end_dt = parse_datetime(e_time) if e_time else None
-    if start_dt and settings.USE_TZ and timezone.is_naive(start_dt):
-        start_dt = timezone.make_aware(start_dt)
     if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
         end_dt = timezone.make_aware(end_dt)
-
-    if start_dt and end_dt and end_dt < start_dt:
+    if play_dt and end_dt and end_dt < play_dt:
         messages.error(request, "End date/time cannot be before start date/time.")
         return redirect(f"/trips/{trip_id}/#play")
 
@@ -1556,10 +1563,12 @@ def add_play_view(request, trip_id):
         trip=trip,
         title=title,
         play_type=request.POST.get('play_type', 'Sightseeing'),
-        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
+        status=status,
         address=request.POST.get('address', '').strip(),
-        start_time=start_dt,
-        end_time=end_dt,
+        start_time=play_dt,
+        end_time=None,
+        has_start_time=has_play_time,
+        has_end_time=False,
         price=float(request.POST.get('price')) if request.POST.get('price') else None,
         currency=request.POST.get('currency', 'USD'),
         link=request.POST.get('link', '').strip(),
@@ -1591,25 +1600,41 @@ def edit_play_view(request, trip_id, play_id):
         messages.error(request, "Permission denied: You can only edit activities you created or if you are a Trip Editor/Owner.")
         return redirect(fallback_redirect)
 
-    s_time = request.POST.get('start_time')
-    e_time = request.POST.get('end_time')
-    start_dt = parse_datetime(s_time) if s_time else None
-    end_dt = parse_datetime(e_time) if e_time else None
-    if start_dt and settings.USE_TZ and timezone.is_naive(start_dt):
-        start_dt = timezone.make_aware(start_dt)
-    if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
-        end_dt = timezone.make_aware(end_dt)
+    new_status = _normalize_item_status(request.POST.get('status'), play.status)
+    dates_in_form = any(k in request.POST for k in ('date', 'play_date', 'start_time'))
 
-    if start_dt and end_dt and end_dt < start_dt:
-        messages.error(request, "End date/time cannot be before start date/time.")
-        return redirect(fallback_redirect)
+    if dates_in_form:
+        play_dt, has_play_time = _parse_element_datetime(
+            request,
+            date_names=('date', 'play_date'),
+            time_names=('time', 'play_time'),
+            legacy_names=('start_time',)
+        )
+        if new_status == 'CONFIRMED' and not play_dt:
+            messages.error(request, "Confirmed activities require a date.")
+            return redirect(fallback_redirect)
+
+        e_time = request.POST.get('end_time')
+        end_dt = parse_datetime(e_time) if e_time else None
+        if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
+            end_dt = timezone.make_aware(end_dt)
+        if play_dt and end_dt and end_dt < play_dt:
+            messages.error(request, "End date/time cannot be before start date/time.")
+            return redirect(fallback_redirect)
+
+        play.start_time = play_dt
+        play.has_start_time = has_play_time
+    else:
+        if new_status == 'CONFIRMED' and not play.start_time:
+            messages.error(request, "Confirmed activities require a date.")
+            return redirect(fallback_redirect)
 
     play.title = request.POST.get('title', play.title).strip()
     play.play_type = request.POST.get('play_type', play.play_type)
-    play.status = _normalize_item_status(request.POST.get('status'), play.status)
+    play.status = new_status
     play.address = request.POST.get('address', '').strip()
-    play.start_time = start_dt
-    play.end_time = end_dt
+    play.end_time = None
+    play.has_end_time = False
     play.price = float(request.POST.get('price')) if request.POST.get('price') else None
     play.currency = request.POST.get('currency', play.currency)
     play.link = request.POST.get('link', '').strip()

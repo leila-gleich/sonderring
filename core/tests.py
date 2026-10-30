@@ -3,7 +3,7 @@ from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.template.context import BaseContext
-from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Nav, Do, Rec, Attachment, SecurityAuditLog
+from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Move, Taste, Play, Nav, Do, Rec, Attachment, SecurityAuditLog
 
 # Patch BaseContext.__copy__ for Python 3.14 compatibility with Django 4.2 test runner
 def _patched_copy(self):
@@ -1699,6 +1699,218 @@ class DateRangeValidationAndOptionalStayTimesTests(TestCase):
         self.assertContains(resp, 'setupStayDateSync')
         self.assertContains(resp, 'setupDateRangePair')
         self.assertContains(resp, 'setupDateTimeRangePair')
+        self.assertContains(resp, 'setupSingleDateElementSync')
+
+    def test_only_stay_has_start_and_end_dates_validation(self):
+        """Only stays require both start and end dates when confirmed."""
+        # Confirmed stay fails without both dates
+        resp_stay = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'No Dates Hotel',
+            'status': 'CONFIRMED',
+        }, follow=True)
+        self.assertContains(resp_stay, 'Confirmed stays require both a check-in date (start) and check-out date (end).')
+
+    def test_move_date_required_if_confirmed_optional_if_idea(self):
+        """Moves require a date when confirmed; date is optional when status is IDEA."""
+        # 1. Confirmed Move without date is rejected
+        resp_conf_no_date = self.client.post(reverse('core:add_move', args=[self.trip.id]), {
+            'title': 'Undated Confirmed Flight',
+            'mode': 'Flight',
+            'status': 'CONFIRMED',
+        }, follow=True)
+        self.assertContains(resp_conf_no_date, 'Confirmed moves require a date.')
+        self.assertFalse(Move.objects.filter(title='Undated Confirmed Flight').exists())
+
+        # 2. Idea Move without date is accepted (optional)
+        resp_idea_no_date = self.client.post(reverse('core:add_move', args=[self.trip.id]), {
+            'title': 'Undated Idea Flight',
+            'mode': 'Flight',
+            'status': 'IDEA',
+        }, follow=True)
+        self.assertEqual(resp_idea_no_date.status_code, 200)
+        move_idea = Move.objects.filter(title='Undated Idea Flight').first()
+        self.assertIsNotNone(move_idea)
+        self.assertEqual(move_idea.status, 'IDEA')
+        self.assertIsNone(move_idea.departure_time)
+        self.assertIsNone(move_idea.arrival_time)
+        self.assertIsNone(move_idea.date)
+
+        # 3. Confirmed Move with single date succeeds and has no arrival/end date
+        resp_conf_with_date = self.client.post(reverse('core:add_move', args=[self.trip.id]), {
+            'title': 'Dated Confirmed Flight',
+            'mode': 'Flight',
+            'status': 'CONFIRMED',
+            'date': '2026-11-15',
+            'time': '09:30',
+        }, follow=True)
+        self.assertEqual(resp_conf_with_date.status_code, 200)
+        move_conf = Move.objects.filter(title='Dated Confirmed Flight').first()
+        self.assertIsNotNone(move_conf)
+        self.assertEqual(move_conf.status, 'CONFIRMED')
+        self.assertEqual(str(move_conf.date), '2026-11-15')
+        self.assertTrue(move_conf.is_departure_time_set)
+        self.assertIsNone(move_conf.arrival_time)
+
+        # 4. Editing Move from IDEA to CONFIRMED without date is rejected
+        edit_resp = self.client.post(reverse('core:edit_move', args=[self.trip.id, move_idea.id]), {
+            'title': 'Undated Idea Flight',
+            'status': 'CONFIRMED',
+            'date': '',
+        }, follow=True)
+        self.assertContains(edit_resp, 'Confirmed moves require a date.')
+        move_idea.refresh_from_db()
+        self.assertEqual(move_idea.status, 'IDEA')
+
+    def test_taste_date_required_if_confirmed_optional_if_idea(self):
+        """Tastes require a date when confirmed; date is optional when status is IDEA."""
+        # 1. Confirmed Taste without date is rejected
+        resp_conf_no_date = self.client.post(reverse('core:add_taste', args=[self.trip.id]), {
+            'title': 'Undated Confirmed Dinner',
+            'taste_type': 'Restaurant',
+            'status': 'CONFIRMED',
+        }, follow=True)
+        self.assertContains(resp_conf_no_date, 'Confirmed food & drink reservations require a date.')
+        self.assertFalse(Taste.objects.filter(title='Undated Confirmed Dinner').exists())
+
+        # 2. Idea Taste without date is accepted (optional)
+        resp_idea_no_date = self.client.post(reverse('core:add_taste', args=[self.trip.id]), {
+            'title': 'Undated Idea Cafe',
+            'taste_type': 'Cafe & Bakery',
+            'status': 'IDEA',
+        }, follow=True)
+        self.assertEqual(resp_idea_no_date.status_code, 200)
+        taste_idea = Taste.objects.filter(title='Undated Idea Cafe').first()
+        self.assertIsNotNone(taste_idea)
+        self.assertEqual(taste_idea.status, 'IDEA')
+        self.assertIsNone(taste_idea.start_time)
+        self.assertIsNone(taste_idea.end_time)
+        self.assertIsNone(taste_idea.date)
+
+        # 3. Confirmed Taste with single date succeeds and has no end date
+        resp_conf_with_date = self.client.post(reverse('core:add_taste', args=[self.trip.id]), {
+            'title': 'Dated Confirmed Dinner',
+            'taste_type': 'Restaurant',
+            'status': 'CONFIRMED',
+            'date': '2026-11-16',
+            'time': '19:00',
+        }, follow=True)
+        self.assertEqual(resp_conf_with_date.status_code, 200)
+        taste_conf = Taste.objects.filter(title='Dated Confirmed Dinner').first()
+        self.assertIsNotNone(taste_conf)
+        self.assertEqual(taste_conf.status, 'CONFIRMED')
+        self.assertEqual(str(taste_conf.date), '2026-11-16')
+        self.assertTrue(taste_conf.is_start_time_set)
+        self.assertIsNone(taste_conf.end_time)
+
+        # 4. Editing Taste from IDEA to CONFIRMED without date is rejected
+        edit_resp = self.client.post(reverse('core:edit_taste', args=[self.trip.id, taste_idea.id]), {
+            'title': 'Undated Idea Cafe',
+            'status': 'CONFIRMED',
+            'date': '',
+        }, follow=True)
+        self.assertContains(edit_resp, 'Confirmed food & drink reservations require a date.')
+        taste_idea.refresh_from_db()
+        self.assertEqual(taste_idea.status, 'IDEA')
+
+    def test_play_date_required_if_confirmed_optional_if_idea(self):
+        """Plays require a date when confirmed; date is optional when status is IDEA."""
+        # 1. Confirmed Play without date is rejected
+        resp_conf_no_date = self.client.post(reverse('core:add_play', args=[self.trip.id]), {
+            'title': 'Undated Confirmed Museum',
+            'play_type': 'Culture & Museum',
+            'status': 'CONFIRMED',
+        }, follow=True)
+        self.assertContains(resp_conf_no_date, 'Confirmed activities require a date.')
+        self.assertFalse(Play.objects.filter(title='Undated Confirmed Museum').exists())
+
+        # 2. Idea Play without date is accepted (optional)
+        resp_idea_no_date = self.client.post(reverse('core:add_play', args=[self.trip.id]), {
+            'title': 'Undated Idea Hike',
+            'play_type': 'Outdoor & Hike',
+            'status': 'IDEA',
+        }, follow=True)
+        self.assertEqual(resp_idea_no_date.status_code, 200)
+        play_idea = Play.objects.filter(title='Undated Idea Hike').first()
+        self.assertIsNotNone(play_idea)
+        self.assertEqual(play_idea.status, 'IDEA')
+        self.assertIsNone(play_idea.start_time)
+        self.assertIsNone(play_idea.end_time)
+        self.assertIsNone(play_idea.date)
+
+        # 3. Confirmed Play with single date succeeds and has no end date
+        resp_conf_with_date = self.client.post(reverse('core:add_play', args=[self.trip.id]), {
+            'title': 'Dated Confirmed Excursion',
+            'play_type': 'Tour & Excursion',
+            'status': 'CONFIRMED',
+            'date': '2026-11-17',
+            'time': '10:00',
+        }, follow=True)
+        self.assertEqual(resp_conf_with_date.status_code, 200)
+        play_conf = Play.objects.filter(title='Dated Confirmed Excursion').first()
+        self.assertIsNotNone(play_conf)
+        self.assertEqual(play_conf.status, 'CONFIRMED')
+        self.assertEqual(str(play_conf.date), '2026-11-17')
+        self.assertTrue(play_conf.is_start_time_set)
+        self.assertIsNone(play_conf.end_time)
+
+        # 4. Editing Play from IDEA to CONFIRMED without date is rejected
+        edit_resp = self.client.post(reverse('core:edit_play', args=[self.trip.id, play_idea.id]), {
+            'title': 'Undated Idea Hike',
+            'status': 'CONFIRMED',
+            'date': '',
+        }, follow=True)
+        self.assertContains(edit_resp, 'Confirmed activities require a date.')
+        play_idea.refresh_from_db()
+        self.assertEqual(play_idea.status, 'IDEA')
+
+    def test_workspace_and_timeline_shows_end_date_only_for_stay(self):
+        """Workspace timeline displays end dates only for Stays, never for Move, Taste, or Play."""
+        import datetime
+        stay = Stay.objects.create(
+            trip=self.trip,
+            title='Timeline Stay Hotel',
+            status='CONFIRMED',
+            check_in=datetime.datetime(2026, 11, 2, 15, 0, tzinfo=datetime.timezone.utc),
+            check_out=datetime.datetime(2026, 11, 6, 11, 0, tzinfo=datetime.timezone.utc),
+            has_check_in_time=True,
+            has_check_out_time=True,
+            created_by=self.user
+        )
+        move = Move.objects.create(
+            trip=self.trip,
+            title='Timeline Flight',
+            mode='Flight',
+            status='CONFIRMED',
+            departure_time=datetime.datetime(2026, 11, 2, 9, 0, tzinfo=datetime.timezone.utc),
+            has_departure_time=True,
+            created_by=self.user
+        )
+        taste = Taste.objects.create(
+            trip=self.trip,
+            title='Timeline Dinner',
+            status='CONFIRMED',
+            start_time=datetime.datetime(2026, 11, 3, 19, 0, tzinfo=datetime.timezone.utc),
+            has_start_time=True,
+            created_by=self.user
+        )
+        play = Play.objects.create(
+            trip=self.trip,
+            title='Timeline Museum',
+            status='CONFIRMED',
+            start_time=datetime.datetime(2026, 11, 4, 10, 0, tzinfo=datetime.timezone.utc),
+            has_start_time=True,
+            created_by=self.user
+        )
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+
+        # Check forms have single date inputs for move, taste, play
+        self.assertContains(resp, 'name="date"')
+        self.assertContains(resp, 'move-date-required')
+        self.assertContains(resp, 'taste-date-required')
+        self.assertContains(resp, 'play-date-required')
+        self.assertContains(resp, 'setupSingleDateElementSync')
 
 
 class MoveStayTastePlayWorkflowTests(TestCase):
@@ -1877,6 +2089,110 @@ class MoveStayTastePlayWorkflowTests(TestCase):
         del_resp = self.client.post(reverse('core:delete_play', args=[self.trip.id, play.id]), follow=True)
         self.assertEqual(del_resp.status_code, 200)
         self.assertFalse(Play.objects.filter(id=play.id).exists())
+
+    def test_play_modal_structure_and_primary_inputs(self):
+        """Verify workspace renders Play modals with name, status (after name), type, location, notes and More Options."""
+        from core.models import Play
+        play = Play.objects.create(
+            trip=self.trip,
+            title='Sample Activity',
+            play_type='Culture & Museum',
+            status='IDEA',
+            address='123 Museum Way',
+            notes='Sample entrance notes',
+            created_by=self.owner,
+            updated_by=self.owner
+        )
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode('utf-8')
+
+        # Verify addPlayModal structure
+        self.assertIn('id="addPlayModal"', content)
+        self.assertIn('id="btnTogglePlayMoreOptions"', content)
+        self.assertIn('id="playMoreOptionsContent"', content)
+        self.assertIn('togglePlayMoreOptions()', content)
+
+        # In addPlayModal, status is in the primary section immediately following title
+        add_modal_idx = content.find('id="addPlayModal"')
+        title_idx = content.find('name="title"', add_modal_idx)
+        status_idx = content.find('name="status"', title_idx)
+        type_idx = content.find('name="play_type"', status_idx)
+        address_idx = content.find('name="address"', type_idx)
+        notes_idx = content.find('name="notes"', address_idx)
+        more_btn_idx = content.find('id="btnTogglePlayMoreOptions"', notes_idx)
+        more_content_idx = content.find('id="playMoreOptionsContent"', more_btn_idx)
+
+        self.assertTrue(add_modal_idx < title_idx < status_idx < type_idx < address_idx < notes_idx < more_btn_idx < more_content_idx)
+
+        # Inside More Options content:
+        start_time_idx = content.find('name="start_time"', more_content_idx)
+        end_time_idx = content.find('name="end_time"', more_content_idx)
+        price_idx = content.find('name="price"', more_content_idx)
+        code_idx = content.find('name="confirmation_code"', more_content_idx)
+        link_idx = content.find('name="link"', more_content_idx)
+        desc_idx = content.find('name="description"', more_content_idx)
+
+        self.assertTrue(more_content_idx < start_time_idx < end_time_idx)
+        self.assertTrue(more_content_idx < price_idx < code_idx)
+        self.assertTrue(more_content_idx < link_idx < desc_idx)
+
+        # Verify editPlayModal structure
+        edit_modal_id = f'id="editPlayModal_{play.id}"'
+        self.assertIn(edit_modal_id, content)
+        self.assertIn(f'id="btnToggleEditPlayMoreOptions_{play.id}"', content)
+        self.assertIn(f'id="editPlayMoreOptionsContent_{play.id}"', content)
+
+    def test_play_add_with_only_primary_inputs(self):
+        """Test adding a Play with only name, status, type, location, and notes."""
+        from core.models import Play
+        resp = self.client.post(reverse('core:add_play', args=[self.trip.id]), {
+            'title': 'Strolling the Old Town',
+            'status': 'IDEA',
+            'play_type': 'Sightseeing',
+            'address': 'Gamla Stan, Stockholm',
+            'notes': 'Cobblestone streets, wear comfortable walking shoes.',
+        }, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        play = Play.objects.filter(trip=self.trip, title='Strolling the Old Town').first()
+        self.assertIsNotNone(play)
+        self.assertEqual(play.status, 'IDEA')
+        self.assertEqual(play.play_type, 'Sightseeing')
+        self.assertEqual(play.address, 'Gamla Stan, Stockholm')
+        self.assertEqual(play.notes, 'Cobblestone streets, wear comfortable walking shoes.')
+        self.assertIsNone(play.price)
+        self.assertEqual(play.link, '')
+        self.assertEqual(play.description, '')
+
+    def test_play_add_with_more_options(self):
+        """Test adding a Play with both primary inputs and more options fields."""
+        from core.models import Play
+        resp = self.client.post(reverse('core:add_play', args=[self.trip.id]), {
+            'title': 'Vasa Museum Guided Tour',
+            'status': 'CONFIRMED',
+            'play_type': 'Culture & Museum',
+            'address': 'Galärvarvsvägen 14, Stockholm',
+            'notes': 'English tour starts at 11:15 AM near the ship bow',
+            'start_time': '2026-11-15T11:00',
+            'end_time': '2026-11-15T13:00',
+            'price': '19.50',
+            'confirmation_code': 'VASA-9921',
+            'link': 'https://www.vasamuseet.se/en',
+            'description': 'Maritime museum displaying the 17th-century ship Vasa.',
+        }, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        play = Play.objects.filter(trip=self.trip, title='Vasa Museum Guided Tour').first()
+        self.assertIsNotNone(play)
+        self.assertEqual(play.status, 'CONFIRMED')
+        self.assertEqual(play.play_type, 'Culture & Museum')
+        self.assertEqual(play.address, 'Galärvarvsvägen 14, Stockholm')
+        self.assertEqual(play.notes, 'English tour starts at 11:15 AM near the ship bow')
+        self.assertEqual(float(play.price), 19.50)
+        self.assertEqual(play.confirmation_code, 'VASA-9921')
+        self.assertEqual(play.link, 'https://www.vasamuseet.se/en')
+        self.assertEqual(play.description, 'Maritime museum displaying the 17th-century ship Vasa.')
 
     def test_markdown_sync_structure_order(self):
         """Verify markdown file generates ## Move, ## Stay, ## Taste, ## Play in exact canonical order."""
