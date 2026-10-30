@@ -1388,16 +1388,23 @@ def add_taste_view(request, trip_id):
         messages.error(request, "Food & drink title is required.")
         return redirect(f"/trips/{trip_id}/#taste")
 
-    s_time = request.POST.get('start_time')
+    status = _normalize_item_status(request.POST.get('status'), 'IDEA')
+    taste_dt, has_taste_time = _parse_element_datetime(
+        request,
+        date_names=('date', 'taste_date'),
+        time_names=('time', 'taste_time'),
+        legacy_names=('start_time',)
+    )
+
+    if status == 'CONFIRMED' and not taste_dt:
+        messages.error(request, "Confirmed food & drink reservations require a date.")
+        return redirect(f"/trips/{trip_id}/#taste")
+
     e_time = request.POST.get('end_time')
-    start_dt = parse_datetime(s_time) if s_time else None
     end_dt = parse_datetime(e_time) if e_time else None
-    if start_dt and settings.USE_TZ and timezone.is_naive(start_dt):
-        start_dt = timezone.make_aware(start_dt)
     if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
         end_dt = timezone.make_aware(end_dt)
-
-    if start_dt and end_dt and end_dt < start_dt:
+    if taste_dt and end_dt and end_dt < taste_dt:
         messages.error(request, "End date/time cannot be before start date/time.")
         return redirect(f"/trips/{trip_id}/#taste")
 
@@ -1405,10 +1412,12 @@ def add_taste_view(request, trip_id):
         trip=trip,
         title=title,
         taste_type=request.POST.get('taste_type', 'Restaurant'),
-        status=_normalize_item_status(request.POST.get('status'), 'IDEA'),
+        status=status,
         address=request.POST.get('address', '').strip(),
-        start_time=start_dt,
-        end_time=end_dt,
+        start_time=taste_dt,
+        end_time=None,
+        has_start_time=has_taste_time,
+        has_end_time=False,
         price=float(request.POST.get('price')) if request.POST.get('price') else None,
         currency=request.POST.get('currency', 'USD'),
         link=request.POST.get('link', '').strip(),
@@ -1440,25 +1449,41 @@ def edit_taste_view(request, trip_id, taste_id):
         messages.error(request, "Permission denied: You can only edit dining spots you created or if you are a Trip Editor/Owner.")
         return redirect(fallback_redirect)
 
-    s_time = request.POST.get('start_time')
-    e_time = request.POST.get('end_time')
-    start_dt = parse_datetime(s_time) if s_time else None
-    end_dt = parse_datetime(e_time) if e_time else None
-    if start_dt and settings.USE_TZ and timezone.is_naive(start_dt):
-        start_dt = timezone.make_aware(start_dt)
-    if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
-        end_dt = timezone.make_aware(end_dt)
+    new_status = _normalize_item_status(request.POST.get('status'), taste.status)
+    dates_in_form = any(k in request.POST for k in ('date', 'taste_date', 'start_time'))
 
-    if start_dt and end_dt and end_dt < start_dt:
-        messages.error(request, "End date/time cannot be before start date/time.")
-        return redirect(fallback_redirect)
+    if dates_in_form:
+        taste_dt, has_taste_time = _parse_element_datetime(
+            request,
+            date_names=('date', 'taste_date'),
+            time_names=('time', 'taste_time'),
+            legacy_names=('start_time',)
+        )
+        if new_status == 'CONFIRMED' and not taste_dt:
+            messages.error(request, "Confirmed food & drink reservations require a date.")
+            return redirect(fallback_redirect)
+
+        e_time = request.POST.get('end_time')
+        end_dt = parse_datetime(e_time) if e_time else None
+        if end_dt and settings.USE_TZ and timezone.is_naive(end_dt):
+            end_dt = timezone.make_aware(end_dt)
+        if taste_dt and end_dt and end_dt < taste_dt:
+            messages.error(request, "End date/time cannot be before start date/time.")
+            return redirect(fallback_redirect)
+
+        taste.start_time = taste_dt
+        taste.has_start_time = has_taste_time
+    else:
+        if new_status == 'CONFIRMED' and not taste.start_time:
+            messages.error(request, "Confirmed food & drink reservations require a date.")
+            return redirect(fallback_redirect)
 
     taste.title = request.POST.get('title', taste.title).strip()
     taste.taste_type = request.POST.get('taste_type', taste.taste_type)
-    taste.status = _normalize_item_status(request.POST.get('status'), taste.status)
+    taste.status = new_status
     taste.address = request.POST.get('address', '').strip()
-    taste.start_time = start_dt
-    taste.end_time = end_dt
+    taste.end_time = None
+    taste.has_end_time = False
     taste.price = float(request.POST.get('price')) if request.POST.get('price') else None
     taste.currency = request.POST.get('currency', taste.currency)
     taste.link = request.POST.get('link', '').strip()
