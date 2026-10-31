@@ -99,3 +99,12 @@ When prompts or user stories use these terms, interpret them according to these 
   $\rightarrow$ Remove the model attributes (`end_time`, `has_end_time`) for Taste items in the schema and forms.
 - *"For play items categorized as a tour, add the attribute length"*:
   $\rightarrow$ Add a `length` field/attribute specifically for Play items whose category is "Tour".
+
+---
+
+## 6. Living User Stories & Acceptance Criteria Protocol
+
+- **Canonical Document**: [`docs/livingUserStoriesAndAcceptanceCriteria.md`](docs/livingUserStoriesAndAcceptanceCriteria.md)
+- **Mandatory Agent Rule**: **Always update the Living User Stories & Acceptance Criteria as changes are made in the documents.**
+  Whenever modifications, additions, or deprecations are introduced in reference specifications (such as `docs/tripItemAttributesReference.md`), data models, form flows, or domain rules, AI agents and contributors must immediately update `docs/livingUserStoriesAndAcceptanceCriteria.md` to keep user stories and testable acceptance criteria synchronized.
+
