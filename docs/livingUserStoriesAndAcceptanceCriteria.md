@@ -3,8 +3,15 @@
 > **Document Status**: Canonical & Living  
 > **Last Updated**: 2026-10-31  
 > **Traceability & Source Documents**:  
+> • [`docs/PRD.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PRD.md) (Product Requirements Document)  
+> • [`docs/MVP.md`](file:///Users/leilagleich/Desktop/sonderring/docs/MVP.md) (MVP Scope & Roadmap)  
+> • [`docs/CYBERSECURITY.md`](file:///Users/leilagleich/Desktop/sonderring/docs/CYBERSECURITY.md) (Security Architecture & Threat Model)  
+> • [`docs/PAGE_OUTLINE.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PAGE_OUTLINE.md) (Site Architecture & UI Flows)  
+> • [`docs/DATA_MODEL.md`](file:///Users/leilagleich/Desktop/sonderring/docs/DATA_MODEL.md) (Canonical Data Model & Schema)  
+> • [`docs/API_SPECIFICATION.md`](file:///Users/leilagleich/Desktop/sonderring/docs/API_SPECIFICATION.md) (REST API Contract)  
+> • [`docs/MARKDOWN_SYNC_SPEC.md`](file:///Users/leilagleich/Desktop/sonderring/docs/MARKDOWN_SYNC_SPEC.md) (Markdown Sync Spec)  
 > • [`docs/tripItemAttributesReference.md`](file:///Users/leilagleich/Desktop/sonderring/docs/tripItemAttributesReference.md)  
-> • [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md)  
+> • [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md) (Domain Nomenclature)  
 > • [`README.md`](file:///Users/leilagleich/Desktop/sonderring/README.md)  
 > • [`Trips/README.md`](file:///Users/leilagleich/Desktop/Trips/README.md)  
 
@@ -296,14 +303,16 @@
 
 | Epic / Story ID | Dimension | Scope | Reference Document Section | Primary Template / Code Location |
 | :--- | :--- | :--- | :--- | :--- |
-| **US-TS-01** | Global | Full Stack | `tripItemAttributesReference.md` § TripSpace Metadata | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L90), `templates/trip_workspace.html` |
-| **US-TS-02** | Global | UI / View | `AGENTS.md` § 1.1 | `core/views.py`, `templates/home.html` |
-| **US-DIM-01** | All | Full Stack | `AGENTS.md` § 1.2 | `templates/trip_workspace.html` |
-| **US-FLOW-01**| All | Frontend | `tripItemAttributesReference.md` § ITEM INPUTS | `templates/trip_workspace.html#L1400-L2400` |
-| **US-FLOW-02**| All | Full Stack | `AGENTS.md` § 3 | `core/forms.py`, `core/views.py`, `templates/trip_workspace.html` |
-| **US-MOVE-01**| Move | Full Stack | `tripItemAttributesReference.md` § Move | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L250), `templates/trip_workspace.html` |
-| **US-STAY-01**| Stay | Full Stack | `tripItemAttributesReference.md` § Stay | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L380), `templates/trip_workspace.html` |
-| **US-TASTE-01**| Taste | Full Stack | `tripItemAttributesReference.md` § Taste | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L520), `templates/trip_workspace.html` |
-| **US-PLAY-01**| Play | Full Stack | `tripItemAttributesReference.md` § Plays | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L650), `templates/trip_workspace.html` |
-| **US-SEC-01** | All | Security | `README.md` § Tech Stack & Security | `core/fields.py`, `core/encryption.py` |
-| **US-SYNC-01**| All | Data / Tooling| `Trips/README.md` § Structural Uniformity | `core/fixture_sync.py`, `core/signals.py` |
+| **US-TS-01** | Global | Full Stack | `PRD.md` § 4.1, `tripItemAttributesReference.md` § 1 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L90), `templates/trip_workspace.html` |
+| **US-TS-02** | Global | UI / View | `PRD.md` § 4.1, `PAGE_OUTLINE.md` § 2.1 | `core/views.py`, `templates/home.html` |
+| **US-TS-03** | Global | Collaboration | `PRD.md` § 4.1, `PAGE_OUTLINE.md` § 2.3 | `core/models.py`, `templates/trip_workspace.html` |
+| **US-DIM-01** | All | Full Stack | `AGENTS.md` § 1.2, `PRD.md` § 4.3 | `templates/trip_workspace.html` |
+| **US-FLOW-01**| All | Frontend | `PRD.md` § 4.2, `PAGE_OUTLINE.md` § 3 | `templates/trip_workspace.html#L1400-L2400` |
+| **US-FLOW-02**| All | Full Stack | `AGENTS.md` § 3, `DATA_MODEL.md` § 3 | `core/forms.py`, `core/views.py`, `templates/trip_workspace.html` |
+| **US-MOVE-01**| Move | Full Stack | `tripItemAttributesReference.md` § 3.1, `DATA_MODEL.md` § 2.4 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L250), `templates/trip_workspace.html` |
+| **US-STAY-01**| Stay | Full Stack | `tripItemAttributesReference.md` § 3.2, `DATA_MODEL.md` § 2.5 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L380), `templates/trip_workspace.html` |
+| **US-TASTE-01**| Taste | Full Stack | `tripItemAttributesReference.md` § 3.3, `DATA_MODEL.md` § 2.6 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L520), `templates/trip_workspace.html` |
+| **US-PLAY-01**| Play | Full Stack | `tripItemAttributesReference.md` § 3.4, `DATA_MODEL.md` § 2.7 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L650), `templates/trip_workspace.html` |
+| **US-SEC-01** | All | Security | `CYBERSECURITY.md` § 2, `README.md` § Security | `core/fields.py`, `core/encryption.py` |
+| **US-SEC-02** | All | Vault | `CYBERSECURITY.md` § 4, `DATA_MODEL.md` § 2.8 | `core/views.py`, `media/vault/` |
+| **US-SYNC-01**| All | Data / Tooling| `MARKDOWN_SYNC_SPEC.md` § 2-4, `Trips/README.md` | `core/fixture_sync.py`, `core/signals.py` |
