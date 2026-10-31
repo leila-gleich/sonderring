@@ -692,7 +692,7 @@ def create_trip_view(request):
         'time_granularity': time_granularity,
         'created_by': current_user,
     }
-
+    ############ TIME GRANULARITY ###########
     if time_granularity == 'EXACT_RANGE':
         s_date = request.POST.get('start_date')
         e_date = request.POST.get('end_date')
@@ -705,15 +705,18 @@ def create_trip_view(request):
             trip_data['start_date'] = parsed_s
             trip_data['end_date'] = parsed_e
             trip_data['year'] = trip_data['start_date'].year if trip_data['start_date'] else timezone.now().year
+    
     elif time_granularity == 'SEASON_YEAR':
         trip_data['season'] = request.POST.get('season', 'SUMMER')
         trip_data['year'] = int(request.POST.get('season_year') or timezone.now().year)
+    
     elif time_granularity == 'MONTH':
         trip_data['start_month'] = int(request.POST.get('start_month') or 1)
         end_m = request.POST.get('end_month')
         if end_m:
             trip_data['end_month'] = int(end_m)
         trip_data['year'] = int(request.POST.get('month_year') or timezone.now().year)
+    
     else: # YEAR
         trip_data['year'] = int(request.POST.get('year') or timezone.now().year)
 
