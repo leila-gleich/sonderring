@@ -994,61 +994,8 @@ def _parse_element_datetime(request, date_names=('date',), time_names=('time',),
     return dt, has_time
 
 
-@require_POST
-def add_stay_view(request, trip_id):
-    trip = get_object_or_404(Trip, id=trip_id)
-    current_user = get_current_user(request)
-
-    if not can_user_edit_trip(current_user, trip):
-        messages.error(request, "Permission denied: Only Trip Owners and Editors can add accommodations.")
-        return redirect(f"/trips/{trip_id}/#stays")
-
-    title = request.POST.get('title', '').strip()
-    if not title:
-        messages.error(request, "Stay name is required.")
-        return redirect(f"/trips/{trip_id}/#stays")
-
-    status = _normalize_item_status(request.POST.get('status'), 'IDEA')
-    check_in_dt, check_out_dt, has_ci_time, has_co_time = _parse_stay_datetimes(request)
-
-    if status == 'CONFIRMED':
-        if not check_in_dt or not check_out_dt:
-            messages.error(request, "Confirmed stays require both a check-in date (start) and check-out date (end).")
-            return redirect(f"/trips/{trip_id}/#stays")
-
-    if check_in_dt and check_out_dt and check_out_dt < check_in_dt:
-        messages.error(request, "Check-out date/time cannot be before check-in date/time.")
-        return redirect(f"/trips/{trip_id}/#stays")
-
-    stay = Stay(
-        trip=trip,
-        title=title,
-        status=status,
-        place_type=request.POST.get('place_type', 'Hotel Room') or 'Hotel Room',
-        num_beds=int(request.POST.get('num_beds')) if request.POST.get('num_beds') else None,
-        num_rooms=int(request.POST.get('num_rooms')) if request.POST.get('num_rooms') else None,
-        num_guests=int(request.POST.get('num_guests')) if request.POST.get('num_guests') else None,
-        address=request.POST.get('address', '').strip(),
-        check_in=check_in_dt,
-        check_out=check_out_dt,
-        has_check_in_time=has_ci_time,
-        has_check_out_time=has_co_time,
-        total_price=float(request.POST.get('total_price')) if request.POST.get('total_price') else None,
-        currency=request.POST.get('currency', 'USD'),
-        booking_link=request.POST.get('booking_link', '').strip(),
-        notes=request.POST.get('notes', '').strip(),
-        created_by=current_user,
-        updated_by=current_user
-    )
-
-    code = request.POST.get('confirmation_code', '').strip()
-    is_confirmed_hotel = (status == 'CONFIRMED' and 'hotel' in (stay.place_type or '').lower())
-    if code and is_confirmed_hotel:
-        stay.confirmation_code = code
-
-    stay.save()
-
-    # Process attached documents
+def _process_item_vault_uploads(request, trip, current_user, stay=None, move=None, taste=None, play=None):
+    """Processes uploaded files and securely attaches them to the item in the Vault."""
     uploaded_files = request.FILES.getlist('documents') or request.FILES.getlist('document') or request.FILES.getlist('file')
     uploaded_count = 0
     for file_obj in uploaded_files:
@@ -1067,6 +1014,9 @@ def add_stay_view(request, trip_id):
         attachment = Attachment.objects.create(
             trip=trip,
             stay=stay,
+            move=move,
+            taste=taste,
+            play=play,
             file_name=orig_filename,
             file_type=detected_mime,
             file=file_obj,
@@ -1074,6 +1024,16 @@ def add_stay_view(request, trip_id):
             uploaded_by=current_user,
             updated_by=current_user
         )
+        metadata = {'file_name': attachment.file_name, 'file_type': attachment.file_type}
+        if stay:
+            metadata['stay_id'] = str(stay.id)
+        if move:
+            metadata['move_id'] = str(move.id)
+        if taste:
+            metadata['taste_id'] = str(taste.id)
+        if play:
+            metadata['play_id'] = str(play.id)
+
         log_security_event(
             request,
             action='VAULT_DOCUMENT_UPLOADED',
@@ -1081,10 +1041,81 @@ def add_stay_view(request, trip_id):
             resource_id=attachment.id,
             trip=trip,
             user=current_user,
-            metadata={'file_name': attachment.file_name, 'file_type': attachment.file_type, 'stay_id': str(stay.id)}
+            metadata=metadata
         )
         uploaded_count += 1
+    return uploaded_count
 
+
+@require_POST
+def add_stay_view(request, trip_id):
+    trip = get_object_or_404(Trip, id=trip_id)
+    current_user = get_current_user(request)
+
+    if not can_user_edit_trip(current_user, trip):
+        messages.error(request, "Permission denied: Only Trip Owners and Editors can add accommodations.")
+        return redirect(f"/trips/{trip_id}/#stays")
+
+    title = (request.POST.get('name') or request.POST.get('title', '')).strip()
+    if not title:
+        messages.error(request, "Stay name is required.")
+        return redirect(f"/trips/{trip_id}/#stays")
+
+    status = _normalize_item_status(request.POST.get('status'), 'IDEA')
+    check_in_dt, check_out_dt, has_ci_time, has_co_time = _parse_stay_datetimes(request)
+
+    if status == 'CONFIRMED':
+        if not check_in_dt or not check_out_dt:
+            messages.error(request, "Confirmed stays require both a check-in date (start) and check-out date (end).")
+            return redirect(f"/trips/{trip_id}/#stays")
+
+    if check_in_dt and check_out_dt and check_out_dt < check_in_dt:
+        messages.error(request, "Check-out date/time cannot be before check-in date/time.")
+        return redirect(f"/trips/{trip_id}/#stays")
+
+    raw_price = request.POST.get('price') or request.POST.get('total_price')
+    try:
+        price_val = float(raw_price) if raw_price else None
+    except (ValueError, TypeError):
+        price_val = None
+
+    raw_length = request.POST.get('stay_length')
+    try:
+        stay_length = int(raw_length) if raw_length else None
+    except (ValueError, TypeError):
+        stay_length = None
+
+    stay = Stay(
+        trip=trip,
+        title=title,
+        status=status,
+        place_type=request.POST.get('type') or request.POST.get('place_type', 'Hotel') or 'Hotel',
+        stay_length=stay_length,
+        stay_length_unit=request.POST.get('stay_length_unit', 'Days') or 'Days',
+        num_beds=int(request.POST.get('num_beds')) if request.POST.get('num_beds') else None,
+        num_rooms=int(request.POST.get('num_rooms')) if request.POST.get('num_rooms') else None,
+        num_guests=int(request.POST.get('num_guests')) if request.POST.get('num_guests') else None,
+        address=(request.POST.get('location') or request.POST.get('address', '')).strip(),
+        check_in=check_in_dt,
+        check_out=check_out_dt,
+        has_check_in_time=has_ci_time,
+        has_check_out_time=has_co_time,
+        total_price=price_val,
+        currency=request.POST.get('currency', 'USD'),
+        booking_link=(request.POST.get('link') or request.POST.get('booking_link', '')).strip(),
+        notes=request.POST.get('notes', '').strip(),
+        created_by=current_user,
+        updated_by=current_user
+    )
+
+    code = request.POST.get('confirmation_code', '').strip()
+    if code and status == 'CONFIRMED':
+        if stay.place_type != 'Entire Place':
+            stay.confirmation_code = code
+
+    stay.save()
+
+    uploaded_count = _process_item_vault_uploads(request, trip, current_user, stay=stay)
     if uploaded_count > 0:
         messages.success(request, f"Stay '{stay.title}' added with {uploaded_count} uploaded document{'s' if uploaded_count > 1 else ''}!")
     else:
@@ -1105,7 +1136,7 @@ def edit_stay_view(request, trip_id, stay_id):
         messages.error(request, "Permission denied: You can only edit accommodations you created or if you are a Trip Editor/Owner.")
         return redirect(fallback_redirect)
 
-    new_title = request.POST.get('title', stay.title).strip()
+    new_title = (request.POST.get('name') or request.POST.get('title', stay.title)).strip()
     if not new_title:
         messages.error(request, "Stay title cannot be blank.")
         return redirect(fallback_redirect)
@@ -1135,15 +1166,29 @@ def edit_stay_view(request, trip_id, stay_id):
 
     stay.title = new_title
     stay.status = new_status
-    stay.place_type = request.POST.get('place_type', stay.place_type)
+    stay.place_type = request.POST.get('type') or request.POST.get('place_type', stay.place_type)
+    if 'stay_length' in request.POST:
+        raw_length = request.POST.get('stay_length')
+        try:
+            stay.stay_length = int(raw_length) if raw_length else None
+        except (ValueError, TypeError):
+            stay.stay_length = None
+    if 'stay_length_unit' in request.POST:
+        stay.stay_length_unit = request.POST.get('stay_length_unit', stay.stay_length_unit) or 'Days'
     stay.num_beds = int(request.POST.get('num_beds')) if request.POST.get('num_beds') else None
     stay.num_rooms = int(request.POST.get('num_rooms')) if request.POST.get('num_rooms') else None
     stay.num_guests = int(request.POST.get('num_guests')) if request.POST.get('num_guests') else None
-    stay.address = request.POST.get('address', '').strip()
+    stay.address = (request.POST.get('location') or request.POST.get('address', '')).strip()
     
-    stay.total_price = float(request.POST.get('total_price')) if request.POST.get('total_price') else None
+    raw_price = request.POST.get('price') or request.POST.get('total_price')
+    if raw_price is not None:
+        try:
+            stay.total_price = float(raw_price) if raw_price else None
+        except (ValueError, TypeError):
+            stay.total_price = None
+
     stay.currency = request.POST.get('currency', stay.currency)
-    stay.booking_link = request.POST.get('booking_link', '').strip()
+    stay.booking_link = (request.POST.get('link') or request.POST.get('booking_link', '')).strip()
     stay.notes = request.POST.get('notes', '').strip()
 
     code = request.POST.get('confirmation_code', '').strip()
@@ -1152,6 +1197,8 @@ def edit_stay_view(request, trip_id, stay_id):
 
     stay.updated_by = current_user
     stay.save()
+
+    _process_item_vault_uploads(request, trip, current_user, stay=stay)
 
     # Process attached documents
     uploaded_files = request.FILES.getlist('documents') or request.FILES.getlist('document') or request.FILES.getlist('file')
@@ -1229,8 +1276,8 @@ def add_move_view(request, trip_id):
         messages.error(request, "Permission denied: Only Trip Owners and Editors can add transportation legs.")
         return redirect(f"/trips/{trip_id}/#move")
 
-    title = request.POST.get('title', '').strip()
-    mode = request.POST.get('mode', 'Flight')
+    title = (request.POST.get('name') or request.POST.get('title', '')).strip()
+    mode = request.POST.get('type') or request.POST.get('mode', 'Planes')
     if not title:
         messages.error(request, "Transit leg name is required.")
         return redirect(f"/trips/{trip_id}/#move")
@@ -1256,26 +1303,33 @@ def add_move_view(request, trip_id):
         messages.error(request, "Arrival date/time cannot be before departure date/time.")
         return redirect(f"/trips/{trip_id}/#move")
 
+    raw_price = request.POST.get('price')
+    try:
+        price_val = float(raw_price) if raw_price else None
+    except (ValueError, TypeError):
+        price_val = None
+
     move = Move(
         trip=trip,
         title=title,
         mode=mode,
+        company=request.POST.get('company', '').strip() or None,
         trip_stage=request.POST.get('trip_stage', 'START_END'),
         direction=request.POST.get('direction', 'ARRIVING'),
         status=status,
         passenger_name=request.POST.get('passenger_name', '').strip(),
-        origin_address=request.POST.get('origin_address', '').strip(),
-        destination_address=request.POST.get('destination_address', '').strip(),
+        origin_address=(request.POST.get('origin') or request.POST.get('origin_address', '')).strip(),
+        destination_address=(request.POST.get('destination') or request.POST.get('destination_address', '')).strip(),
         departure_time=dept_dt,
-        arrival_time=None,
+        arrival_time=arr_dt,
         has_departure_time=has_dept_time,
-        has_arrival_time=False,
+        has_arrival_time=bool(arr_dt),
         date_confidence=request.POST.get('date_confidence', 'CONFIRMED'),
         time_confidence=request.POST.get('time_confidence', 'CONFIRMED'),
-        flexibility_notes=request.POST.get('flexibility_notes', '').strip(),
-        price=float(request.POST.get('price')) if request.POST.get('price') else None,
+        flexibility_notes=(request.POST.get('notes') or request.POST.get('flexibility_notes', '')).strip(),
+        price=price_val,
         currency=request.POST.get('currency', 'USD'),
-        booking_link=request.POST.get('booking_link', '').strip(),
+        booking_link=(request.POST.get('link') or request.POST.get('booking_link', '')).strip(),
         created_by=current_user,
         updated_by=current_user
     )
@@ -1285,6 +1339,7 @@ def add_move_view(request, trip_id):
         move.confirmation_code = code
 
     move.save()
+    _process_item_vault_uploads(request, trip, current_user, move=move)
     messages.success(request, f"Transit leg '{move.title}' added successfully!")
     return redirect(f"/trips/{trip_id}/#move")
 
@@ -1331,23 +1386,30 @@ def edit_move_view(request, trip_id, move_id):
             messages.error(request, "Confirmed moves require a date.")
             return redirect(fallback_redirect)
 
-    move.title = request.POST.get('title', move.title).strip()
-    move.mode = request.POST.get('mode', move.mode)
+    move.title = (request.POST.get('name') or request.POST.get('title', move.title)).strip()
+    move.mode = request.POST.get('type') or request.POST.get('mode', move.mode)
+    if 'company' in request.POST:
+        move.company = request.POST.get('company', '').strip() or None
     move.trip_stage = request.POST.get('trip_stage', move.trip_stage)
     move.direction = request.POST.get('direction', move.direction)
     move.status = new_status
     move.passenger_name = request.POST.get('passenger_name', '').strip()
-    move.origin_address = request.POST.get('origin_address', '').strip()
-    move.destination_address = request.POST.get('destination_address', '').strip()
+    move.origin_address = (request.POST.get('origin') or request.POST.get('origin_address', '')).strip()
+    move.destination_address = (request.POST.get('destination') or request.POST.get('destination_address', '')).strip()
     move.arrival_time = None
     move.has_arrival_time = False
 
     move.date_confidence = request.POST.get('date_confidence', move.date_confidence)
     move.time_confidence = request.POST.get('time_confidence', move.time_confidence)
-    move.flexibility_notes = request.POST.get('flexibility_notes', '').strip()
-    move.price = float(request.POST.get('price')) if request.POST.get('price') else None
+    move.flexibility_notes = (request.POST.get('notes') or request.POST.get('flexibility_notes', '')).strip()
+    if 'price' in request.POST:
+        raw_price = request.POST.get('price')
+        try:
+            move.price = float(raw_price) if raw_price else None
+        except (ValueError, TypeError):
+            move.price = None
     move.currency = request.POST.get('currency', move.currency)
-    move.booking_link = request.POST.get('booking_link', '').strip()
+    move.booking_link = (request.POST.get('link') or request.POST.get('booking_link', '')).strip()
 
     code = request.POST.get('confirmation_code', '').strip()
     if code:
@@ -1355,6 +1417,7 @@ def edit_move_view(request, trip_id, move_id):
 
     move.updated_by = current_user
     move.save()
+    _process_item_vault_uploads(request, trip, current_user, move=move)
     messages.success(request, f"Updated Transit Leg '{move.title}'!")
     if next_url and next_url.startswith('/'):
         return redirect(next_url)
@@ -1430,17 +1493,22 @@ def add_taste_view(request, trip_id):
     except (ValueError, TypeError):
         price_val = None
 
-    taste_type = request.POST.get('category') or request.POST.get('taste_type', 'Food')
+    taste_type = request.POST.get('type') or request.POST.get('category') or request.POST.get('taste_type', 'Food')
     price_range = request.POST.get('price_range', '').strip() or None
-    menu_link = (request.POST.get('menu_link') or request.POST.get('link', '')).strip() or None
+    link = (request.POST.get('link') or request.POST.get('menu_link', '')).strip() or None
     general_link = request.POST.get('general_link', '').strip() or None
+
+    cuisine = request.POST.get('cuisine', '').strip() or None
+    drink_category = request.POST.get('drink_category', '').strip() or None
 
     taste = Taste(
         trip=trip,
         title=title,
         taste_type=taste_type,
+        cuisine=cuisine,
+        drink_category=drink_category,
         status=status,
-        address=request.POST.get('address', '').strip(),
+        address=(request.POST.get('location') or request.POST.get('address', '')).strip(),
         start_time=taste_dt,
         end_time=None,
         has_start_time=has_taste_time,
@@ -1448,8 +1516,8 @@ def add_taste_view(request, trip_id):
         price=price_val,
         price_range=price_range,
         currency=request.POST.get('currency', 'USD'),
-        link=menu_link,
-        menu_link=menu_link,
+        link=link,
+        menu_link=link,
         general_link=general_link,
         description=request.POST.get('description', '').strip(),
         notes=request.POST.get('notes', '').strip(),
@@ -1457,11 +1525,12 @@ def add_taste_view(request, trip_id):
         updated_by=current_user
     )
 
-    code = request.POST.get('confirmation_code', '').strip()
+    code = (request.POST.get('booking_reference') or request.POST.get('confirmation_code', '')).strip()
     if code:
         taste.confirmation_code = code
 
     taste.save()
+    _process_item_vault_uploads(request, trip, current_user, taste=taste)
     messages.success(request, f"Taste '{taste.title}' added successfully!")
     return redirect(f"/trips/{trip_id}/#taste")
 
@@ -1509,9 +1578,13 @@ def edit_taste_view(request, trip_id, taste_id):
             return redirect(fallback_redirect)
 
     taste.title = (request.POST.get('name') or request.POST.get('title', taste.title)).strip()
-    taste.taste_type = request.POST.get('category') or request.POST.get('taste_type', taste.taste_type)
+    taste.taste_type = request.POST.get('type') or request.POST.get('category') or request.POST.get('taste_type', taste.taste_type)
+    if 'cuisine' in request.POST:
+        taste.cuisine = request.POST.get('cuisine', '').strip() or None
+    if 'drink_category' in request.POST:
+        taste.drink_category = request.POST.get('drink_category', '').strip() or None
     taste.status = new_status
-    taste.address = request.POST.get('address', '').strip()
+    taste.address = (request.POST.get('location') or request.POST.get('address', '')).strip()
     taste.end_time = None
     taste.has_end_time = False
     if 'price_range' in request.POST:
@@ -1527,7 +1600,7 @@ def edit_taste_view(request, trip_id, taste_id):
             taste.price = None
     taste.currency = request.POST.get('currency', taste.currency)
     if 'menu_link' in request.POST or 'link' in request.POST:
-        m_link = (request.POST.get('menu_link') or request.POST.get('link', '')).strip() or None
+        m_link = (request.POST.get('link') or request.POST.get('menu_link', '')).strip() or None
         taste.menu_link = m_link
         taste.link = m_link
     if 'general_link' in request.POST:
@@ -1535,12 +1608,13 @@ def edit_taste_view(request, trip_id, taste_id):
     taste.description = request.POST.get('description', '').strip()
     taste.notes = request.POST.get('notes', '').strip()
 
-    code = request.POST.get('confirmation_code', '').strip()
+    code = (request.POST.get('booking_reference') or request.POST.get('confirmation_code', '')).strip()
     if code:
         taste.confirmation_code = code
 
     taste.updated_by = current_user
     taste.save()
+    _process_item_vault_uploads(request, trip, current_user, taste=taste)
     messages.success(request, f"Updated '{taste.title}'!")
     if next_url and next_url.startswith('/'):
         return redirect(next_url)
@@ -1579,7 +1653,7 @@ def add_play_view(request, trip_id):
         messages.error(request, "Permission denied: Only Trip Owners and Editors can add activities.")
         return redirect(f"/trips/{trip_id}/#play")
 
-    title = request.POST.get('title', '').strip()
+    title = (request.POST.get('name') or request.POST.get('title', '')).strip()
     if not title:
         messages.error(request, "Activity title is required.")
         return redirect(f"/trips/{trip_id}/#play")
@@ -1604,17 +1678,26 @@ def add_play_view(request, trip_id):
         messages.error(request, "End date/time cannot be before start date/time.")
         return redirect(f"/trips/{trip_id}/#play")
 
+    raw_price = request.POST.get('price')
+    try:
+        price_val = float(raw_price) if raw_price else None
+    except (ValueError, TypeError):
+        price_val = None
+
+    price_tier = request.POST.get('price_tier', '').strip() or None
+
     play = Play(
         trip=trip,
         title=title,
-        play_type=request.POST.get('play_type', 'Sightseeing'),
+        play_type=request.POST.get('type') or request.POST.get('play_type', 'Sightseeing'),
+        price_tier=price_tier,
         status=status,
-        address=request.POST.get('address', '').strip(),
+        address=(request.POST.get('location') or request.POST.get('address', '')).strip(),
         start_time=play_dt,
         end_time=None,
         has_start_time=has_play_time,
         has_end_time=False,
-        price=float(request.POST.get('price')) if request.POST.get('price') else None,
+        price=price_val,
         currency=request.POST.get('currency', 'USD'),
         link=request.POST.get('link', '').strip(),
         description=request.POST.get('description', '').strip(),
@@ -1628,6 +1711,7 @@ def add_play_view(request, trip_id):
         play.confirmation_code = code
 
     play.save()
+    _process_item_vault_uploads(request, trip, current_user, play=play)
     messages.success(request, f"Activity '{play.title}' added successfully!")
     return redirect(f"/trips/{trip_id}/#play")
 
@@ -1674,17 +1758,21 @@ def edit_play_view(request, trip_id, play_id):
             messages.error(request, "Confirmed activities require a date.")
             return redirect(fallback_redirect)
 
-    play.title = request.POST.get('title', play.title).strip()
-    play.play_type = request.POST.get('play_type', play.play_type)
+    play.title = (request.POST.get('name') or request.POST.get('title', play.title)).strip()
+    play.play_type = request.POST.get('type') or request.POST.get('play_type', play.play_type)
+    if 'price_tier' in request.POST:
+        play.price_tier = request.POST.get('price_tier', '').strip() or None
     play.status = new_status
-    play.address = request.POST.get('address', '').strip()
-    play.end_time = None
-    play.has_end_time = False
-    play.price = float(request.POST.get('price')) if request.POST.get('price') else None
-    play.currency = request.POST.get('currency', play.currency)
-    play.link = request.POST.get('link', '').strip()
-    play.description = request.POST.get('description', '').strip()
+    play.address = (request.POST.get('location') or request.POST.get('address', '')).strip()
     play.notes = request.POST.get('notes', '').strip()
+    if 'link' in request.POST:
+        play.link = request.POST.get('link', '').strip()
+    if 'price' in request.POST:
+        raw_price = request.POST.get('price')
+        try:
+            play.price = float(raw_price) if raw_price else None
+        except (ValueError, TypeError):
+            play.price = None
 
     code = request.POST.get('confirmation_code', '').strip()
     if code:
@@ -1692,6 +1780,7 @@ def edit_play_view(request, trip_id, play_id):
 
     play.updated_by = current_user
     play.save()
+    _process_item_vault_uploads(request, trip, current_user, play=play)
     messages.success(request, f"Updated Activity '{play.title}'!")
     if next_url and next_url.startswith('/'):
         return redirect(next_url)

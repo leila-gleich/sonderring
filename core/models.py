@@ -381,16 +381,30 @@ class TripMember(models.Model):
 class Stay(models.Model):
     STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
     PLACE_TYPE_CHOICES = [
-        ('Hotel Room', 'Hotel Room'),
-        ('Entire Place', 'Entire Place'),
-        ('Shared Room/Guest House', 'Shared Room/Guest House'),
+        ('Hotel', 'Hotel'),
+        ('Home', 'Home'),
+        ('Apartment', 'Apartment'),
+        ('Room', 'Room'),
+        ('Bed', 'Bed'),
+        # Legacy mappings for backward compatibility
+        ('Hotel Room', 'Hotel'),
+        ('Entire Place', 'Home'),
+        ('Shared Room/Guest House', 'Room'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stays')
     title = models.CharField(max_length=150)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
-    place_type = models.CharField(max_length=50, choices=PLACE_TYPE_CHOICES, blank=True, null=True, default='Hotel Room')
+    place_type = models.CharField(max_length=50, choices=PLACE_TYPE_CHOICES, blank=True, null=True, default='Hotel')
+    stay_length = models.IntegerField(blank=True, null=True, help_text="Stay duration value")
+    stay_length_unit = models.CharField(
+        max_length=20,
+        choices=[('Days', 'Day(s)'), ('Weeks', 'Week(s)'), ('Months', 'Month(s)')],
+        default='Days',
+        blank=True,
+        null=True
+    )
     num_beds = models.IntegerField(blank=True, null=True)
     num_rooms = models.IntegerField(blank=True, null=True)
     num_guests = models.IntegerField(blank=True, null=True)
@@ -422,6 +436,30 @@ class Stay(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'check_in'], name='idx_stay_trip_status_checkin'),
         ]
+
+    @property
+    def location(self):
+        return self.address
+
+    @location.setter
+    def location(self, val):
+        self.address = val
+
+    @property
+    def link(self):
+        return self.booking_link
+
+    @link.setter
+    def link(self, val):
+        self.booking_link = val
+
+    @property
+    def price(self):
+        return self.total_price
+
+    @price.setter
+    def price(self, val):
+        self.total_price = val
 
     @property
     def _confirmation_aad(self) -> str:
@@ -477,11 +515,28 @@ class Move(models.Model):
         ('CONFIRMED', 'Confirmed'),
         ('TENTATIVE', 'Tentative'),
     ]
+    MODE_CHOICES = [
+        ('Planes', 'Planes'),
+        ('Trains', 'Trains'),
+        ('Car', 'Car'),
+        # Legacy mappings for backward compatibility
+        ('Flight', 'Planes'),
+        ('Train', 'Trains'),
+        ('Ferry', 'Ferry'),
+        ('Bus', 'Bus'),
+        ('Rideshare', 'Car'),
+    ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='moves')
     title = models.CharField(max_length=150)
-    mode = models.CharField(max_length=50) # Flight, Train, Ferry, Car, Bus, etc.
+    mode = models.CharField(max_length=50, choices=MODE_CHOICES, default='Planes') # Planes, Trains, Car
+    company = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+        help_text="Company or operator (airline, train line, car rental)"
+    )
     trip_stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='START_END')
     direction = models.CharField(max_length=20, choices=DIRECTION_CHOICES, default='ARRIVING')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
@@ -523,6 +578,22 @@ class Move(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'departure_time'], name='idx_move_trip_status_dept'),
         ]
+
+    @property
+    def link(self):
+        return self.booking_link
+
+    @link.setter
+    def link(self, val):
+        self.booking_link = val
+
+    @property
+    def notes(self):
+        return self.flexibility_notes
+
+    @notes.setter
+    def notes(self, val):
+        self.flexibility_notes = val
 
     @property
     def _confirmation_aad(self) -> str:
@@ -574,11 +645,11 @@ class Taste(models.Model):
         ('$', '$'),
         ('$$', '$$'),
         ('$$$', '$$$'),
+        ('$$$$', '$$$$'),
     ]
     CATEGORY_CHOICES = [
         ('Food', 'Food'),
         ('Drink', 'Drink'),
-        ('Cafe', 'Cafe'),
     ]
     LEGACY_TASTE_TYPE_MAP = {
         'Restaurant': 'Food',
@@ -588,25 +659,61 @@ class Taste(models.Model):
         'Dessert': 'Food',
         'Bar & Drinks': 'Drink',
         'Winery & Brewery': 'Drink',
-        'Cafe & Bakery': 'Cafe',
-        'Coffee': 'Cafe',
+        'Cafe & Bakery': 'Drink',
+        'Coffee': 'Drink',
+        'Cafe': 'Drink',
     }
     TASTE_TYPE_CHOICES = CATEGORY_CHOICES + [
+        ('Cafe', 'Drink'),
         ('Restaurant', 'Food'),
         ('Bar & Drinks', 'Drink'),
-        ('Cafe & Bakery', 'Cafe'),
+        ('Cafe & Bakery', 'Drink'),
         ('Winery & Brewery', 'Drink'),
         ('Food Market', 'Food'),
         ('Culinary Tour', 'Food'),
         ('Dessert', 'Food'),
-        ('Coffee', 'Cafe'),
+        ('Coffee', 'Drink'),
         ('Cooking Class', 'Food'),
+    ]
+    CUISINE_CHOICES = [
+        ('American', 'American'),
+        ('African', 'African'),
+        ('Asian', 'Asian'),
+        ('Contemporary', 'Contemporary'),
+        ('European', 'European'),
+        ('Fusion', 'Fusion'),
+        ('Indian', 'Indian'),
+        ('Mediterranean', 'Mediterranean'),
+        ('Mexican', 'Mexican'),
+        ('South American', 'South American'),
+    ]
+    DRINK_CATEGORY_CHOICES = [
+        ('Beer', 'Beer'),
+        ('Cocktails', 'Cocktails'),
+        ('Wine', 'Wine'),
+        ('Tea & Coffee', 'Tea & Coffee'),
+        ('Juice and Smoothies', 'Juice and Smoothies'),
+        ('Other', 'Other'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='tastes')
     title = models.CharField(max_length=150)
     taste_type = models.CharField(max_length=50, choices=TASTE_TYPE_CHOICES, default='Food')
+    cuisine = models.CharField(
+        max_length=50,
+        choices=CUISINE_CHOICES,
+        blank=True,
+        null=True,
+        help_text="Cuisine type if Food"
+    )
+    drink_category = models.CharField(
+        max_length=50,
+        choices=DRINK_CATEGORY_CHOICES,
+        blank=True,
+        null=True,
+        help_text="Beverage category if Drink"
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
     description = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
@@ -620,7 +727,7 @@ class Taste(models.Model):
         choices=PRICE_RANGE_CHOICES,
         blank=True,
         null=True,
-        help_text="Price range tier ($ to $$$)"
+        help_text="Price range tier ($ to $$$$)"
     )
     currency = models.CharField(max_length=3, default='USD')
     link = models.URLField(blank=True, null=True)
@@ -652,6 +759,22 @@ class Taste(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'start_time'], name='idx_taste_trip_status_start'),
         ]
+
+    @property
+    def location(self):
+        return self.address
+
+    @location.setter
+    def location(self, val):
+        self.address = val
+
+    @property
+    def booking_reference(self):
+        return self.confirmation_code
+
+    @booking_reference.setter
+    def booking_reference(self, val):
+        self.confirmation_code = val
 
     @property
     def _confirmation_aad(self) -> str:
@@ -708,21 +831,46 @@ class Taste(models.Model):
 class Play(models.Model):
     STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
     PLAY_TYPE_CHOICES = [
-        ('Sightseeing', 'Sightseeing & Landmark'),
-        ('Outdoor & Hike', 'Outdoor & Hike'),
-        ('Tour & Excursion', 'Tour & Excursion'),
-        ('Culture & Museum', 'Culture & Museum'),
-        ('Water & Boat', 'Water & Boat'),
-        ('Nightlife & Music', 'Nightlife & Music'),
-        ('Event & Show', 'Event & Performance'),
-        ('Spa & Wellness', 'Spa & Wellness'),
-        ('Travel Tip', 'Travel Tip & Advice'),
+        ('Outdoors', 'Outdoors'),
+        ('Tours', 'Tours'),
+        ('Events', 'Events'),
+        ('Sightseeing', 'Sightseeing'),
+        ('Other', 'Other'),
+        # Legacy mappings for backward compatibility
+        ('Activity', 'Outdoors'),
+        ('Tour', 'Tours'),
+        ('Sight', 'Sightseeing'),
+        ('Event', 'Events'),
+        ('Hike', 'Outdoors'),
+        ('Museum', 'Sightseeing'),
+        ('Outdoor & Hike', 'Outdoors'),
+        ('Tour & Excursion', 'Tours'),
+        ('Culture & Museum', 'Sightseeing'),
+        ('Water & Boat', 'Outdoors'),
+        ('Nightlife & Music', 'Events'),
+        ('Event & Show', 'Events'),
+        ('Spa & Wellness', 'Other'),
+        ('Travel Tip', 'Other'),
+    ]
+    PRICE_TIER_CHOICES = [
+        ('Free', 'Free'),
+        ('$', '$'),
+        ('$$', '$$'),
+        ('$$$', '$$$'),
+        ('$$$$', '$$$$'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='plays')
     title = models.CharField(max_length=150)
     play_type = models.CharField(max_length=50, choices=PLAY_TYPE_CHOICES, default='Sightseeing')
+    price_tier = models.CharField(
+        max_length=10,
+        choices=PRICE_TIER_CHOICES,
+        blank=True,
+        null=True,
+        help_text="Price tier for Play item (Free to $$$$)"
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
     description = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
@@ -759,6 +907,14 @@ class Play(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'start_time'], name='idx_play_trip_status_start'),
         ]
+
+    @property
+    def location(self):
+        return self.address
+
+    @location.setter
+    def location(self, val):
+        self.address = val
 
     @property
     def _confirmation_aad(self) -> str:

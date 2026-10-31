@@ -1559,32 +1559,27 @@ class DateRangeValidationAndOptionalStayTimesTests(TestCase):
         resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
         self.assertEqual(resp.status_code, 200)
 
-        # Primary fields: title, status, check_in_date, check_out_date, total_price, notes
+        # Primary fields per tripItemAttributesReference: title, place_type, address, booking_link, notes
         self.assertContains(resp, 'name="title"')
         self.assertContains(resp, 'id="addStayStatus"')
-        self.assertContains(resp, 'name="check_in_date"')
-        self.assertContains(resp, 'name="check_out_date"')
-        self.assertContains(resp, 'name="total_price"')
+        self.assertContains(resp, 'id="addStayPlaceType"')
+        self.assertContains(resp, 'name="address"')
+        self.assertContains(resp, 'name="booking_link"')
         self.assertContains(resp, 'name="notes"')
-
-        # Confirmation code conditional container
-        self.assertContains(resp, 'id="addStayConfirmationCol"')
-        self.assertContains(resp, 'id="addStayConfirmationCode"')
 
         # More options toggle button and expandable details section
         self.assertContains(resp, 'id="btnToggleStayMoreOptions"')
         self.assertContains(resp, 'onclick="toggleStayMoreOptions()"')
         self.assertContains(resp, 'id="stayMoreOptionsContent"')
 
-        # Additional attributes in expandable section: place_type, num_beds, num_rooms, num_guests, address, check_in_time, check_out_time, booking_link, documents
-        self.assertContains(resp, 'id="addStayPlaceType"')
-        self.assertContains(resp, 'name="num_beds"')
-        self.assertContains(resp, 'name="num_rooms"')
-        self.assertContains(resp, 'name="num_guests"')
-        self.assertContains(resp, 'name="address"')
-        self.assertContains(resp, 'name="check_in_time"')
-        self.assertContains(resp, 'name="check_out_time"')
-        self.assertContains(resp, 'name="booking_link"')
+        # Additional attributes in expandable section: stay_length, stay_length_unit, check_in_date, check_out_date, total_price, confirmation_code, documents
+        self.assertContains(resp, 'name="stay_length"')
+        self.assertContains(resp, 'name="stay_length_unit"')
+        self.assertContains(resp, 'name="check_in_date"')
+        self.assertContains(resp, 'name="check_out_date"')
+        self.assertContains(resp, 'name="total_price"')
+        self.assertContains(resp, 'id="addStayConfirmationCol"')
+        self.assertContains(resp, 'id="addStayConfirmationCode"')
         self.assertContains(resp, 'name="documents"')
 
     def test_add_stay_confirmation_code_saved_for_confirmed_hotel(self):
@@ -2173,22 +2168,21 @@ class MoveStayTastePlayWorkflowTests(TestCase):
         self.assertIn('id="btnToggleTasteMoreOptions"', html)
         self.assertIn('id="tasteMoreOptionsContent"', html)
 
-        # 2. Check 3 Categories in Add Modal
+        # 2. Check Categories in Add Modal
         self.assertIn('<option value="Food" selected>Food</option>', html)
         self.assertIn('<option value="Drink">Drink</option>', html)
-        self.assertIn('<option value="Cafe">Cafe</option>', html)
 
-        # 3. Check Price Range ($ to $$$) select is present and no float price input in taste modal
+        # 3. Check Price Range ($ to $$$$) choice buttons and hidden input
         self.assertIn('name="price_range"', html)
-        self.assertIn('<option value="$">$</option>', html)
-        self.assertIn('<option value="$$">$$</option>', html)
-        self.assertIn('<option value="$$$">$$$</option>', html)
+        self.assertIn('selectPriceTier(this, \'$\'', html)
+        self.assertIn('selectPriceTier(this, \'$$\'', html)
+        self.assertIn('selectPriceTier(this, \'$$$\'', html)
+        self.assertIn('selectPriceTier(this, \'$$$$\'', html)
 
-        # 4. Check Link to Menu and General Link in forms
-        self.assertIn('Link to Menu', html)
-        self.assertIn('General Link', html)
-        self.assertIn('name="general_link"', html)
-        self.assertIn('name="menu_link"', html)
+        # 4. Check Link and Cuisine/Drink Category subfields in forms
+        self.assertIn('name="link"', html)
+        self.assertIn('name="cuisine"', html)
+        self.assertIn('name="drink_category"', html)
 
         # 5. Check Taste Card display: Menu button and Title link without blue underline
         self.assertIn('>Menu</a>', html)
@@ -2343,16 +2337,13 @@ class MoveStayTastePlayWorkflowTests(TestCase):
         self.assertTrue(add_modal_idx < title_idx < status_idx < type_idx < address_idx < notes_idx < more_btn_idx < more_content_idx)
 
         # Inside More Options content:
-        start_time_idx = content.find('name="start_time"', more_content_idx)
-        end_time_idx = content.find('name="end_time"', more_content_idx)
-        price_idx = content.find('name="price"', more_content_idx)
+        tier_idx = content.find('name="price_tier"', more_content_idx)
+        date_idx = content.find('name="date"', more_content_idx)
         code_idx = content.find('name="confirmation_code"', more_content_idx)
-        link_idx = content.find('name="link"', more_content_idx)
-        desc_idx = content.find('name="description"', more_content_idx)
+        docs_idx = content.find('name="documents"', more_content_idx)
 
-        self.assertTrue(more_content_idx < start_time_idx < end_time_idx)
-        self.assertTrue(more_content_idx < price_idx < code_idx)
-        self.assertTrue(more_content_idx < link_idx < desc_idx)
+        self.assertTrue(more_content_idx < tier_idx < code_idx)
+        self.assertTrue(more_content_idx < date_idx < docs_idx)
 
         # Verify editPlayModal structure
         edit_modal_id = f'id="editPlayModal_{play.id}"'
