@@ -321,6 +321,26 @@
                 }
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
+
+                // Reset item modal steps if it has status-question step
+                const statusStep = modal.querySelector('.item-status-step');
+                const formStep = modal.querySelector('.item-form-step');
+                if (statusStep && formStep) {
+                    statusStep.style.display = 'block';
+                    formStep.style.display = 'none';
+
+                    const statusInput = modal.querySelector('[name="status"]');
+                    if (id.startsWith('edit')) {
+                        // In edit modal, sync active status card with current value of status input
+                        if (statusInput && statusInput.value && typeof selectItemStatus === 'function') {
+                            selectItemStatus(modal, statusInput.value, false);
+                        }
+                    } else {
+                        // In add modal, clear active card selection so user is prompted to answer question
+                        modal.querySelectorAll('.status-choice-card').forEach(c => c.classList.remove('active'));
+                    }
+                }
+
                 if (window.initAllDateConstraints) {
                     window.initAllDateConstraints(modal);
                 }
@@ -335,6 +355,116 @@
             if (modal) {
                 modal.classList.remove('active');
                 document.body.style.overflow = 'auto';
+
+                // Reset back to status step for next time
+                const statusStep = modal.querySelector('.item-status-step');
+                const formStep = modal.querySelector('.item-form-step');
+                if (statusStep && formStep) {
+                    statusStep.style.display = 'block';
+                    formStep.style.display = 'none';
+                }
+            }
+        }
+
+        function selectItemStatus(modalId, status, autoAdvance) {
+            if (autoAdvance === undefined) autoAdvance = true;
+            const modal = typeof modalId === 'string' ? document.getElementById(modalId) : modalId;
+            if (!modal) return;
+
+            const statusInput = modal.querySelector('[name="status"]');
+            if (statusInput) {
+                statusInput.value = status;
+                statusInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            // Update active state on choice cards in status question step
+            const choiceCards = modal.querySelectorAll('.status-choice-card');
+            choiceCards.forEach(card => {
+                const cardStatus = card.getAttribute('data-status');
+                if (cardStatus === status) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+
+            // Update flow bar badge & text
+            const flowBadge = modal.querySelector('.status-flow-badge');
+            const flowVal = modal.querySelector('.status-flow-val');
+            const statusText = status === 'CONFIRMED' ? 'Confirmed' : (status === 'COMPLETE' ? 'Complete' : 'Idea');
+            const badgeClass = status === 'CONFIRMED' ? 'status-badge-confirmed' : (status === 'COMPLETE' ? 'status-badge-complete' : 'status-badge-idea');
+
+            if (flowBadge) {
+                flowBadge.textContent = statusText;
+                flowBadge.className = 'status-choice-badge ' + badgeClass + ' status-flow-badge';
+            }
+            if (flowVal) {
+                flowVal.textContent = statusText;
+            }
+
+            // Update current status pill in modal header if present
+            const statusPill = modal.querySelector('.current-status-pill');
+            if (statusPill) {
+                statusPill.textContent = statusText;
+                statusPill.className = 'status-pill status-' + status.toLowerCase() + ' current-status-pill';
+            }
+
+            // Update submit button text if this is an add modal
+            const submitBtn = modal.querySelector('button[type="submit"]');
+            if (submitBtn && (!modal.id || !modal.id.startsWith('edit'))) {
+                let actionWord = 'Item';
+                if (modal.id && modal.id.includes('Stay')) actionWord = 'Stay';
+                else if (modal.id && (modal.id.includes('Move') || modal.id.includes('Nav'))) actionWord = 'Move';
+                else if (modal.id && (modal.id.includes('Taste') || modal.id.includes('Rec'))) actionWord = status === 'CONFIRMED' ? 'Reservation' : 'Taste';
+                else if (modal.id && (modal.id.includes('Play') || modal.id.includes('Do'))) actionWord = 'Activity';
+
+                if (status === 'CONFIRMED') {
+                    submitBtn.textContent = 'Save Confirmed ' + actionWord;
+                } else if (status === 'COMPLETE') {
+                    submitBtn.textContent = 'Save Completed ' + actionWord;
+                } else {
+                    submitBtn.textContent = 'Save ' + actionWord + ' Idea';
+                }
+            }
+
+            // If autoAdvance is true, transition to the form step
+            if (autoAdvance) {
+                const statusStep = modal.querySelector('.item-status-step');
+                const formStep = modal.querySelector('.item-form-step');
+                if (statusStep && formStep) {
+                    statusStep.style.display = 'none';
+                    formStep.style.display = 'block';
+                    const firstInput = formStep.querySelector('input[type="text"]:not([type="hidden"]), select');
+                    if (firstInput) {
+                        setTimeout(() => firstInput.focus(), 50);
+                    }
+                }
+            }
+        }
+
+        function backToStatusStep(modalId) {
+            const modal = typeof modalId === 'string' ? document.getElementById(modalId) : modalId;
+            if (!modal) return;
+            const statusStep = modal.querySelector('.item-status-step');
+            const formStep = modal.querySelector('.item-form-step');
+            if (statusStep && formStep) {
+                statusStep.style.display = 'block';
+                formStep.style.display = 'none';
+            }
+        }
+
+        function continueToFormStep(modalId) {
+            const modal = typeof modalId === 'string' ? document.getElementById(modalId) : modalId;
+            if (!modal) return;
+            const statusStep = modal.querySelector('.item-status-step');
+            const formStep = modal.querySelector('.item-form-step');
+            if (statusStep && formStep) {
+                statusStep.style.display = 'none';
+                formStep.style.display = 'block';
+                const firstInput = formStep.querySelector('input[type="text"]:not([type="hidden"]), select');
+                if (firstInput) {
+                    setTimeout(() => firstInput.focus(), 50);
+                }
             }
         }
 
@@ -455,7 +585,7 @@
             const coDate = container.querySelector('input[name="check_out_date"]');
             const ciTime = container.querySelector('input[name="check_in_time"]');
             const coTime = container.querySelector('input[name="check_out_time"]');
-            const statusSelect = container.querySelector('select[name="status"]');
+            const statusSelect = container.querySelector('[name="status"]');
             const form = container.tagName === 'FORM' ? container : container.querySelector('form');
 
             if (!ciDate || !coDate) return;
@@ -575,7 +705,7 @@
         function setupSingleDateElementSync(container, elementType, alertMsg) {
             if (!container || container._singleDateSyncInitialized) return;
             const dateInput = container.querySelector('input[name="date"]') || container.querySelector('input[name="departure_date"]') || container.querySelector('input[name="departure_time"]') || container.querySelector('input[name="start_time"]');
-            const statusSelect = container.querySelector('select[name="status"]');
+            const statusSelect = container.querySelector('[name="status"]');
             const form = container.tagName === 'FORM' ? container : container.querySelector('form');
 
             if (!dateInput) return;

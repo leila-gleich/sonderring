@@ -2495,6 +2495,134 @@ class MoveStayTastePlayWorkflowTests(TestCase):
         self.assertIsNotNone(play)
         self.assertEqual(play.guest_name, 'Explorer Friend')
 
+    def test_trip_item_forms_render_status_first_question_flow(self):
+        """Verify all trip item forms (Stay, Move, Taste, Play) render status as their own first question rather than an input in the form."""
+        from core.models import Stay, Move, Taste, Play
+        stay = Stay.objects.create(trip=self.trip, title='Test Hotel', status='CONFIRMED', created_by=self.owner)
+        move = Move.objects.create(trip=self.trip, title='Test Flight', status='CONFIRMED', created_by=self.owner)
+        taste = Taste.objects.create(trip=self.trip, title='Test Bistro', status='IDEA', created_by=self.owner)
+        play = Play.objects.create(trip=self.trip, title='Test Sight', status='COMPLETE', created_by=self.owner)
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode('utf-8')
+
+        # 1. Add Stay Modal
+        self.assertIn('id="addStayModal"', content)
+        add_stay_idx = content.find('id="addStayModal"')
+        add_stay_end = content.find('id="addMoveModal"')
+        stay_chunk = content[add_stay_idx:add_stay_end]
+        self.assertIn('class="item-status-step"', stay_chunk)
+        self.assertIn('class="item-form-step"', stay_chunk)
+        self.assertIn('What is the status of this stay?', stay_chunk)
+        self.assertIn('data-status="IDEA"', stay_chunk)
+        self.assertIn('data-status="CONFIRMED"', stay_chunk)
+        self.assertIn('data-status="COMPLETE"', stay_chunk)
+        self.assertIn('class="status-flow-bar"', stay_chunk)
+        self.assertIn('Change Status', stay_chunk)
+        self.assertNotIn('<select name="status"', stay_chunk)
+        self.assertIn('<input type="hidden" name="status"', stay_chunk)
+
+        # 2. Add Move Modal
+        add_move_idx = content.find('id="addMoveModal"')
+        add_taste_idx = content.find('id="addTasteModal"')
+        move_chunk = content[add_move_idx:add_taste_idx]
+        self.assertIn('class="item-status-step"', move_chunk)
+        self.assertIn('class="item-form-step"', move_chunk)
+        self.assertIn('What is the status of this transit leg?', move_chunk)
+        self.assertIn('data-status="IDEA"', move_chunk)
+        self.assertIn('data-status="CONFIRMED"', move_chunk)
+        self.assertIn('data-status="COMPLETE"', move_chunk)
+        self.assertIn('class="status-flow-bar"', move_chunk)
+        self.assertNotIn('<select name="status"', move_chunk)
+        self.assertIn('<input type="hidden" name="status"', move_chunk)
+
+        # 3. Add Taste Modal
+        add_play_idx = content.find('id="addPlayModal"')
+        taste_chunk = content[add_taste_idx:add_play_idx]
+        self.assertIn('class="item-status-step"', taste_chunk)
+        self.assertIn('class="item-form-step"', taste_chunk)
+        self.assertIn('What is the status of this food & drink spot?', taste_chunk)
+        self.assertIn('data-status="IDEA"', taste_chunk)
+        self.assertIn('data-status="CONFIRMED"', taste_chunk)
+        self.assertIn('data-status="COMPLETE"', taste_chunk)
+        self.assertIn('class="status-flow-bar"', taste_chunk)
+        self.assertNotIn('<select name="status"', taste_chunk)
+        self.assertIn('<input type="hidden" name="status"', taste_chunk)
+
+        # 4. Add Play Modal
+        invite_idx = content.find('id="inviteMemberModal"')
+        play_chunk = content[add_play_idx:invite_idx]
+        self.assertIn('class="item-status-step"', play_chunk)
+        self.assertIn('class="item-form-step"', play_chunk)
+        self.assertIn('What is the status of this activity?', play_chunk)
+        self.assertIn('data-status="IDEA"', play_chunk)
+        self.assertIn('data-status="CONFIRMED"', play_chunk)
+        self.assertIn('data-status="COMPLETE"', play_chunk)
+        self.assertIn('class="status-flow-bar"', play_chunk)
+        self.assertNotIn('<select name="status"', play_chunk)
+        self.assertIn('<input type="hidden" name="status"', play_chunk)
+
+        # 5. Edit Modals
+        for modal_id in [f'editStayModal_{stay.id}', f'editTasteModal_{taste.id}', f'editPlayModal_{play.id}', f'editMoveModal_{move.id}']:
+            self.assertIn(modal_id, content)
+            idx = content.find(modal_id)
+            modal_sub = content[idx:idx + 15000]
+            self.assertIn('class="item-status-step"', modal_sub)
+            self.assertIn('class="item-form-step"', modal_sub)
+            self.assertIn('class="status-flow-bar"', modal_sub)
+            self.assertNotIn('<select name="status"', modal_sub)
+            self.assertIn('<input type="hidden" name="status"', modal_sub)
+
+    def test_trip_items_creation_with_idea_confirmed_complete_statuses(self):
+        """Test adding items in all three readiness states (Idea, Confirmed, Complete)."""
+        from core.models import Stay, Move, Taste, Play
+        # Stay as IDEA (no dates required)
+        resp1 = self.client.post(reverse('core:add_stay', args=[self.trip.id]), {
+            'title': 'Dream Glass Igloo',
+            'status': 'IDEA',
+            'place_type': 'Hotel Room',
+        }, follow=True)
+        self.assertEqual(resp1.status_code, 200)
+        stay_idea = Stay.objects.filter(trip=self.trip, title='Dream Glass Igloo').first()
+        self.assertIsNotNone(stay_idea)
+        self.assertEqual(stay_idea.status, 'IDEA')
+
+        # Move as IDEA (no departure date required)
+        resp2 = self.client.post(reverse('core:add_move', args=[self.trip.id]), {
+            'title': 'Scenic Coastal Train Route',
+            'status': 'IDEA',
+            'mode': 'Train',
+        }, follow=True)
+        self.assertEqual(resp2.status_code, 200)
+        move_idea = Move.objects.filter(trip=self.trip, title='Scenic Coastal Train Route').first()
+        self.assertIsNotNone(move_idea)
+        self.assertEqual(move_idea.status, 'IDEA')
+
+        # Taste as CONFIRMED (with date)
+        resp3 = self.client.post(reverse('core:add_taste', args=[self.trip.id]), {
+            'title': 'Grillmarkadurinn Tasting',
+            'status': 'CONFIRMED',
+            'date': '2026-11-05',
+            'time': '19:30',
+        }, follow=True)
+        self.assertEqual(resp3.status_code, 200)
+        taste_conf = Taste.objects.filter(trip=self.trip, title='Grillmarkadurinn Tasting').first()
+        self.assertIsNotNone(taste_conf)
+        self.assertEqual(taste_conf.status, 'CONFIRMED')
+
+        # Play as COMPLETE
+        resp4 = self.client.post(reverse('core:add_play', args=[self.trip.id]), {
+            'title': 'Seljalandsfoss Behind-the-Falls Walk',
+            'status': 'COMPLETE',
+            'play_type': 'Sightseeing',
+        }, follow=True)
+        self.assertEqual(resp4.status_code, 200)
+        play_comp = Play.objects.filter(trip=self.trip, title='Seljalandsfoss Behind-the-Falls Walk').first()
+        self.assertIsNotNone(play_comp)
+        self.assertEqual(play_comp.status, 'COMPLETE')
+
+
 
 class SeedDataAndFixtureSyncTests(TestCase):
     """Tests verifying seed data execution, export, and auto-syncing."""
