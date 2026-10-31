@@ -625,6 +625,19 @@
                 container.querySelectorAll('.stay-date-required').forEach(el => {
                     el.style.display = isConfirmed ? 'inline' : 'none';
                 });
+                if (isConfirmed && ciDate.offsetParent === null) {
+                    const optContent = container.querySelector('#stayMoreOptionsContent, [id^="editStayMoreOptionsContent_"]');
+                    if (optContent && optContent.style.display === 'none') {
+                        if (typeof toggleStayMoreOptions === 'function' && optContent.id === 'stayMoreOptionsContent') {
+                            toggleStayMoreOptions();
+                        } else if (typeof toggleEditStayMoreOptions === 'function' && optContent.id.startsWith('editStayMoreOptionsContent_')) {
+                            const sid = optContent.id.replace('editStayMoreOptionsContent_', '');
+                            toggleEditStayMoreOptions(sid);
+                        } else {
+                            optContent.style.display = 'block';
+                        }
+                    }
+                }
             }
 
             ciDate.addEventListener('change', syncStayConstraints);
@@ -719,9 +732,14 @@
                     el.style.display = isConfirmed ? 'inline' : 'none';
                 });
                 if (isConfirmed && dateInput.offsetParent === null) {
-                    const optContent = container.querySelector('#tasteMoreOptionsContent, [id^="editTasteMoreOptionsContent_"], #playMoreOptionsContent, [id^="editPlayMoreOptionsContent_"]');
+                    const optContent = container.querySelector('#moveMoreOptionsContent, [id^="editMoveMoreOptionsContent_"], #tasteMoreOptionsContent, [id^="editTasteMoreOptionsContent_"], #playMoreOptionsContent, [id^="editPlayMoreOptionsContent_"]');
                     if (optContent && optContent.style.display === 'none') {
-                        if (typeof toggleTasteMoreOptions === 'function' && optContent.id === 'tasteMoreOptionsContent') {
+                        if (typeof toggleMoveMoreOptions === 'function' && optContent.id === 'moveMoreOptionsContent') {
+                            toggleMoveMoreOptions();
+                        } else if (typeof toggleEditMoveMoreOptions === 'function' && optContent.id.startsWith('editMoveMoreOptionsContent_')) {
+                            const mid = optContent.id.replace('editMoveMoreOptionsContent_', '');
+                            toggleEditMoveMoreOptions(mid);
+                        } else if (typeof toggleTasteMoreOptions === 'function' && optContent.id === 'tasteMoreOptionsContent') {
                             toggleTasteMoreOptions();
                         } else if (typeof toggleEditTasteMoreOptions === 'function' && optContent.id.startsWith('editTasteMoreOptionsContent_')) {
                             const tid = optContent.id.replace('editTasteMoreOptionsContent_', '');

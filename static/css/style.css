@@ -3342,6 +3342,71 @@ body {
     text-decoration: none;
 }
 
+/* Price choice button group for Taste & Play */
+.price-btn-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+
+.price-choice-btn {
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: #ffffff;
+    border-radius: var(--radius-sm, 6px);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.price-choice-btn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.price-choice-btn.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+}
+
+.btn-toggle-more-options {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border: 1px dashed var(--border-color, #cbd5e1);
+    font-size: 0.88rem;
+    font-weight: 500;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    color: #475569;
+    transition: all 0.15s ease;
+}
+
+.btn-toggle-more-options:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #1e293b;
+}
+
+.more-options-content {
+    border-top: 1px dashed var(--border-color, #e2e8f0);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+
 
 
 

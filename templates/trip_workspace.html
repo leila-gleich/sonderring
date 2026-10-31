@@ -377,7 +377,12 @@
         <div class="item-card stay-card">
             <div class="item-card-header">
                 <div class="item-card-header-top">
-                    <span class="item-type-badge">{{ stay.place_type|default:"Accommodation" }}</span>
+                    <div>
+                        <span class="item-type-badge">{{ stay.place_type|default:"Accommodation" }}</span>
+                        {% if stay.stay_length %}
+                        <span class="item-length-badge" style="font-size: 0.78rem; font-weight: 500; color: #475569; background: #f1f5f9; padding: 2px 7px; border-radius: 4px; border: 1px solid #e2e8f0; margin-left: 0.35rem;">⏳ {{ stay.stay_length }} {{ stay.stay_length_unit|default:"Day(s)" }}</span>
+                        {% endif %}
+                    </div>
                     <div class="item-header-actions">
                         <span class="status-pill status-{{ stay.status|lower }} status-badge-stay-{{ stay.id }}">
                             {{ stay.get_status_display }}
@@ -565,98 +570,111 @@
                             </button>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Property Name <span class="required">*</span></label>
-                            <input type="text" name="title" class="form-control" value="{{ stay.title }}" required>
-                        </div>
-
                         <div class="form-row">
+                            <div class="form-col" style="flex: 2;">
+                                <label class="form-label">Stay Name <span class="required">*</span></label>
+                                <input type="text" name="title" class="form-control" value="{{ stay.title }}" required>
+                            </div>
                             <div class="form-col">
-                                <label class="form-label">Type of Place</label>
+                                <label class="form-label">Type</label>
                                 <select name="place_type" class="form-control">
-                                    <option value="Hotel Room" {% if stay.place_type == 'Hotel Room' %}selected{% endif %}>Hotel Room</option>
-                                    <option value="Entire Place" {% if stay.place_type == 'Entire Place' %}selected{% endif %}>Entire Place</option>
-                                    <option value="Shared Room/Guest House" {% if stay.place_type == 'Shared Room/Guest House' %}selected{% endif %}>Shared Room / Guest House</option>
+                                    <option value="Hotel" {% if stay.place_type == 'Hotel' or stay.place_type == 'Hotel Room' %}selected{% endif %}>Hotel</option>
+                                    <option value="Home" {% if stay.place_type == 'Home' or stay.place_type == 'Entire Place' %}selected{% endif %}>Home</option>
+                                    <option value="Apartment" {% if stay.place_type == 'Apartment' %}selected{% endif %}>Apartment</option>
+                                    <option value="Room" {% if stay.place_type == 'Room' or stay.place_type == 'Shared Room/Guest House' %}selected{% endif %}>Room</option>
+                                    <option value="Bed" {% if stay.place_type == 'Bed' %}selected{% endif %}>Bed</option>
                                 </select>
                             </div>
-                            <div class="form-col">
-                                <label class="form-label">Beds</label>
-                                <input type="number" name="num_beds" class="form-control" value="{{ stay.num_beds|default:'' }}">
-                            </div>
-                            <div class="form-col">
-                                <label class="form-label">Rooms</label>
-                                <input type="number" name="num_rooms" class="form-control" value="{{ stay.num_rooms|default:'' }}">
-                            </div>
-                            <div class="form-col">
-                                <label class="form-label">Guests</label>
-                                <input type="number" name="num_guests" class="form-control" value="{{ stay.num_guests|default:'' }}">
-                            </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Address</label>
-                            <input type="text" name="address" class="form-control" value="{{ stay.address|default:'' }}">
+                            <label class="form-label">Location</label>
+                            <input type="text" name="address" class="form-control" value="{{ stay.address|default:'' }}" placeholder="Address, area, or neighborhood">
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">
-                                    Check-in Date (Start)
-                                    <span class="stay-date-required text-danger" {% if stay.status != 'CONFIRMED' and stay.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
+                        <div class="form-group">
+                            <label class="form-label">Link</label>
+                            <input type="url" name="booking_link" class="form-control" value="{{ stay.booking_link|default:'' }}" placeholder="https://...">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, parking instructions, WiFi password...">{{ stay.notes|default:'' }}</textarea>
+                        </div>
+
+                        <!-- More Options Toggle Button -->
+                        <div class="form-group" style="margin: 0.85rem 0;">
+                            <button type="button" class="btn btn-outline btn-toggle-more-options" id="btnToggleEditStayMoreOptions_{{ stay.id }}" onclick="toggleEditStayMoreOptions('{{ stay.id }}')">
+                                <span>⚙️</span>
+                                <span class="more-options-text">More Options</span>
+                                <span class="more-options-chevron">▾</span>
+                            </button>
+                        </div>
+
+                        <!-- More Options Expandable Section -->
+                        <div id="editStayMoreOptionsContent_{{ stay.id }}" class="more-options-content" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">Stay Length</label>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input type="number" min="1" step="1" name="stay_length" class="form-control" placeholder="e.g. 3" value="{{ stay.stay_length|default:'' }}" style="max-width: 140px;">
+                                    <select name="stay_length_unit" class="form-control" style="max-width: 150px;">
+                                        <option value="Day(s)" {% if stay.stay_length_unit == 'Day(s)' or not stay.stay_length_unit %}selected{% endif %}>Day(s)</option>
+                                        <option value="Week(s)" {% if stay.stay_length_unit == 'Week(s)' %}selected{% endif %}>Week(s)</option>
+                                        <option value="Month(s)" {% if stay.stay_length_unit == 'Month(s)' %}selected{% endif %}>Month(s)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label class="form-label">
+                                        Start Date (Check-in)
+                                        <span class="stay-date-required text-danger" {% if stay.status != 'CONFIRMED' and stay.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
+                                    </label>
+                                    <input type="date" name="check_in_date" class="form-control" value="{{ stay.check_in|date:'Y-m-d' }}" {% if stay.status == 'CONFIRMED' or stay.status == 'COMPLETE' %}required{% endif %}>
+                                </div>
+                                <div class="form-col">
+                                    <label class="form-label">
+                                        End Date (Check-out)
+                                        <span class="stay-date-required text-danger" {% if stay.status != 'CONFIRMED' and stay.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
+                                    </label>
+                                    <input type="date" name="check_out_date" class="form-control" value="{{ stay.check_out|date:'Y-m-d' }}" {% if stay.status == 'CONFIRMED' or stay.status == 'COMPLETE' %}required{% endif %}>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label class="form-label">Check-in Time <small class="text-muted">(Optional)</small></label>
+                                    <input type="time" name="check_in_time" class="form-control" value="{{ stay.check_in_time_str }}">
+                                </div>
+                                <div class="form-col">
+                                    <label class="form-label">Check-out Time <small class="text-muted">(Optional)</small></label>
+                                    <input type="time" name="check_out_time" class="form-control" value="{{ stay.check_out_time_str }}">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label class="form-label">Price ($)</label>
+                                    <input type="number" step="0.01" name="total_price" class="form-control" value="{{ stay.total_price|default:'' }}" placeholder="e.g. 890.00">
+                                </div>
+                                <div class="form-col">
+                                    <label class="form-label">Confirmation Code</label>
+                                    <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                                    <span>📎</span>
+                                    <span>Upload Documents</span>
+                                    <small class="text-muted">(PDF, PNG, JPG)</small>
                                 </label>
-                                <input type="date" name="check_in_date" class="form-control" value="{{ stay.check_in|date:'Y-m-d' }}" {% if stay.status == 'CONFIRMED' or stay.status == 'COMPLETE' %}required{% endif %}>
+                                <input type="file" name="documents" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
+                                <small class="text-muted" style="display: block; margin-top: 0.35rem; font-size: 0.8rem;">
+                                    Upload additional booking confirmations or tickets to the Secure Vault.
+                                </small>
                             </div>
-                            <div class="form-col">
-                                <label class="form-label">
-                                    Check-out Date (End)
-                                    <span class="stay-date-required text-danger" {% if stay.status != 'CONFIRMED' and stay.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
-                                </label>
-                                <input type="date" name="check_out_date" class="form-control" value="{{ stay.check_out|date:'Y-m-d' }}" {% if stay.status == 'CONFIRMED' or stay.status == 'COMPLETE' %}required{% endif %}>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Check-in Time <small class="text-muted">(Optional)</small></label>
-                                <input type="time" name="check_in_time" class="form-control" value="{{ stay.check_in_time_str }}">
-                            </div>
-                            <div class="form-col">
-                                <label class="form-label">Check-out Time <small class="text-muted">(Optional)</small></label>
-                                <input type="time" name="check_out_time" class="form-control" value="{{ stay.check_out_time_str }}">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Total Cost ($)</label>
-                                <input type="number" step="0.01" name="total_price" class="form-control" value="{{ stay.total_price|default:'' }}">
-                            </div>
-                            <div class="form-col">
-                                <label class="form-label">Confirmation Code (AES-256)</label>
-                                <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Booking Link</label>
-                            <input type="url" name="booking_link" class="form-control" value="{{ stay.booking_link|default:'' }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Notes & Instructions</label>
-                            <textarea name="notes" class="form-control" rows="2">{{ stay.notes|default:'' }}</textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
-                                <span>📎</span>
-                                <span>Upload Documents</span>
-                                <small class="text-muted">(PDF, PNG, JPG)</small>
-                            </label>
-                            <input type="file" name="documents" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
-                            <small class="text-muted" style="display: block; margin-top: 0.35rem; font-size: 0.8rem;">
-                                Upload additional booking confirmations or tickets to the Secure Vault.
-                            </small>
                         </div>
 
                         <div class="modal-footer">
@@ -735,7 +753,14 @@
             <div class="item-card do-card taste-card">
                 <div class="item-card-header">
                     <div class="item-card-header-top">
-                        <span class="item-type-badge">{{ taste.get_taste_type_display }}</span>
+                        <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                            <span class="item-type-badge">{{ taste.get_taste_type_display }}</span>
+                            {% if taste.cuisine %}
+                            <span class="item-cuisine-badge" style="font-size: 0.78rem; font-weight: 500; color: #475569; background: #f1f5f9; padding: 2px 7px; border-radius: 4px; border: 1px solid #e2e8f0;">🍳 {{ taste.cuisine }}</span>
+                            {% elif taste.drink_category %}
+                            <span class="item-drink-cat-badge" style="font-size: 0.78rem; font-weight: 500; color: #475569; background: #f1f5f9; padding: 2px 7px; border-radius: 4px; border: 1px solid #e2e8f0;">🍸 {{ taste.drink_category }}</span>
+                            {% endif %}
+                        </div>
                         <div class="item-header-actions">
                             <span class="status-pill status-{{ taste.status|lower }} status-badge-taste-{{ taste.id }}">
                                 {{ taste.get_status_display }}
@@ -779,6 +804,23 @@
 
                 {% if taste.notes %}
                 <p class="item-notes"><strong>Notes:</strong> {{ taste.notes }}</p>
+                {% endif %}
+
+                {% if taste.attachments.all %}
+                <div class="stay-attachments-bar" style="margin: 0.5rem 0; padding: 0.5rem 0.75rem; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <span>📎</span> <span>Documents ({{ taste.attachments.count }})</span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                        {% for att in taste.attachments.all %}
+                        <a href="{% url 'core:download_attachment' trip.id att.id %}" class="btn btn-sm btn-outline" style="font-size: 0.78rem; padding: 0.2rem 0.55rem; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="Download {{ att.file_name }}">
+                            <span>📄</span>
+                            <span style="max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ att.file_name }}</span>
+                            <span style="font-size: 0.7rem; opacity: 0.7;">↓</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
                 {% endif %}
 
                 {% if taste.price_range or taste.price or taste.has_confirmation_code or taste.menu_link or taste.link %}
@@ -886,7 +928,7 @@
                             </div>
                             <button type="button" class="modal-close" onclick="closeModal('editTasteModal_{{ taste.id }}')">×</button>
                         </div>
-                        <form method="POST" action="{% url 'core:edit_taste' trip.id taste.id %}" class="modal-form">
+                        <form method="POST" action="{% url 'core:edit_taste' trip.id taste.id %}" enctype="multipart/form-data" class="modal-form">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="">
                             <input type="hidden" name="status" value="{{ taste.status }}">
@@ -908,18 +950,22 @@
                                     <input type="text" name="title" class="form-control" value="{{ taste.title }}" placeholder="e.g., Trattoria da Nino, Bar Raval, Café Loki" required>
                                 </div>
                                 <div class="form-col">
-                                    <label class="form-label">Category</label>
-                                    <select name="taste_type" class="form-control">
-                                        <option value="Food" {% if taste.taste_type == 'Food' or taste.taste_type == 'Restaurant' or taste.taste_type == 'Food Market' or taste.taste_type == 'Culinary Tour' or taste.taste_type == 'Cooking Class' or taste.taste_type == 'Dessert' %}selected{% endif %}>Food</option>
-                                        <option value="Drink" {% if taste.taste_type == 'Drink' or taste.taste_type == 'Bar & Drinks' or taste.taste_type == 'Winery & Brewery' %}selected{% endif %}>Drink</option>
-                                        <option value="Cafe" {% if taste.taste_type == 'Cafe' or taste.taste_type == 'Cafe & Bakery' or taste.taste_type == 'Coffee' %}selected{% endif %}>Cafe</option>
+                                    <label class="form-label">Type</label>
+                                    <select name="taste_type" class="form-control" onchange="updateTasteSubtype('editTasteModal_{{ taste.id }}')">
+                                        <option value="Food" {% if taste.taste_type == 'Food' or not taste.taste_type or taste.taste_type == 'Restaurant' or taste.taste_type == 'Cafe' %}selected{% endif %}>Food</option>
+                                        <option value="Drink" {% if taste.taste_type == 'Drink' or taste.taste_type == 'Bar & Drinks' %}selected{% endif %}>Drink</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Location</label>
-                                <input type="text" name="address" class="form-control" value="{{ taste.address|default:'' }}" placeholder="Street address or area">
+                                <input type="text" name="address" class="form-control" value="{{ taste.address|default:'' }}" placeholder="Street address, neighborhood or area">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Link</label>
+                                <input type="url" name="link" class="form-control" value="{{ taste.link|default:taste.general_link|default:taste.menu_link|default:'' }}" placeholder="https://... (venue website or menu)">
                             </div>
 
                             <div class="form-group">
@@ -929,7 +975,7 @@
 
                             <!-- More Options Toggle Button -->
                             <div class="form-group" style="margin: 0.85rem 0;">
-                                <button type="button" class="btn btn-outline" id="btnToggleEditTasteMoreOptions_{{ taste.id }}" onclick="toggleEditTasteMoreOptions('{{ taste.id }}')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                                <button type="button" class="btn btn-outline btn-toggle-more-options" id="btnToggleEditTasteMoreOptions_{{ taste.id }}" onclick="toggleEditTasteMoreOptions('{{ taste.id }}')">
                                     <span>⚙️</span>
                                     <span class="more-options-text">More Options</span>
                                     <span class="more-options-chevron">▾</span>
@@ -937,7 +983,50 @@
                             </div>
 
                             <!-- More Options Expandable Section (Other Attributes) -->
-                            <div id="editTasteMoreOptionsContent_{{ taste.id }}" style="display: none; border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
+                            <div id="editTasteMoreOptionsContent_{{ taste.id }}" class="more-options-content" style="display: none;">
+                                <!-- Conditional Cuisine / Drink Category -->
+                                <div class="taste-cuisine-row" style="{% if taste.taste_type == 'Drink' %}display: none;{% else %}display: block;{% endif %} margin-bottom: 1rem;">
+                                    <label class="form-label">Cuisine</label>
+                                    <select name="cuisine" class="form-control">
+                                        <option value="">Select cuisine...</option>
+                                        <option value="American" {% if taste.cuisine == 'American' %}selected{% endif %}>American</option>
+                                        <option value="African" {% if taste.cuisine == 'African' %}selected{% endif %}>African</option>
+                                        <option value="Asian" {% if taste.cuisine == 'Asian' %}selected{% endif %}>Asian</option>
+                                        <option value="Contemporary" {% if taste.cuisine == 'Contemporary' %}selected{% endif %}>Contemporary</option>
+                                        <option value="European" {% if taste.cuisine == 'European' %}selected{% endif %}>European</option>
+                                        <option value="Fusion" {% if taste.cuisine == 'Fusion' %}selected{% endif %}>Fusion</option>
+                                        <option value="Indian" {% if taste.cuisine == 'Indian' %}selected{% endif %}>Indian</option>
+                                        <option value="Mediterranean" {% if taste.cuisine == 'Mediterranean' %}selected{% endif %}>Mediterranean</option>
+                                        <option value="Mexican" {% if taste.cuisine == 'Mexican' %}selected{% endif %}>Mexican</option>
+                                        <option value="South American" {% if taste.cuisine == 'South American' %}selected{% endif %}>South American</option>
+                                    </select>
+                                </div>
+
+                                <div class="taste-drink-row" style="{% if taste.taste_type == 'Drink' %}display: block;{% else %}display: none;{% endif %} margin-bottom: 1rem;">
+                                    <label class="form-label">Category</label>
+                                    <select name="drink_category" class="form-control">
+                                        <option value="">Select drink category...</option>
+                                        <option value="Beer" {% if taste.drink_category == 'Beer' %}selected{% endif %}>Beer</option>
+                                        <option value="Cocktails" {% if taste.drink_category == 'Cocktails' %}selected{% endif %}>Cocktails</option>
+                                        <option value="Wine" {% if taste.drink_category == 'Wine' %}selected{% endif %}>Wine</option>
+                                        <option value="Tea & Coffee" {% if taste.drink_category == 'Tea & Coffee' %}selected{% endif %}>Tea & Coffee</option>
+                                        <option value="Juice and Smoothies" {% if taste.drink_category == 'Juice and Smoothies' %}selected{% endif %}>Juice and Smoothies</option>
+                                        <option value="Other" {% if taste.drink_category == 'Other' %}selected{% endif %}>Other</option>
+                                    </select>
+                                </div>
+
+                                <!-- Price Buttons ($, $$, $$$, $$$$) -->
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label class="form-label">Price</label>
+                                    <input type="hidden" name="price_range" id="editTastePriceRange_{{ taste.id }}" value="{{ taste.price_range|default:'' }}">
+                                    <div class="price-btn-group" data-input-id="editTastePriceRange_{{ taste.id }}">
+                                        <button type="button" class="price-choice-btn {% if taste.price_range == '$' %}active{% endif %}" onclick="selectPriceTier(this, '$', 'editTastePriceRange_{{ taste.id }}')">$</button>
+                                        <button type="button" class="price-choice-btn {% if taste.price_range == '$$' %}active{% endif %}" onclick="selectPriceTier(this, '$$', 'editTastePriceRange_{{ taste.id }}')">$$</button>
+                                        <button type="button" class="price-choice-btn {% if taste.price_range == '$$$' %}active{% endif %}" onclick="selectPriceTier(this, '$$$', 'editTastePriceRange_{{ taste.id }}')">$$$</button>
+                                        <button type="button" class="price-choice-btn {% if taste.price_range == '$$$$' %}active{% endif %}" onclick="selectPriceTier(this, '$$$$', 'editTastePriceRange_{{ taste.id }}')">$$$$</button>
+                                    </div>
+                                </div>
+
                                 <div class="form-row">
                                     <div class="form-col">
                                         <label class="form-label">
@@ -952,36 +1041,21 @@
                                     </div>
                                 </div>
 
-                                <div class="form-row">
-                                    <div class="form-col">
-                                        <label class="form-label">Price Range</label>
-                                        <select name="price_range" class="form-control">
-                                            <option value="">Select price range...</option>
-                                            <option value="$" {% if taste.price_range == '$' %}selected{% endif %}>$</option>
-                                            <option value="$$" {% if taste.price_range == '$$' %}selected{% endif %}>$$</option>
-                                            <option value="$$$" {% if taste.price_range == '$$$' %}selected{% endif %}>$$$</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-col">
-                                        <label class="form-label">Confirmation Code</label>
-                                        <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
-                                    </div>
-                                </div>
-
-                                <div class="form-row">
-                                    <div class="form-col">
-                                        <label class="form-label">General Link</label>
-                                        <input type="url" name="general_link" class="form-control" value="{{ taste.general_link|default:'' }}" placeholder="https://... (venue website)">
-                                    </div>
-                                    <div class="form-col">
-                                        <label class="form-label">Link to Menu</label>
-                                        <input type="url" name="menu_link" class="form-control" value="{{ taste.menu_link|default:taste.link|default:'' }}" placeholder="https://... (menu link)">
-                                    </div>
+                                <div class="form-group">
+                                    <label class="form-label">Booking Reference</label>
+                                    <input type="text" name="booking_reference" class="form-control" placeholder="Leave blank to keep existing" value="">
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">Description / Recommendations</label>
-                                    <textarea name="description" class="form-control" rows="2" placeholder="Recommended specialties, chef's tasting, terrace seating...">{{ taste.description|default:'' }}</textarea>
+                                    <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                                        <span>📎</span>
+                                        <span>Upload Documents</span>
+                                        <small class="text-muted">(PDF, PNG, JPG)</small>
+                                    </label>
+                                    <input type="file" name="documents" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
+                                    <small class="text-muted" style="display: block; margin-top: 0.35rem; font-size: 0.8rem;">
+                                        Upload reservations, confirmations, or menus to the Secure Vault.
+                                    </small>
                                 </div>
                             </div>
 
@@ -1069,7 +1143,12 @@
             <div class="item-card do-card play-card">
                 <div class="item-card-header">
                     <div class="item-card-header-top">
-                        <span class="item-type-badge">{{ play.get_play_type_display }}</span>
+                        <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                            <span class="item-type-badge">{{ play.get_play_type_display }}</span>
+                            {% if play.price_tier %}
+                            <span class="item-price-tier-badge" style="font-size: 0.78rem; font-weight: 600; color: #166534; background: #dcfce7; padding: 2px 7px; border-radius: 4px; border: 1px solid #bbf7d0;">{{ play.price_tier }}</span>
+                            {% endif %}
+                        </div>
                         <div class="item-header-actions">
                             <span class="status-pill status-{{ play.status|lower }} status-badge-play-{{ play.id }}">
                                 {{ play.get_status_display }}
@@ -1109,9 +1188,30 @@
                 <p class="item-notes"><strong>Notes:</strong> {{ play.notes }}</p>
                 {% endif %}
 
-                {% if play.price or play.has_confirmation_code or play.link %}
+                {% if play.attachments.all %}
+                <div class="stay-attachments-bar" style="margin: 0.5rem 0; padding: 0.5rem 0.75rem; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <span>📎</span> <span>Documents ({{ play.attachments.count }})</span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                        {% for att in play.attachments.all %}
+                        <a href="{% url 'core:download_attachment' trip.id att.id %}" class="btn btn-sm btn-outline" style="font-size: 0.78rem; padding: 0.2rem 0.55rem; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;" title="Download {{ att.file_name }}">
+                            <span>📄</span>
+                            <span style="max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ att.file_name }}</span>
+                            <span style="font-size: 0.7rem; opacity: 0.7;">↓</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if play.price_tier or play.price or play.has_confirmation_code or play.link %}
                 <div class="item-footer">
-                    {% if play.price %}
+                    {% if play.price_tier %}
+                    <div class="price-box">
+                        <span class="price-val">{{ play.price_tier }}</span>
+                    </div>
+                    {% elif play.price %}
                     <div class="price-box">
                         <span class="price-val">${{ play.price|floatformat:2 }}</span>
                         <span class="price-currency">{{ play.currency }}</span>
@@ -1210,7 +1310,7 @@
                             </div>
                             <button type="button" class="modal-close" onclick="closeModal('editPlayModal_{{ play.id }}')">×</button>
                         </div>
-                        <form method="POST" action="{% url 'core:edit_play' trip.id play.id %}" class="modal-form">
+                        <form method="POST" action="{% url 'core:edit_play' trip.id play.id %}" enctype="multipart/form-data" class="modal-form">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="">
                             <input type="hidden" name="status" value="{{ play.status }}">
@@ -1227,50 +1327,62 @@
                             </div>
 
                             <!-- Primary Inputs (Name) -->
-                            <div class="form-group">
-                                <label class="form-label">Activity Title <span class="required">*</span></label>
-                                <input type="text" name="title" class="form-control" value="{{ play.title }}" required>
-                            </div>
-
-                            <!-- Type & Location -->
                             <div class="form-row">
+                                <div class="form-col" style="flex: 2;">
+                                    <label class="form-label">Activity Name <span class="required">*</span></label>
+                                    <input type="text" name="title" class="form-control" value="{{ play.title }}" required>
+                                </div>
                                 <div class="form-col">
                                     <label class="form-label">Type</label>
                                     <select name="play_type" class="form-control">
-                                        <option value="Sightseeing" {% if play.play_type == 'Sightseeing' %}selected{% endif %}>Sightseeing & Landmark</option>
-                                        <option value="Outdoor & Hike" {% if play.play_type == 'Outdoor & Hike' %}selected{% endif %}>Outdoor & Hike</option>
-                                        <option value="Tour & Excursion" {% if play.play_type == 'Tour & Excursion' %}selected{% endif %}>Tour & Excursion</option>
-                                        <option value="Culture & Museum" {% if play.play_type == 'Culture & Museum' %}selected{% endif %}>Culture & Museum</option>
-                                        <option value="Water & Boat" {% if play.play_type == 'Water & Boat' %}selected{% endif %}>Water & Boat</option>
-                                        <option value="Nightlife & Music" {% if play.play_type == 'Nightlife & Music' %}selected{% endif %}>Nightlife & Music</option>
-                                        <option value="Event & Show" {% if play.play_type == 'Event & Show' %}selected{% endif %}>Event & Performance</option>
-                                        <option value="Spa & Wellness" {% if play.play_type == 'Spa & Wellness' %}selected{% endif %}>Spa & Wellness</option>
-                                        <option value="Travel Tip" {% if play.play_type == 'Travel Tip' %}selected{% endif %}>Travel Tip & Advice</option>
+                                        <option value="Outdoors" {% if play.play_type == 'Outdoors' or play.play_type == 'Outdoor & Hike' or play.play_type == 'Water & Boat' %}selected{% endif %}>Outdoors</option>
+                                        <option value="Tours" {% if play.play_type == 'Tours' or play.play_type == 'Tour & Excursion' %}selected{% endif %}>Tours</option>
+                                        <option value="Events" {% if play.play_type == 'Events' or play.play_type == 'Event & Show' or play.play_type == 'Nightlife & Music' %}selected{% endif %}>Events</option>
+                                        <option value="Sightseeing" {% if play.play_type == 'Sightseeing' or play.play_type == 'Culture & Museum' %}selected{% endif %}>Sightseeing</option>
+                                        <option value="Other" {% if play.play_type == 'Other' or play.play_type == 'Spa & Wellness' or play.play_type == 'Travel Tip' %}selected{% endif %}>Other</option>
                                     </select>
-                                </div>
-                                <div class="form-col" style="flex: 2;">
-                                    <label class="form-label">Location / Address</label>
-                                    <input type="text" name="address" class="form-control" value="{{ play.address|default:'' }}" placeholder="Venue name, trail head or area">
                                 </div>
                             </div>
 
-                            <!-- Notes -->
+                            <div class="form-group">
+                                <label class="form-label">Location</label>
+                                <input type="text" name="address" class="form-control" value="{{ play.address|default:'' }}" placeholder="Venue name, trail head or area">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Link</label>
+                                <input type="url" name="link" class="form-control" value="{{ play.link|default:'' }}" placeholder="https://...">
+                            </div>
+
                             <div class="form-group">
                                 <label class="form-label">Notes</label>
-                                <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, meeting point instructions...">{{ play.notes|default:'' }}</textarea>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, meeting point instructions, booking notes...">{{ play.notes|default:'' }}</textarea>
                             </div>
 
                             <!-- More Options Toggle Button -->
                             <div class="form-group" style="margin: 0.85rem 0;">
-                                <button type="button" class="btn btn-outline" id="btnToggleEditPlayMoreOptions_{{ play.id }}" onclick="toggleEditPlayMoreOptions('{{ play.id }}')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                                <button type="button" class="btn btn-outline btn-toggle-more-options" id="btnToggleEditPlayMoreOptions_{{ play.id }}" onclick="toggleEditPlayMoreOptions('{{ play.id }}')">
                                     <span>⚙️</span>
-                                    <span class="more-options-text">{% if play.start_time or play.price or play.has_confirmation_code or play.link or play.description %}Fewer Options{% else %}More Options{% endif %}</span>
-                                    <span class="more-options-chevron">{% if play.start_time or play.price or play.has_confirmation_code or play.link or play.description %}▴{% else %}▾{% endif %}</span>
+                                    <span class="more-options-text">More Options</span>
+                                    <span class="more-options-chevron">▾</span>
                                 </button>
                             </div>
 
                             <!-- More Options Expandable Section -->
-                            <div id="editPlayMoreOptionsContent_{{ play.id }}" style="{% if play.start_time or play.price or play.has_confirmation_code or play.link or play.description %}display: block;{% else %}display: none;{% endif %} border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
+                            <div id="editPlayMoreOptionsContent_{{ play.id }}" class="more-options-content" style="display: none;">
+                                <!-- Price Tier Buttons (Free, $, $$, $$$, $$$$) -->
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label class="form-label">Price</label>
+                                    <input type="hidden" name="price_tier" id="editPlayPriceTier_{{ play.id }}" value="{{ play.price_tier|default:'' }}">
+                                    <div class="price-btn-group" data-input-id="editPlayPriceTier_{{ play.id }}">
+                                        <button type="button" class="price-choice-btn {% if play.price_tier == 'Free' %}active{% endif %}" onclick="selectPriceTier(this, 'Free', 'editPlayPriceTier_{{ play.id }}')">Free</button>
+                                        <button type="button" class="price-choice-btn {% if play.price_tier == '$' %}active{% endif %}" onclick="selectPriceTier(this, '$', 'editPlayPriceTier_{{ play.id }}')">$</button>
+                                        <button type="button" class="price-choice-btn {% if play.price_tier == '$$' %}active{% endif %}" onclick="selectPriceTier(this, '$$', 'editPlayPriceTier_{{ play.id }}')">$$</button>
+                                        <button type="button" class="price-choice-btn {% if play.price_tier == '$$$' %}active{% endif %}" onclick="selectPriceTier(this, '$$$', 'editPlayPriceTier_{{ play.id }}')">$$$</button>
+                                        <button type="button" class="price-choice-btn {% if play.price_tier == '$$$$' %}active{% endif %}" onclick="selectPriceTier(this, '$$$$', 'editPlayPriceTier_{{ play.id }}')">$$$$</button>
+                                    </div>
+                                </div>
+
                                 <div class="form-row">
                                     <div class="form-col">
                                         <label class="form-label">
@@ -1285,25 +1397,21 @@
                                     </div>
                                 </div>
 
-                                <div class="form-row">
-                                    <div class="form-col">
-                                        <label class="form-label">Estimated Cost ($)</label>
-                                        <input type="number" step="0.01" name="price" class="form-control" value="{{ play.price|default:'' }}">
-                                    </div>
-                                    <div class="form-col">
-                                        <label class="form-label">Confirmation Code</label>
-                                        <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
-                                    </div>
+                                <div class="form-group">
+                                    <label class="form-label">Confirmation Code</label>
+                                    <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">Guide / Ticket Link</label>
-                                    <input type="url" name="link" class="form-control" value="{{ play.link|default:'' }}" placeholder="https://...">
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label">Description / Instructions</label>
-                                    <textarea name="description" class="form-control" rows="2" placeholder="Gear needed, booking notes, directions, tour details...">{{ play.description|default:'' }}</textarea>
+                                    <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                                        <span>📎</span>
+                                        <span>Upload Documents</span>
+                                        <small class="text-muted">(PDF, PNG, JPG)</small>
+                                    </label>
+                                    <input type="file" name="documents" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
+                                    <small class="text-muted" style="display: block; margin-top: 0.35rem; font-size: 0.8rem;">
+                                        Upload tickets, passes, or tour itineraries to the Secure Vault.
+                                    </small>
                                 </div>
                             </div>
 
@@ -1742,43 +1850,33 @@
                     </button>
                 </div>
 
-                <!-- Primary Input (Name) -->
-                <div class="form-group">
-                    <label class="form-label">Stay Name <span class="required">*</span></label>
-                    <input type="text" name="title" class="form-control" placeholder="e.g., Saga Hotel Reykjavik, Villa Bellini" required>
-                </div>
-
-                <!-- Start Date & End Date -->
                 <div class="form-row">
-                    <div class="form-col">
-                        <label class="form-label">
-                            Start Date (Check-in)
-                            <span class="stay-date-required text-danger">*</span>
-                        </label>
-                        <input type="date" name="check_in_date" class="form-control" required>
+                    <div class="form-col" style="flex: 2;">
+                        <label class="form-label">Stay Name <span class="required">*</span></label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g., Saga Hotel Reykjavik, Villa Bellini" required>
                     </div>
                     <div class="form-col">
-                        <label class="form-label">
-                            End Date (Check-out)
-                            <span class="stay-date-required text-danger">*</span>
-                        </label>
-                        <input type="date" name="check_out_date" class="form-control" required>
+                        <label class="form-label">Type</label>
+                        <select name="place_type" id="addStayPlaceType" class="form-control">
+                            <option value="Hotel" selected>Hotel</option>
+                            <option value="Home">Home</option>
+                            <option value="Apartment">Apartment</option>
+                            <option value="Room">Room</option>
+                            <option value="Bed">Bed</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Price & Confirmation Code (Only available for confirmed hotel) -->
-                <div class="form-row" id="addStayPriceAndCodeRow">
-                    <div class="form-col" id="addStayPriceCol">
-                        <label class="form-label">Price ($)</label>
-                        <input type="number" step="0.01" name="total_price" class="form-control" placeholder="e.g. 890.00">
-                    </div>
-                    <div class="form-col" id="addStayConfirmationCol">
-                        <label class="form-label">Confirmation Code (AES-256)</label>
-                        <input type="text" name="confirmation_code" id="addStayConfirmationCode" class="form-control" placeholder="e.g. SAGA-44012-IS">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="address" class="form-control" placeholder="Address, area, or neighborhood">
                 </div>
 
-                <!-- Notes -->
+                <div class="form-group">
+                    <label class="form-label">Link</label>
+                    <input type="url" name="booking_link" class="form-control" placeholder="https://...">
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Notes</label>
                     <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, parking instructions, WiFi password..."></textarea>
@@ -1786,7 +1884,7 @@
 
                 <!-- More Options Toggle Button -->
                 <div class="form-group" style="margin: 0.85rem 0;">
-                    <button type="button" class="btn btn-outline" id="btnToggleStayMoreOptions" onclick="toggleStayMoreOptions()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                    <button type="button" class="btn btn-outline btn-toggle-more-options" id="btnToggleStayMoreOptions" onclick="toggleStayMoreOptions()">
                         <span id="moreOptionsIcon">⚙️</span>
                         <span id="moreOptionsText">More Options</span>
                         <span id="moreOptionsChevron">▾</span>
@@ -1794,33 +1892,34 @@
                 </div>
 
                 <!-- More Options Expandable Section (Other Attributes & Document Upload) -->
-                <div id="stayMoreOptionsContent" style="display: none; border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
-                    <div class="form-row">
-                        <div class="form-col">
-                            <label class="form-label">Type of Place</label>
-                            <select name="place_type" id="addStayPlaceType" class="form-control">
-                                <option value="Hotel Room" selected>Hotel Room</option>
-                                <option value="Entire Place">Entire Place (House / Apt)</option>
-                                <option value="Shared Room/Guest House">Shared Room / Guest House</option>
+                <div id="stayMoreOptionsContent" class="more-options-content" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Stay Length</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="number" min="1" step="1" name="stay_length" class="form-control" placeholder="e.g. 3" style="max-width: 140px;">
+                            <select name="stay_length_unit" class="form-control" style="max-width: 150px;">
+                                <option value="Day(s)" selected>Day(s)</option>
+                                <option value="Week(s)">Week(s)</option>
+                                <option value="Month(s)">Month(s)</option>
                             </select>
-                        </div>
-                        <div class="form-col">
-                            <label class="form-label">Beds</label>
-                            <input type="number" name="num_beds" class="form-control" placeholder="e.g. 2">
-                        </div>
-                        <div class="form-col">
-                            <label class="form-label">Rooms</label>
-                            <input type="number" name="num_rooms" class="form-control" placeholder="e.g. 1">
-                        </div>
-                        <div class="form-col">
-                            <label class="form-label">Guests</label>
-                            <input type="number" name="num_guests" class="form-control" placeholder="e.g. 4">
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Physical Address / Area</label>
-                        <input type="text" name="address" class="form-control" placeholder="Street address, neighborhood or city">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">
+                                Start Date (Check-in)
+                                <span class="stay-date-required text-danger">*</span>
+                            </label>
+                            <input type="date" name="check_in_date" class="form-control" required>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">
+                                End Date (Check-out)
+                                <span class="stay-date-required text-danger">*</span>
+                            </label>
+                            <input type="date" name="check_out_date" class="form-control" required>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -1834,9 +1933,15 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Booking Link</label>
-                        <input type="url" name="booking_link" class="form-control" placeholder="https://...">
+                    <div class="form-row">
+                        <div class="form-col" id="addStayPriceCol">
+                            <label class="form-label">Price ($)</label>
+                            <input type="number" step="0.01" name="total_price" class="form-control" placeholder="e.g. 890.00">
+                        </div>
+                        <div class="form-col" id="addStayConfirmationCol">
+                            <label class="form-label">Confirmation Code</label>
+                            <input type="text" name="confirmation_code" id="addStayConfirmationCode" class="form-control" placeholder="e.g. SAGA-44012-IS">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1921,7 +2026,7 @@
                 </div>
                 <button type="button" class="modal-close" onclick="closeModal('addMoveModal')">×</button>
             </div>
-            <form method="POST" action="{% url 'core:add_move' trip.id %}" class="modal-form">
+            <form method="POST" action="{% url 'core:add_move' trip.id %}" enctype="multipart/form-data" class="modal-form">
                 {% csrf_token %}
                 <input type="hidden" name="status" value="CONFIRMED">
 
@@ -1938,35 +2043,15 @@
 
                 <div class="form-row">
                     <div class="form-col" style="flex: 2;">
-                        <label class="form-label">Transport Title <span class="required">*</span></label>
+                        <label class="form-label">Transport Name <span class="required">*</span></label>
                         <input type="text" name="title" class="form-control" placeholder="e.g., Delta Flight DL 128, KEF 4x4 Campervan, Trenitalia Coastal" required>
                     </div>
                     <div class="form-col">
-                        <label class="form-label">Mode</label>
+                        <label class="form-label">Type</label>
                         <select name="mode" class="form-control">
-                            <option value="Flight">Flight</option>
-                            <option value="Train">Train</option>
-                            <option value="Car">Car / Rental</option>
-                            <option value="Ferry">Ferry / Cruise</option>
-                            <option value="Bus">Bus</option>
-                            <option value="Rideshare">Rideshare</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="form-label">Trip Stage</label>
-                        <select name="trip_stage" class="form-control">
-                            <option value="START_END">Trip Start/End (Arrival / Departure)</option>
-                            <option value="MID_TRIP">Mid-Trip (During trip)</option>
-                        </select>
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label">Direction</label>
-                        <select name="direction" class="form-control">
-                            <option value="ARRIVING">Arriving to Trip</option>
-                            <option value="LEAVING">Leaving Trip</option>
+                            <option value="Planes" selected>Planes</option>
+                            <option value="Trains">Trains</option>
+                            <option value="Car">Car</option>
                         </select>
                     </div>
                 </div>
@@ -1982,43 +2067,68 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="form-label">
-                            Date
-                            <span class="move-date-required text-danger">*</span>
-                        </label>
-                        <input type="date" name="date" class="form-control" required>
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
-                        <input type="time" name="time" class="form-control">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="form-label">Passenger Handle(s)</label>
-                        <input type="text" name="passenger_name" class="form-control" placeholder="e.g. @leila, @sam">
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label">Total Cost ($)</label>
-                        <input type="number" step="0.01" name="price" class="form-control" placeholder="e.g. 780.00">
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label">Confirmation Code (AES-256)</label>
-                        <input type="text" name="confirmation_code" class="form-control" placeholder="e.g. DL-KEF-4820">
-                    </div>
-                </div>
-
                 <div class="form-group">
-                    <label class="form-label">Booking Link</label>
+                    <label class="form-label">Link</label>
                     <input type="url" name="booking_link" class="form-control" placeholder="https://...">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Flexibility Notes & Route Details</label>
+                    <label class="form-label">Notes</label>
                     <textarea name="flexibility_notes" class="form-control" rows="2" placeholder="Layover window, pickup instructions, buffer..."></textarea>
+                </div>
+
+                <!-- More Options Toggle Button -->
+                <div class="form-group" style="margin: 0.85rem 0;">
+                    <button type="button" class="btn btn-outline btn-toggle-more-options" id="btnToggleMoveMoreOptions" onclick="toggleMoveMoreOptions()">
+                        <span>⚙️</span>
+                        <span id="moveMoreOptionsText">More Options</span>
+                        <span id="moveMoreOptionsChevron">▾</span>
+                    </button>
+                </div>
+
+                <!-- More Options Expandable Section -->
+                <div id="moveMoreOptionsContent" class="more-options-content" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">
+                                Departure Date
+                                <span class="move-date-required text-danger">*</span>
+                            </label>
+                            <input type="date" name="date" class="form-control" required>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Departure Time <small class="text-muted">(Planes & Trains)</small></label>
+                            <input type="time" name="time" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Company <small class="text-muted">(if applicable)</small></label>
+                        <input type="text" name="company" class="form-control" placeholder="e.g. Icelandair, Trenitalia, Hertz">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Price ($)</label>
+                            <input type="number" step="0.01" name="price" class="form-control" placeholder="e.g. 780.00">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Confirmation Code</label>
+                            <input type="text" name="confirmation_code" class="form-control" placeholder="e.g. DL-KEF-4820">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                            <span>📎</span>
+                            <span>Upload Documents</span>
+                            <small class="text-muted">(PDF, PNG, JPG)</small>
+                        </label>
+                        <input type="file" name="documents" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
+                        <small class="text-muted" style="display: block; margin-top: 0.35rem; font-size: 0.8rem;">
+                            Upload tickets, boarding passes, or rental agreements to the Secure Vault.
+                        </small>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
@@ -2092,7 +2202,7 @@
                 </div>
                 <button type="button" class="modal-close" onclick="closeModal('addTasteModal')">×</button>
             </div>
-            <form method="POST" action="{% url 'core:add_taste' trip.id %}" class="modal-form">
+            <form method="POST" action="{% url 'core:add_taste' trip.id %}" enctype="multipart/form-data" class="modal-form">
                 {% csrf_token %}
                 <input type="hidden" name="status" value="IDEA">
 
@@ -2113,18 +2223,22 @@
                         <input type="text" name="title" class="form-control" placeholder="e.g., Trattoria da Nino, Friðheimar Greenhouse, Bar Raval" required>
                     </div>
                     <div class="form-col">
-                        <label class="form-label">Category</label>
-                        <select name="taste_type" class="form-control">
+                        <label class="form-label">Type</label>
+                        <select name="taste_type" class="form-control" onchange="updateTasteSubtype('addTasteModal')">
                             <option value="Food" selected>Food</option>
                             <option value="Drink">Drink</option>
-                            <option value="Cafe">Cafe</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Location</label>
-                    <input type="text" name="address" class="form-control" placeholder="Street address or area">
+                    <input type="text" name="address" class="form-control" placeholder="Street address, neighborhood or area">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Link</label>
+                    <input type="url" name="link" class="form-control" placeholder="https://... (venue website or menu)">
                 </div>
 
                 <div class="form-group">
@@ -2134,7 +2248,7 @@
 
                 <!-- More Options Toggle Button -->
                 <div class="form-group" style="margin: 0.85rem 0;">
-                    <button type="button" class="btn btn-outline" id="btnToggleTasteMoreOptions" onclick="toggleTasteMoreOptions()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                    <button type="button" class="btn btn-outline btn-toggle-more-options" id="btnToggleTasteMoreOptions" onclick="toggleTasteMoreOptions()">
                         <span id="tasteMoreOptionsIcon">⚙️</span>
                         <span id="tasteMoreOptionsText">More Options</span>
                         <span id="tasteMoreOptionsChevron">▾</span>
@@ -2142,7 +2256,50 @@
                 </div>
 
                 <!-- More Options Expandable Section (Other Attributes) -->
-                <div id="tasteMoreOptionsContent" style="display: none; border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
+                <div id="tasteMoreOptionsContent" class="more-options-content" style="display: none;">
+                    <!-- Conditional Cuisine / Drink Category -->
+                    <div class="taste-cuisine-row" style="margin-bottom: 1rem;">
+                        <label class="form-label">Cuisine</label>
+                        <select name="cuisine" class="form-control">
+                            <option value="" selected>Select cuisine...</option>
+                            <option value="American">American</option>
+                            <option value="African">African</option>
+                            <option value="Asian">Asian</option>
+                            <option value="Contemporary">Contemporary</option>
+                            <option value="European">European</option>
+                            <option value="Fusion">Fusion</option>
+                            <option value="Indian">Indian</option>
+                            <option value="Mediterranean">Mediterranean</option>
+                            <option value="Mexican">Mexican</option>
+                            <option value="South American">South American</option>
+                        </select>
+                    </div>
+
+                    <div class="taste-drink-row" style="display: none; margin-bottom: 1rem;">
+                        <label class="form-label">Category</label>
+                        <select name="drink_category" class="form-control">
+                            <option value="" selected>Select drink category...</option>
+                            <option value="Beer">Beer</option>
+                            <option value="Cocktails">Cocktails</option>
+                            <option value="Wine">Wine</option>
+                            <option value="Tea & Coffee">Tea & Coffee</option>
+                            <option value="Juice and Smoothies">Juice and Smoothies</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Price Buttons ($, $$, $$$, $$$$) -->
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">Price</label>
+                        <input type="hidden" name="price_range" id="addTastePriceRange" value="">
+                        <div class="price-btn-group" data-input-id="addTastePriceRange">
+                            <button type="button" class="price-choice-btn" onclick="selectPriceTier(this, '$', 'addTastePriceRange')">$</button>
+                            <button type="button" class="price-choice-btn" onclick="selectPriceTier(this, '$$', 'addTastePriceRange')">$$</button>
+                            <button type="button" class="price-choice-btn" onclick="selectPriceTier(this, '$$$', 'addTastePriceRange')">$$$</button>
+                            <button type="button" class="price-choice-btn" onclick="selectPriceTier(this, '$$$$', 'addTastePriceRange')">$$$$</button>
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-col">
                             <label class="form-label">
@@ -2157,36 +2314,21 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-col">
-                            <label class="form-label">Price Range</label>
-                            <select name="price_range" class="form-control">
-                                <option value="">Select price range...</option>
-                                <option value="$">$</option>
-                                <option value="$$">$$</option>
-                                <option value="$$$">$$$</option>
-                            </select>
-                        </div>
-                        <div class="form-col">
-                            <label class="form-label">Confirmation Code</label>
-                            <input type="text" name="confirmation_code" class="form-control" placeholder="Resy/booking code">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-col">
-                            <label class="form-label">General Link</label>
-                            <input type="url" name="general_link" class="form-control" placeholder="https://... (venue website)">
-                        </div>
-                        <div class="form-col">
-                            <label class="form-label">Link to Menu</label>
-                            <input type="url" name="menu_link" class="form-control" placeholder="https://... (menu link)">
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Booking Reference</label>
+                        <input type="text" name="booking_reference" class="form-control" placeholder="e.g. RESY-48102, Opentable code">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Description & What to Order</label>
-                        <textarea name="description" class="form-control" rows="2" placeholder="Recommended specialties, chef's tasting, terrace seating..."></textarea>
+                        <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                            <span>📎</span>
+                            <span>Upload Documents</span>
+                            <small class="text-muted">(PDF, PNG, JPG)</small>
+                        </label>
+                        <input type="file" name="documents" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
+                        <small class="text-muted" style="display: block; margin-top: 0.35rem; font-size: 0.8rem;">
+                            Upload reservations, confirmations, or menus to the Secure Vault.
+                        </small>
                     </div>
                 </div>
 
@@ -2261,7 +2403,7 @@
                 </div>
                 <button type="button" class="modal-close" onclick="closeModal('addPlayModal')">×</button>
             </div>
-            <form method="POST" action="{% url 'core:add_play' trip.id %}" class="modal-form">
+            <form method="POST" action="{% url 'core:add_play' trip.id %}" enctype="multipart/form-data" class="modal-form">
                 {% csrf_token %}
 
                 <!-- Status Flow Bar -->
@@ -2276,35 +2418,34 @@
                 </div>
 
                 <!-- Primary Inputs (Name) -->
-                <div class="form-group">
-                    <label class="form-label">Activity Title <span class="required">*</span></label>
-                    <input type="text" name="title" class="form-control" placeholder="e.g., Blue Lagoon Soak, Taormina Greek Theatre, Coastal Hike" required>
-                    <input type="hidden" name="status" value="IDEA">
-                </div>
-
-                <!-- Type & Location -->
                 <div class="form-row">
+                    <div class="form-col" style="flex: 2;">
+                        <label class="form-label">Activity Name <span class="required">*</span></label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g., Blue Lagoon Soak, Taormina Greek Theatre, Coastal Hike" required>
+                        <input type="hidden" name="status" id="addPlayStatus" value="IDEA">
+                    </div>
                     <div class="form-col">
                         <label class="form-label">Type</label>
                         <select name="play_type" class="form-control">
-                            <option value="Sightseeing">Sightseeing & Landmark</option>
-                            <option value="Outdoor & Hike">Outdoor & Hike</option>
-                            <option value="Tour & Excursion">Tour & Excursion</option>
-                            <option value="Culture & Museum">Culture & Museum</option>
-                            <option value="Water & Boat">Water & Boat</option>
-                            <option value="Nightlife & Music">Nightlife & Music</option>
-                            <option value="Event & Show">Event & Performance</option>
-                            <option value="Spa & Wellness">Spa & Wellness</option>
-                            <option value="Travel Tip">Travel Tip & Advice</option>
+                            <option value="Outdoors">Outdoors</option>
+                            <option value="Tours">Tours</option>
+                            <option value="Events">Events</option>
+                            <option value="Sightseeing" selected>Sightseeing</option>
+                            <option value="Other">Other</option>
                         </select>
-                    </div>
-                    <div class="form-col" style="flex: 2;">
-                        <label class="form-label">Location / Address</label>
-                        <input type="text" name="address" class="form-control" placeholder="Venue name, trail head or area">
                     </div>
                 </div>
 
-                <!-- Notes -->
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="address" class="form-control" placeholder="Venue name, trail head or area">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Link</label>
+                    <input type="url" name="link" class="form-control" placeholder="https://...">
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Notes</label>
                     <textarea name="notes" class="form-control" rows="2" placeholder="Keypad codes, meeting point instructions, booking notes..."></textarea>
@@ -2312,7 +2453,7 @@
 
                 <!-- More Options Toggle Button -->
                 <div class="form-group" style="margin: 0.85rem 0;">
-                    <button type="button" class="btn btn-outline" id="btnTogglePlayMoreOptions" onclick="togglePlayMoreOptions()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                    <button type="button" class="btn btn-outline btn-toggle-more-options" id="btnTogglePlayMoreOptions" onclick="togglePlayMoreOptions()">
                         <span id="playMoreOptionsIcon">⚙️</span>
                         <span id="playMoreOptionsText">More Options</span>
                         <span id="playMoreOptionsChevron">▾</span>
@@ -2320,7 +2461,20 @@
                 </div>
 
                 <!-- More Options Expandable Section (Other Attributes) -->
-                <div id="playMoreOptionsContent" style="display: none; border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
+                <div id="playMoreOptionsContent" class="more-options-content" style="display: none;">
+                    <!-- Price Tier Buttons (Free, $, $$, $$$, $$$$) -->
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">Price</label>
+                        <input type="hidden" name="price_tier" id="addPlayPriceTier" value="">
+                        <div class="price-btn-group" data-input-id="addPlayPriceTier">
+                            <button type="button" class="price-choice-btn" onclick="selectPriceTier(this, 'Free', 'addPlayPriceTier')">Free</button>
+                            <button type="button" class="price-choice-btn" onclick="selectPriceTier(this, '$', 'addPlayPriceTier')">$</button>
+                            <button type="button" class="price-choice-btn" onclick="selectPriceTier(this, '$$', 'addPlayPriceTier')">$$</button>
+                            <button type="button" class="price-choice-btn" onclick="selectPriceTier(this, '$$$', 'addPlayPriceTier')">$$$</button>
+                            <button type="button" class="price-choice-btn" onclick="selectPriceTier(this, '$$$$', 'addPlayPriceTier')">$$$$</button>
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-col">
                             <label class="form-label">
@@ -2335,25 +2489,21 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-col">
-                            <label class="form-label">Estimated Cost ($)</label>
-                            <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00">
-                        </div>
-                        <div class="form-col">
-                            <label class="form-label">Confirmation Code</label>
-                            <input type="text" name="confirmation_code" class="form-control" placeholder="Ticket/voucher code">
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirmation Code</label>
+                        <input type="text" name="confirmation_code" class="form-control" placeholder="Ticket or voucher code">
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Guide / Ticket Link</label>
-                        <input type="url" name="link" class="form-control" placeholder="https://...">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Description & Instructions</label>
-                        <textarea name="description" class="form-control" rows="2" placeholder="Gear needed, directions, tour details..."></textarea>
+                        <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                            <span>📎</span>
+                            <span>Upload Documents</span>
+                            <small class="text-muted">(PDF, PNG, JPG)</small>
+                        </label>
+                        <input type="file" name="documents" class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
+                        <small class="text-muted" style="display: block; margin-top: 0.35rem; font-size: 0.8rem;">
+                            Upload tickets, passes, or tour itineraries to the Secure Vault.
+                        </small>
                     </div>
                 </div>
 
@@ -2550,6 +2700,32 @@
 
 {% block extra_js %}
 <script>
+    // Toggle More Options for Add Move Modal
+    function toggleMoveMoreOptions() {
+        const content = document.getElementById('moveMoreOptionsContent');
+        const btn = document.getElementById('btnToggleMoveMoreOptions');
+        if (!content || !btn) return;
+        const isExpanded = (content.style.display !== 'none');
+        content.style.display = isExpanded ? 'none' : 'block';
+        const label = btn.querySelector('#moveMoreOptionsText') || btn.querySelector('.more-options-text');
+        const chevron = btn.querySelector('#moveMoreOptionsChevron') || btn.querySelector('.more-options-chevron');
+        if (label) label.textContent = isExpanded ? 'More Options' : 'Fewer Options';
+        if (chevron) chevron.textContent = isExpanded ? '▾' : '▴';
+    }
+
+    // Toggle More Options for Edit Move Modal
+    function toggleEditMoveMoreOptions(moveId) {
+        const content = document.getElementById('editMoveMoreOptionsContent_' + moveId);
+        const btn = document.getElementById('btnToggleEditMoveMoreOptions_' + moveId);
+        if (!content || !btn) return;
+        const isExpanded = (content.style.display !== 'none');
+        content.style.display = isExpanded ? 'none' : 'block';
+        const label = btn.querySelector('.more-options-text');
+        const chevron = btn.querySelector('.more-options-chevron');
+        if (label) label.textContent = isExpanded ? 'More Options' : 'Fewer Options';
+        if (chevron) chevron.textContent = isExpanded ? '▾' : '▴';
+    }
+
     // Toggle More Options for Add Stay Modal
     function toggleStayMoreOptions() {
         const content = document.getElementById('stayMoreOptionsContent');
@@ -2569,6 +2745,19 @@
             if (label) label.textContent = 'Fewer Options';
             if (chevron) chevron.textContent = '▴';
         }
+    }
+
+    // Toggle More Options for Edit Stay Modal
+    function toggleEditStayMoreOptions(stayId) {
+        const content = document.getElementById('editStayMoreOptionsContent_' + stayId);
+        const btn = document.getElementById('btnToggleEditStayMoreOptions_' + stayId);
+        if (!content || !btn) return;
+        const isExpanded = (content.style.display !== 'none');
+        content.style.display = isExpanded ? 'none' : 'block';
+        const label = btn.querySelector('.more-options-text');
+        const chevron = btn.querySelector('.more-options-chevron');
+        if (label) label.textContent = isExpanded ? 'More Options' : 'Fewer Options';
+        if (chevron) chevron.textContent = isExpanded ? '▾' : '▴';
     }
 
     // Toggle More Options for Add Play Modal
@@ -2652,6 +2841,34 @@
             const chevron = btn.querySelector('.more-options-chevron');
             if (label) label.textContent = 'Fewer Options';
             if (chevron) chevron.textContent = '▴';
+        }
+    }
+
+    // Dynamic switching between Cuisine (if Food) and Drink Category (if Drink)
+    function updateTasteSubtype(scopeId) {
+        const scope = typeof scopeId === 'string' ? document.getElementById(scopeId) : scopeId;
+        if (!scope) return;
+        const typeSelect = scope.querySelector('select[name="taste_type"]');
+        const cuisineRow = scope.querySelector('.taste-cuisine-row');
+        const drinkRow = scope.querySelector('.taste-drink-row');
+        if (!typeSelect) return;
+        const isFood = (typeSelect.value === 'Food');
+        if (cuisineRow) cuisineRow.style.display = isFood ? 'block' : 'none';
+        if (drinkRow) drinkRow.style.display = isFood ? 'none' : 'block';
+    }
+
+    // Price tier choice button selector for Taste ($ to $$$$) and Play (Free to $$$$)
+    function selectPriceTier(btn, val, inputId) {
+        const input = document.getElementById(inputId);
+        const parent = btn.parentElement;
+        if (!parent) return;
+        const isCurrentlyActive = btn.classList.contains('active');
+        parent.querySelectorAll('.price-choice-btn').forEach(b => b.classList.remove('active'));
+        if (isCurrentlyActive) {
+            if (input) input.value = '';
+        } else {
+            btn.classList.add('active');
+            if (input) input.value = val;
         }
     }
 
