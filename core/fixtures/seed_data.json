@@ -616,7 +616,7 @@
   "fields": {
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Residence Inn SJC",
-    "status": "CONFIRMED",
+    "status": "COMPLETE",
     "place_type": "Hotel Room",
     "num_beds": null,
     "num_rooms": null,
@@ -635,7 +635,7 @@
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:56:35.801Z",
-    "updated_at": "2026-10-30T17:56:35.801Z"
+    "updated_at": "2026-10-31T04:59:37.657Z"
   }
 },
 {
@@ -2852,7 +2852,7 @@
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Rosewood Social",
     "taste_type": "Food",
-    "status": "IDEA",
+    "status": "COMPLETE",
     "description": "",
     "address": "San Juan Capistrano",
     "start_time": null,
@@ -2872,7 +2872,7 @@
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T01:23:31.424Z",
-    "updated_at": "2026-10-31T01:28:21.746Z"
+    "updated_at": "2026-10-31T04:59:54.455Z"
   }
 },
 {
@@ -3452,7 +3452,7 @@
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Craft House",
     "taste_type": "Food",
-    "status": "IDEA",
+    "status": "COMPLETE",
     "description": "",
     "address": "Dana Point",
     "start_time": null,
@@ -3472,7 +3472,7 @@
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T01:22:48.387Z",
-    "updated_at": "2026-10-31T01:22:48.387Z"
+    "updated_at": "2026-10-31T04:59:49.299Z"
   }
 },
 {
@@ -7238,7 +7238,7 @@
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Rosewood Social",
     "activity_type": "Dining",
-    "status": "IDEA",
+    "status": "COMPLETE",
     "description": "",
     "address": "San Juan Capistrano",
     "start_time": null,
@@ -7250,7 +7250,7 @@
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T01:23:31.569Z",
-    "updated_at": "2026-10-31T01:28:21.915Z"
+    "updated_at": "2026-10-31T04:59:54.625Z"
   }
 },
 {
@@ -8052,7 +8052,7 @@
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Craft House",
     "activity_type": "Dining",
-    "status": "IDEA",
+    "status": "COMPLETE",
     "description": "",
     "address": "Dana Point",
     "start_time": null,
@@ -8064,7 +8064,7 @@
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T01:22:48.519Z",
-    "updated_at": "2026-10-31T01:22:48.519Z"
+    "updated_at": "2026-10-31T04:59:49.395Z"
   }
 },
 {
@@ -8778,7 +8778,7 @@
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Rosewood Social",
     "category": "Food",
-    "status": "IDEA",
+    "status": "COMPLETE",
     "description": "",
     "address": "San Juan Capistrano",
     "link": "",
@@ -8786,7 +8786,7 @@
     "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T01:23:31.523Z",
-    "updated_at": "2026-10-31T01:28:21.833Z"
+    "updated_at": "2026-10-31T04:59:54.550Z"
   }
 },
 {
@@ -9228,7 +9228,7 @@
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Craft House",
     "category": "Food",
-    "status": "IDEA",
+    "status": "COMPLETE",
     "description": "",
     "address": "Dana Point",
     "link": "",
@@ -9236,7 +9236,7 @@
     "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T01:22:48.458Z",
-    "updated_at": "2026-10-31T01:22:48.458Z"
+    "updated_at": "2026-10-31T04:59:49.350Z"
   }
 },
 {
