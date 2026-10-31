@@ -108,3 +108,22 @@ When prompts or user stories use these terms, interpret them according to these 
 - **Mandatory Agent Rule**: **Always update the Living User Stories & Acceptance Criteria as changes are made in the documents.**
   Whenever modifications, additions, or deprecations are introduced in reference specifications (such as `docs/tripItemAttributesReference.md`), data models, form flows, or domain rules, AI agents and contributors must immediately update `docs/livingUserStoriesAndAcceptanceCriteria.md` to keep user stories and testable acceptance criteria synchronized.
 
+---
+
+## 7. Foundational Documentation Catalog
+
+All agents, developers, and contributors must treat the following documentation suite as the language-agnostic source of truth:
+
+| Document | Purpose | File Link |
+| :--- | :--- | :--- |
+| **Product Requirements (PRD)** | High-level vision, personas, functional requirements, and non-functional requirements. | [`docs/PRD.md`](docs/PRD.md) |
+| **MVP Scope & Roadmap** | Phase 1 (MVP In-Scope) features vs. Phase 2 and Phase 3 roadmaps. | [`docs/MVP.md`](docs/MVP.md) |
+| **Cybersecurity Architecture** | AES-256-GCM envelope encryption, Document Vault, RBAC, and STRIDE threat modeling. | [`docs/CYBERSECURITY.md`](docs/CYBERSECURITY.md) |
+| **Site Architecture & Flows** | Sitemap, screen inventory, status-first modal flows, and responsive breakpoints. | [`docs/PAGE_OUTLINE.md`](docs/PAGE_OUTLINE.md) |
+| **Canonical Data Model** | Entity-relationship diagrams, attribute definitions, state machines, and constraints. | [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) |
+| **API Contract Specification** | RESTful HTTP/JSON endpoints, request/response payloads, and error envelopes. | [`docs/API_SPECIFICATION.md`](docs/API_SPECIFICATION.md) |
+| **Markdown Sync Specification** | Canonical grammar, section ordering, and bidirectional sync protocols with `Trips/*.md`. | [`docs/MARKDOWN_SYNC_SPEC.md`](docs/MARKDOWN_SYNC_SPEC.md) |
+| **Living User Stories & AC** | Active user stories and testable acceptance criteria synchronized with specifications. | [`docs/livingUserStoriesAndAcceptanceCriteria.md`](docs/livingUserStoriesAndAcceptanceCriteria.md) |
+| **Item Attributes Reference** | Field and form input guidelines across all four dimensions. | [`docs/tripItemAttributesReference.md`](docs/tripItemAttributesReference.md) |
+
+
