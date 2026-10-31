@@ -1,13 +1,37 @@
-# Sonderring v0 (Django & SQL Architecture)
+# Sonderring
 
-Sonderring is a collaborative trip-planning web application designed for groups to manage stays, transportation (navs), and activities (dos) while maintaining top-tier cybersecurity standards for confirmation codes and sensitive travel data.
+Sonderring is a collaborative trip-planning canvas designed for groups to plan and manage journeys across four foundational dimensions—**Move**, **Stay**, **Taste**, and **Play**—while maintaining top-tier cybersecurity standards for confirmation codes and sensitive travel credentials.
 
-## Tech Stack
+---
+
+## 📚 Foundational Documentation Catalog
+
+The repository includes a comprehensive, programming language–agnostic documentation suite designed so that any engineering team can understand, architect, and build Sonderring from scratch:
+
+| Document | Purpose | File Link |
+| :--- | :--- | :--- |
+| **Domain Nomenclature** | Official definitions for TripSpaces, Dimensions, Items, Categories, and Inputs vs. Attributes. | [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md) |
+| **Product Requirements (PRD)** | Vision, personas, functional requirements, and non-functional requirements. | [`docs/PRD.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PRD.md) |
+| **MVP Scope & Roadmap** | Strict Phase 1 (MVP in-scope) boundaries vs. Phase 2 and Phase 3 roadmaps. | [`docs/MVP.md`](file:///Users/leilagleich/Desktop/sonderring/docs/MVP.md) |
+| **Cybersecurity Architecture** | Application-level AES-256-GCM envelope encryption, Document Vault, RBAC, and STRIDE threat model. | [`docs/CYBERSECURITY.md`](file:///Users/leilagleich/Desktop/sonderring/docs/CYBERSECURITY.md) |
+| **Site Architecture & Flows** | Sitemap, screen inventory, status-first modal flows, and responsive breakpoints. | [`docs/PAGE_OUTLINE.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PAGE_OUTLINE.md) |
+| **Canonical Data Model** | Entity-relationship diagrams, attribute definitions, state machines, and constraints. | [`docs/DATA_MODEL.md`](file:///Users/leilagleich/Desktop/sonderring/docs/DATA_MODEL.md) |
+| **API Contract Specification** | RESTful HTTP/JSON endpoints, request/response payloads, and error envelopes. | [`docs/API_SPECIFICATION.md`](file:///Users/leilagleich/Desktop/sonderring/docs/API_SPECIFICATION.md) |
+| **Markdown Sync Specification** | Canonical grammar, section ordering, and bidirectional sync protocols with `Trips/*.md`. | [`docs/MARKDOWN_SYNC_SPEC.md`](file:///Users/leilagleich/Desktop/sonderring/docs/MARKDOWN_SYNC_SPEC.md) |
+| **Living User Stories & AC** | Active user stories and testable acceptance criteria synchronized with specifications. | [`docs/livingUserStoriesAndAcceptanceCriteria.md`](file:///Users/leilagleich/Desktop/sonderring/docs/livingUserStoriesAndAcceptanceCriteria.md) |
+| **Item Attributes Reference** | Field and form input guidelines across all four dimensions. | [`docs/tripItemAttributesReference.md`](file:///Users/leilagleich/Desktop/sonderring/docs/tripItemAttributesReference.md) |
+
+---
+
+## 🛠️ Reference Implementation Tech Stack (v0 Prototype)
 - **Backend**: Python / Django (Server-rendered templates + Django REST Framework API for mobile clients)
 - **Database**: PostgreSQL (Relational schema with hybrid time granularity and strict row-level security)
-- **Security**: AES-256-GCM application-level field encryption for booking confirmation codes.
+- **Security**: AES-256-GCM application-level field encryption for booking confirmation codes and door PINs.
+- **Persistence & Sync**: Bi-directional file synchronization with canonical markdown archives in `Trips/*.md`.
 
-## Quickstart & Startup Instructions
+---
+
+## 🚀 Quickstart & Development Setup
 
 ### 1. Prerequisites
 - Python 3.9+
@@ -31,10 +55,6 @@ You can set the following environment variables:
 ### 4. Database Setup & Migrations
 To initialize the database schema:
 ```bash
-# If using direct PostgreSQL schema:
-psql -d sonderring -f db/schema.sql
-
-# Or using Django ORM migrations:
 python manage.py makemigrations core
 python manage.py migrate
 ```
