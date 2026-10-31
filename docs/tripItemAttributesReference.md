@@ -5,12 +5,14 @@
 ## Options should be drop down, with default as start and end date
 * **Dates**: 
 * **Status**:
-## this should be automatically set based on the time span/date, default as idea
 * **Owner (`created_by`)**: 
 * **Trippers (`trip_members`)**:
 * **Description**: 
 
-## Every item should have a name*, status*, type, location, link, notes, then in the expand for more options, Confirmation code (or booking reference, as appropriate) and upload documents
+
+
+## ITEM INPUTS!
+## Every item should have a name*, status*, type, link, notes, then in the expand for more options, Confirmation code (or booking reference, as appropriate) and upload documents. That being said, different items will have different inputs for the initial inputs and expanded more options
 
 ## Move #####
 * Name*
