@@ -176,7 +176,9 @@ def format_taste(taste) -> list[str]:
         else:
             lines.append(f"  * **Date**: {taste.start_time.strftime('%b %d, %Y')}")
     
-    if taste.price is not None:
+    if getattr(taste, 'price_range', None):
+        lines.append(f"  * **Price Range**: {taste.price_range}")
+    elif taste.price is not None:
         lines.append(f"  * **Price**: ${taste.price:,.2f} {taste.currency}" if taste.price > 0 else "  * **Price**: $0.00 USD (Complimentary)")
     
     code = taste.confirmation_code
@@ -189,8 +191,12 @@ def format_taste(taste) -> list[str]:
     if taste.notes:
         lines.append(f"  * **Notes**: {taste.notes}")
     
-    if taste.link:
-        lines.append(f"  * **Link**: {taste.link}")
+    if getattr(taste, 'general_link', None):
+        lines.append(f"  * **General Link**: {taste.general_link}")
+
+    effective_menu = getattr(taste, 'menu_link', None) or taste.link
+    if effective_menu:
+        lines.append(f"  * **Menu Link**: {effective_menu}")
         
     attachment = taste.attachments.first()
     if attachment:

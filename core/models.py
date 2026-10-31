@@ -570,22 +570,43 @@ class Move(models.Model):
 
 class Taste(models.Model):
     STATUS_CHOICES = [('IDEA', 'Idea'), ('CONFIRMED', 'Confirmed'), ('COMPLETE', 'Complete')]
-    TASTE_TYPE_CHOICES = [
-        ('Restaurant', 'Restaurant & Dining'),
-        ('Bar & Drinks', 'Bar & Cocktails'),
-        ('Cafe & Bakery', 'Café & Bakery'),
-        ('Winery & Brewery', 'Winery & Brewery'),
-        ('Food Market', 'Food Market & Street Food'),
-        ('Culinary Tour', 'Culinary Tour & Tasting'),
-        ('Dessert', 'Dessert & Ice Cream'),
-        ('Coffee', 'Coffee & Tea'),
-        ('Cooking Class', 'Cooking Class & Workshop'),
+    PRICE_RANGE_CHOICES = [
+        ('$', '$'),
+        ('$$', '$$'),
+        ('$$$', '$$$'),
+    ]
+    CATEGORY_CHOICES = [
+        ('Food', 'Food'),
+        ('Drink', 'Drink'),
+        ('Cafe', 'Cafe'),
+    ]
+    LEGACY_TASTE_TYPE_MAP = {
+        'Restaurant': 'Food',
+        'Food Market': 'Food',
+        'Culinary Tour': 'Food',
+        'Cooking Class': 'Food',
+        'Dessert': 'Food',
+        'Bar & Drinks': 'Drink',
+        'Winery & Brewery': 'Drink',
+        'Cafe & Bakery': 'Cafe',
+        'Coffee': 'Cafe',
+    }
+    TASTE_TYPE_CHOICES = CATEGORY_CHOICES + [
+        ('Restaurant', 'Food'),
+        ('Bar & Drinks', 'Drink'),
+        ('Cafe & Bakery', 'Cafe'),
+        ('Winery & Brewery', 'Drink'),
+        ('Food Market', 'Food'),
+        ('Culinary Tour', 'Food'),
+        ('Dessert', 'Food'),
+        ('Coffee', 'Cafe'),
+        ('Cooking Class', 'Food'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='tastes')
     title = models.CharField(max_length=150)
-    taste_type = models.CharField(max_length=50, choices=TASTE_TYPE_CHOICES, default='Restaurant')
+    taste_type = models.CharField(max_length=50, choices=TASTE_TYPE_CHOICES, default='Food')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IDEA')
     description = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
@@ -594,8 +615,17 @@ class Taste(models.Model):
     has_start_time = models.BooleanField(default=False)
     has_end_time = models.BooleanField(default=False)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    price_range = models.CharField(
+        max_length=10,
+        choices=PRICE_RANGE_CHOICES,
+        blank=True,
+        null=True,
+        help_text="Price range tier ($ to $$$)"
+    )
     currency = models.CharField(max_length=3, default='USD')
     link = models.URLField(blank=True, null=True)
+    menu_link = models.URLField(blank=True, null=True, help_text="Link to menu")
+    general_link = models.URLField(blank=True, null=True, help_text="General website or resource link")
     _encrypted_confirmation_code = models.TextField(db_column='encrypted_confirmation_code', blank=True, null=True)
     notes = EncryptedTextField(
         blank=True,
@@ -638,6 +668,14 @@ class Taste(models.Model):
     @confirmation_code.setter
     def confirmation_code(self, value):
         self._encrypted_confirmation_code = ConfirmationEncryptor.encrypt(value, aad=self._confirmation_aad)
+
+    @property
+    def category(self):
+        return self.get_taste_type_display() if hasattr(self, 'get_taste_type_display') else self.taste_type
+
+    @property
+    def effective_menu_link(self):
+        return self.menu_link or self.link
 
     def __str__(self):
         return f"{self.title} ({self.taste_type} - {self.status})"

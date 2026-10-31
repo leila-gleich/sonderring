@@ -42,7 +42,7 @@
     "phone_number": "+1-415-555-0144",
     "profile_image_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
     "is_active": true,
-    "last_login": null,
+    "last_login": "2026-10-30T18:36:48.643Z",
     "created_at": "2026-10-30T17:41:01.588Z",
     "updated_at": "2026-10-30T17:41:19.758Z"
   }
@@ -58,7 +58,7 @@
     "phone_number": null,
     "profile_image_url": "https://api.dicebear.com/7.x/initials/svg?seed=leila@sonderring.com",
     "is_active": true,
-    "last_login": "2026-10-30T17:34:16.844Z",
+    "last_login": "2026-10-30T18:38:31.190Z",
     "created_at": "2026-10-30T17:34:16.845Z",
     "updated_at": "2026-10-30T17:41:19.704Z"
   }
@@ -98,10 +98,10 @@
     "start_month": null,
     "end_month": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "T4s9LQw89oHH6NU0i1gDcQ",
     "created_at": "2026-10-30T17:54:51.493Z",
-    "updated_at": "2026-10-30T17:54:51.493Z"
+    "updated_at": "2026-10-30T18:44:15.534Z"
   }
 },
 {
@@ -155,7 +155,7 @@
     "title": "Malticilia 26",
     "description": "Flagship Mediterranean journey exploring the ancient forts of Valletta, coastal swimming at Gozo Blue Lagoon, and Sicilian wine & dining in Taormina and Syracuse. Features complex multi-country logistics with flights, inter-island ferries, and coastal rail.",
     "location": "Malta, Sicily (Taormina, Syracuse), Gozo",
-    "status": "UPCOMING",
+    "status": "PAST",
     "time_granularity": "SEASON_YEAR",
     "season": "SUMMER",
     "year": 2026,
@@ -164,10 +164,10 @@
     "start_month": null,
     "end_month": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "1GxOee0cti77ThV0j9758Q",
     "created_at": "2026-10-30T17:41:26.353Z",
-    "updated_at": "2026-10-30T17:52:47.194Z"
+    "updated_at": "2026-10-30T18:27:56.940Z"
   }
 },
 {
@@ -221,7 +221,7 @@
     "title": "Iceland Ring Road Expedition",
     "description": "8-day road trip across the Golden Circle, South Coast waterfalls, and geothermal hot springs in a 4x4 campervan. Highlights include tectonic rift hiking, glacier viewing, and chasing the Aurora Borealis.",
     "location": "Ring Road, Reykjavik, South Coast, Selfoss, Iceland",
-    "status": "UPCOMING",
+    "status": "PAST",
     "time_granularity": "EXACT_RANGE",
     "season": null,
     "year": 2026,
@@ -230,32 +230,32 @@
     "start_month": null,
     "end_month": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "nGYqQjwkkQt_EEfG4t1-Og",
     "created_at": "2026-10-30T17:41:26.984Z",
-    "updated_at": "2026-10-30T17:41:26.984Z"
+    "updated_at": "2026-10-30T18:27:38.403Z"
   }
 },
 {
   "model": "core.trip",
   "pk": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
   "fields": {
-    "title": "Norway Fjords Coastal Voyage",
-    "description": "Arctic coastal voyage and fjord navigation from Kirkenes (near the Russian border) south to Bergen aboard the historic Hurtigruten Coastal Express. Features scenic fjord excursions, coastal bus transfers, and historical maritime explorations.",
-    "location": "Kirkenes, Tromsø, Sommarøy, Trondheim, Ålesund, Geiranger, Bergen, Norway",
-    "status": "UPCOMING",
-    "time_granularity": "MONTH",
+    "title": "Norway Fjords",
+    "description": "Arctic coastal voyage and fjord navigation from Kirkenes south to Bergen aboard the historic Hurtigruten Coastal Express.",
+    "location": "Norway",
+    "status": "PAST",
+    "time_granularity": "YEAR",
     "season": null,
-    "year": 2026,
+    "year": 2027,
     "start_date": null,
     "end_date": null,
     "start_month": 9,
     "end_month": 10,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "IfN_W-Bz8LGfp3GciFpCPw",
     "created_at": "2026-10-30T17:41:27.968Z",
-    "updated_at": "2026-10-30T17:41:27.968Z"
+    "updated_at": "2026-10-30T18:38:40.253Z"
   }
 },
 {
@@ -309,7 +309,7 @@
     "title": "Hawaii",
     "description": "Multi-island tropical journey exploring volcanic lava fields, marine life sanctuaries, rainforest lodges, and coastal road trips across the Big Island and Maui.",
     "location": "Kona (Big Island), Volcano Village, Maui, Hawaii",
-    "status": "UPCOMING",
+    "status": "PAST",
     "time_granularity": "MONTH",
     "season": null,
     "year": 2026,
@@ -318,10 +318,10 @@
     "start_month": 5,
     "end_month": 6,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "nD7PTGaeyE-_4yPmeHDJUw",
     "created_at": "2026-10-30T17:41:32.789Z",
-    "updated_at": "2026-10-30T17:41:32.789Z"
+    "updated_at": "2026-10-30T18:27:28.966Z"
   }
 },
 {
@@ -896,7 +896,7 @@
   "fields": {
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Bergen Børs Hotel",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "place_type": "Hotel Room",
     "num_beds": 1,
     "num_rooms": 1,
@@ -913,9 +913,9 @@
     "_encrypted_confirmation_code": null,
     "notes": "Historic converted stock exchange hotel overlooking the Vågen harbor.",
     "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.004Z",
-    "updated_at": "2026-10-30T17:41:28.004Z"
+    "updated_at": "2026-10-30T18:29:50.094Z"
   }
 },
 {
@@ -1232,7 +1232,7 @@
   "fields": {
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Hurtigruten Coastal Cruise Stateroom (MS Polarlys / Nordlys)",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "place_type": "Hotel Room",
     "num_beds": 2,
     "num_rooms": 1,
@@ -1249,9 +1249,9 @@
     "_encrypted_confirmation_code": "v1:UKN2Or80d5pE8QKwjFDtN3HuioEyCnFyZKBdchqI9DEFln+EmGAIxjY=",
     "notes": "Arctic outside cabin with unobstructed sea view. Full board dining included in voyage package.",
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:27.994Z",
-    "updated_at": "2026-10-30T17:41:27.994Z"
+    "updated_at": "2026-10-30T18:29:47.937Z"
   }
 },
 {
@@ -1614,7 +1614,7 @@
     "mode": "Bus",
     "trip_stage": "MID_TRIP",
     "direction": "ARRIVING",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "passenger_name": "@leila, @alex",
     "description": null,
     "origin_address": "Kirkenes Airport (KKN)",
@@ -1631,9 +1631,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.081Z",
-    "updated_at": "2026-10-30T17:41:28.081Z"
+    "updated_at": "2026-10-30T18:29:37.462Z"
   }
 },
 {
@@ -1831,7 +1831,7 @@
     "mode": "Flight",
     "trip_stage": "START_END",
     "direction": "LEAVING",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "passenger_name": "@leila, @alex",
     "description": null,
     "origin_address": "Bergen Airport Flesland (BGO), Norway",
@@ -1848,9 +1848,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.145Z",
-    "updated_at": "2026-10-30T17:41:28.145Z"
+    "updated_at": "2026-10-30T18:29:45.946Z"
   }
 },
 {
@@ -1862,7 +1862,7 @@
     "mode": "Flight",
     "trip_stage": "START_END",
     "direction": "ARRIVING",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "passenger_name": "@leila, @alex",
     "description": null,
     "origin_address": "Oslo Gardermoen (OSL)",
@@ -1879,9 +1879,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.053Z",
-    "updated_at": "2026-10-30T17:41:28.053Z"
+    "updated_at": "2026-10-30T18:29:36.347Z"
   }
 },
 {
@@ -1986,7 +1986,7 @@
     "mode": "Car",
     "trip_stage": "START_END",
     "direction": "ARRIVING",
-    "status": "CONFIRMED",
+    "status": "COMPLETE",
     "passenger_name": "@leila, @sam",
     "description": null,
     "origin_address": "Los Angeles, CA (LAX pickup)",
@@ -2003,9 +2003,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "952e98df-e345-4fe0-b298-e6eefd97ac99",
-    "updated_by": null,
+    "updated_by": "952e98df-e345-4fe0-b298-e6eefd97ac99",
     "created_at": "2026-10-30T17:41:28.651Z",
-    "updated_at": "2026-10-30T17:41:28.651Z"
+    "updated_at": "2026-10-30T18:37:00.741Z"
   }
 },
 {
@@ -2606,7 +2606,7 @@
     "mode": "Ferry",
     "trip_stage": "MID_TRIP",
     "direction": "ARRIVING",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "passenger_name": "@leila, @alex",
     "description": null,
     "origin_address": "Kirkenes Hurtigruten Port, Norway",
@@ -2623,9 +2623,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": "v1:aEc9uqFdzNBD66SzR0xnB/MgKQ1whOxAfg80JzGMTSruy/TdyTOavGE=",
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.112Z",
-    "updated_at": "2026-10-30T17:41:28.112Z"
+    "updated_at": "2026-10-30T18:29:39.295Z"
   }
 },
 {
@@ -2823,7 +2823,7 @@
     "mode": "Car",
     "trip_stage": "MID_TRIP",
     "direction": "ARRIVING",
-    "status": "CONFIRMED",
+    "status": "COMPLETE",
     "passenger_name": "@leila, @sam",
     "description": null,
     "origin_address": "North Entrance (Twentynine Palms)",
@@ -2840,9 +2840,39 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "952e98df-e345-4fe0-b298-e6eefd97ac99",
     "created_at": "2026-10-30T17:41:28.675Z",
-    "updated_at": "2026-10-30T17:41:28.675Z"
+    "updated_at": "2026-10-30T18:37:01.875Z"
+  }
+},
+{
+  "model": "core.taste",
+  "pk": "00ea519e-1e83-4de8-b935-af1ae4d7ea6e",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Rosewood Social",
+    "taste_type": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "San Juan Capistrano",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "Features a fusion concept, bringing together diverse culinary influences and contemporary flavor combinations.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:31.424Z",
+    "updated_at": "2026-10-31T01:28:21.746Z"
   }
 },
 {
@@ -2860,8 +2890,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "75.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -2887,8 +2920,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -2914,8 +2950,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "140.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -2941,8 +2980,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "45.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -2968,8 +3010,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "45.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": "v1:bbo0KfaGtCGEtbagaNHid/uiZRy8NQE9XXQxHATKJSJV8jLvoA==",
     "notes": null,
     "guest_name": null,
@@ -2995,8 +3040,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "0.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3013,7 +3061,7 @@
   "fields": {
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Finca",
-    "taste_type": "Restaurant",
+    "taste_type": "Food",
     "status": "IDEA",
     "description": "",
     "address": "31888 Paseo Adelanto #120, San Juan Capistrano, CA 92675",
@@ -3022,16 +3070,19 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": "https://finca-sjc.com/dinner-menu/",
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
-    "notes": "",
+    "notes": "Located on Paseo Adelanto, offering a vibrant menu with a distinct focus on modern, farm-fresh dishes and bold regional flavors.",
     "guest_name": null,
     "recommended_by": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T18:04:47.843Z",
-    "updated_at": "2026-10-30T18:14:46.091Z"
+    "updated_at": "2026-10-31T01:27:53.712Z"
   }
 },
 {
@@ -3049,8 +3100,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "25.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3076,8 +3130,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3103,8 +3160,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "125.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3130,8 +3190,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3157,8 +3220,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3184,8 +3250,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3211,8 +3280,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3238,8 +3310,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3248,6 +3323,36 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:29.016Z",
     "updated_at": "2026-10-30T17:41:29.016Z"
+  }
+},
+{
+  "model": "core.taste",
+  "pk": "71fdb995-d152-4688-8afb-15fb7e8b0393",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Hook & Anchor",
+    "taste_type": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "Seafood & New American: Fresh catches, raw bar, oyster selections, and lighter crudos alongside comfort plates.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:01.950Z",
+    "updated_at": "2026-10-31T01:23:01.950Z"
   }
 },
 {
@@ -3265,8 +3370,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "40.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3292,8 +3400,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3319,8 +3430,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "160.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3329,6 +3443,36 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:30.563Z",
     "updated_at": "2026-10-30T17:41:30.563Z"
+  }
+},
+{
+  "model": "core.taste",
+  "pk": "77dbb256-fd4c-4066-907b-a4fdc02d01ed",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Craft House",
+    "taste_type": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "Contemporary American: Farm-to-table focus, fresh seafood, artisan salads, and gourmet comfort plates.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:48.387Z",
+    "updated_at": "2026-10-31T01:22:48.387Z"
   }
 },
 {
@@ -3346,8 +3490,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3373,8 +3520,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3400,8 +3550,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3427,8 +3580,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "0.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3454,8 +3610,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3464,6 +3623,36 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:32.177Z",
     "updated_at": "2026-10-30T17:41:32.177Z"
+  }
+},
+{
+  "model": "core.taste",
+  "pk": "a73ed2a5-7bba-46ce-b341-173a3094d4b4",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Coastal Kitchen",
+    "taste_type": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "New American / Coastal: Fresh seafood, green salads, seared proteins, and vegetable sides.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:29.847Z",
+    "updated_at": "2026-10-31T01:25:00.668Z"
   }
 },
 {
@@ -3481,8 +3670,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3508,8 +3700,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "120.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3518,6 +3713,36 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:26.595Z",
     "updated_at": "2026-10-30T17:41:26.595Z"
+  }
+},
+{
+  "model": "core.taste",
+  "pk": "b6d2966c-4a4a-4011-8ab0-60a4cccedd2f",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Flights & Iron",
+    "taste_type": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "376 Camino de Estrella, San Clemente CA",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "https://www.flightsandirons.com/menus",
+    "menu_link": "https://www.flightsandirons.com/menus",
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "Focuses on a curated dining and drink experience pairing craft beverages with elevated American grill and gastropub favorites.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:24:07.037Z",
+    "updated_at": "2026-10-31T01:31:30.966Z"
   }
 },
 {
@@ -3535,8 +3760,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3562,8 +3790,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": "65.00",
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3572,6 +3803,36 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:32.521Z",
     "updated_at": "2026-10-30T17:41:32.521Z"
+  }
+},
+{
+  "model": "core.taste",
+  "pk": "d0518580-9ab1-447f-a3d8-5c093aaab36d",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Wind & Sea",
+    "taste_type": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "American / Seafood: Steaks, fish, and classic salads, though leaning heavier on traditional preparations.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:13.024Z",
+    "updated_at": "2026-10-31T01:23:13.024Z"
   }
 },
 {
@@ -3589,8 +3850,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": "https://bbp.is",
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3616,8 +3880,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3643,8 +3910,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": "https://example.com/trattoria-da-nino",
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3670,8 +3940,11 @@
     "has_start_time": false,
     "has_end_time": false,
     "price": null,
+    "price_range": null,
     "currency": "USD",
     "link": null,
+    "menu_link": null,
+    "general_link": null,
     "_encrypted_confirmation_code": null,
     "notes": null,
     "guest_name": null,
@@ -3743,7 +4016,7 @@
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Geirangerfjord UNESCO Waterfall Cruise Excursion",
     "play_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Spectacular tender excursion sailing right beneath the Seven Sisters and Suitor cascading waterfalls.",
     "address": "Geirangerfjord, Møre og Romsdal, Norway",
     "start_time": null,
@@ -3758,9 +4031,9 @@
     "guest_name": null,
     "recommended_by": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.294Z",
-    "updated_at": "2026-10-30T17:41:28.294Z"
+    "updated_at": "2026-10-30T18:29:57.351Z"
   }
 },
 {
@@ -3770,7 +4043,7 @@
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Los Rios Historic District",
     "play_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "COMPLETE",
     "description": "",
     "address": "",
     "start_time": null,
@@ -3787,7 +4060,7 @@
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T18:05:24.090Z",
-    "updated_at": "2026-10-30T18:14:35.334Z"
+    "updated_at": "2026-10-30T20:14:16.589Z"
   }
 },
 {
@@ -4359,6 +4632,33 @@
 },
 {
   "model": "core.play",
+  "pk": "5418d2f4-ed54-419c-886a-5217d39da276",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Whale Watching",
+    "play_type": "Sightseeing",
+    "status": "IDEA",
+    "description": "",
+    "address": "",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "notes": "",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T20:45:02.890Z",
+    "updated_at": "2026-10-30T20:45:02.890Z"
+  }
+},
+{
+  "model": "core.play",
   "pk": "54861cc4-94a7-49ad-8dd6-62dc1eab9156",
   "fields": {
     "trip": "82596c6b-6e68-494f-a75a-1302374b2fc5",
@@ -4472,7 +4772,7 @@
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Aksla Viewpoint 418 Steps Climb in Ålesund",
     "play_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Climb 418 stone steps from the town park to panoramic viewpoint over Ålesund Art Nouveau peninsula and surrounding fjords.",
     "address": "Fjellstua, Aksla, 6003 Ålesund, Norway",
     "start_time": null,
@@ -4487,9 +4787,9 @@
     "guest_name": null,
     "recommended_by": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.254Z",
-    "updated_at": "2026-10-30T17:41:28.254Z"
+    "updated_at": "2026-10-30T18:29:55.438Z"
   }
 },
 {
@@ -4526,7 +4826,7 @@
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Bryggen historic Hanseatic wooden wharf stroll",
     "play_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "UNESCO World Heritage site consisting of preserved timber trading quarters along the Vågen harbor.",
     "address": "Bryggen, 5003 Bergen, Norway",
     "start_time": null,
@@ -4541,9 +4841,9 @@
     "guest_name": null,
     "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_by": null,
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.422Z",
-    "updated_at": "2026-10-30T17:41:28.422Z"
+    "updated_at": "2026-10-30T18:29:59.445Z"
   }
 },
 {
@@ -5034,6 +5334,33 @@
 },
 {
   "model": "core.play",
+  "pk": "9bab3d22-56ac-4b06-9a55-26f3a6478b41",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Animal Encounters at Zoomars at River Street Ranch",
+    "play_type": "Sightseeing",
+    "status": "COMPLETE",
+    "description": "",
+    "address": "31791 Los Rios St, San Juan Capistrano, CA 92675",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "notes": "",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:39:11.457Z",
+    "updated_at": "2026-10-30T20:14:14.845Z"
+  }
+},
+{
+  "model": "core.play",
   "pk": "a6c4bce3-bc4b-4d03-a2fe-ed37ca6c3244",
   "fields": {
     "trip": "61a27415-9d60-4b9b-98b4-23306eacdec2",
@@ -5336,7 +5663,7 @@
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Nidaros Cathedral Historic Tour in Trondheim",
     "play_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "World northernmost medieval cathedral, built over the burial site of King Olav II dating back to 1070 AD.",
     "address": "Kongsgårdsgata 2, 7013 Trondheim, Norway",
     "start_time": null,
@@ -5351,9 +5678,9 @@
     "guest_name": null,
     "recommended_by": null,
     "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.215Z",
-    "updated_at": "2026-10-30T17:41:28.215Z"
+    "updated_at": "2026-10-30T18:29:53.958Z"
   }
 },
 {
@@ -5471,7 +5798,7 @@
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Hurtigruten exterior deck wind gear preparation",
     "play_type": "Travel Tip",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Bring windproof Gore-Tex outer shell, thermal base layers, and fleece balaclava for observation decks when crossing the Arctic Circle.",
     "address": null,
     "start_time": null,
@@ -5486,9 +5813,9 @@
     "guest_name": null,
     "recommended_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
     "created_by": null,
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.470Z",
-    "updated_at": "2026-10-30T17:41:28.470Z"
+    "updated_at": "2026-10-30T18:30:06.490Z"
   }
 },
 {
@@ -5753,7 +6080,7 @@
     "mode": "Bus",
     "trip_stage": "MID_TRIP",
     "direction": "ARRIVING",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "passenger_name": "@leila, @alex",
     "description": null,
     "origin_address": "Kirkenes Airport (KKN)",
@@ -5768,9 +6095,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.067Z",
-    "updated_at": "2026-10-30T17:41:28.067Z"
+    "updated_at": "2026-10-30T18:29:37.561Z"
   }
 },
 {
@@ -5956,7 +6283,7 @@
     "mode": "Flight",
     "trip_stage": "START_END",
     "direction": "LEAVING",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "passenger_name": "@leila, @alex",
     "description": null,
     "origin_address": "Bergen Airport Flesland (BGO), Norway",
@@ -5971,9 +6298,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.128Z",
-    "updated_at": "2026-10-30T17:41:28.128Z"
+    "updated_at": "2026-10-30T18:29:46.038Z"
   }
 },
 {
@@ -5985,7 +6312,7 @@
     "mode": "Flight",
     "trip_stage": "START_END",
     "direction": "ARRIVING",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "passenger_name": "@leila, @alex",
     "description": null,
     "origin_address": "Oslo Gardermoen (OSL)",
@@ -6000,9 +6327,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.040Z",
-    "updated_at": "2026-10-30T17:41:28.040Z"
+    "updated_at": "2026-10-30T18:29:36.459Z"
   }
 },
 {
@@ -6116,9 +6443,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "952e98df-e345-4fe0-b298-e6eefd97ac99",
-    "updated_by": null,
+    "updated_by": "952e98df-e345-4fe0-b298-e6eefd97ac99",
     "created_at": "2026-10-30T17:41:28.639Z",
-    "updated_at": "2026-10-30T17:41:28.639Z"
+    "updated_at": "2026-10-30T18:37:00.813Z"
   }
 },
 {
@@ -6681,7 +7008,7 @@
     "mode": "Ferry",
     "trip_stage": "MID_TRIP",
     "direction": "ARRIVING",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "passenger_name": "@leila, @alex",
     "description": null,
     "origin_address": "Kirkenes Hurtigruten Port, Norway",
@@ -6696,9 +7023,9 @@
     "booking_link": null,
     "_encrypted_confirmation_code": "v1:aEc9uqFdzNBD66SzR0xnB/MgKQ1whOxAfg80JzGMTSruy/TdyTOavGE=",
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.096Z",
-    "updated_at": "2026-10-30T17:41:28.096Z"
+    "updated_at": "2026-10-30T18:29:39.389Z"
   }
 },
 {
@@ -6899,9 +7226,31 @@
     "booking_link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "952e98df-e345-4fe0-b298-e6eefd97ac99",
     "created_at": "2026-10-30T17:41:28.663Z",
-    "updated_at": "2026-10-30T17:41:28.663Z"
+    "updated_at": "2026-10-30T18:37:01.964Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "00ea519e-1e83-4de8-b935-af1ae4d7ea6e",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Rosewood Social",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "San Juan Capistrano",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:31.569Z",
+    "updated_at": "2026-10-31T01:28:21.915Z"
   }
 },
 {
@@ -6998,8 +7347,8 @@
   "fields": {
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Geirangerfjord UNESCO Waterfall Cruise Excursion",
-    "activity_type": "Tour",
-    "status": "CONFIRMED",
+    "activity_type": "Sightseeing",
+    "status": "IDEA",
     "description": "Spectacular tender excursion sailing right beneath the Seven Sisters and Suitor cascading waterfalls.",
     "address": "Geirangerfjord, Møre og Romsdal, Norway",
     "start_time": null,
@@ -7009,9 +7358,9 @@
     "link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.272Z",
-    "updated_at": "2026-10-30T17:41:28.272Z"
+    "updated_at": "2026-10-30T18:29:57.413Z"
   }
 },
 {
@@ -7021,7 +7370,7 @@
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
     "title": "Los Rios Historic District",
     "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "COMPLETE",
     "description": "",
     "address": "",
     "start_time": null,
@@ -7033,7 +7382,7 @@
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T18:05:24.128Z",
-    "updated_at": "2026-10-30T18:14:35.386Z"
+    "updated_at": "2026-10-30T20:14:16.665Z"
   }
 },
 {
@@ -7368,6 +7717,28 @@
 },
 {
   "model": "core.do",
+  "pk": "5418d2f4-ed54-419c-886a-5217d39da276",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Whale Watching",
+    "activity_type": "Sightseeing",
+    "status": "IDEA",
+    "description": "",
+    "address": "",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T20:45:03.030Z",
+    "updated_at": "2026-10-30T20:45:03.030Z"
+  }
+},
+{
+  "model": "core.do",
   "pk": "54d15ade-69f7-4a1d-85b2-f1262627b707",
   "fields": {
     "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
@@ -7385,7 +7756,7 @@
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T18:04:47.938Z",
-    "updated_at": "2026-10-30T18:14:46.204Z"
+    "updated_at": "2026-10-31T01:27:53.886Z"
   }
 },
 {
@@ -7460,8 +7831,8 @@
   "fields": {
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Aksla Viewpoint 418 Steps Climb in Ålesund",
-    "activity_type": "Outdoor",
-    "status": "CONFIRMED",
+    "activity_type": "Sightseeing",
+    "status": "IDEA",
     "description": "Climb 418 stone steps from the town park to panoramic viewpoint over Ålesund Art Nouveau peninsula and surrounding fjords.",
     "address": "Fjellstua, Aksla, 6003 Ålesund, Norway",
     "start_time": null,
@@ -7471,9 +7842,9 @@
     "link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.234Z",
-    "updated_at": "2026-10-30T17:41:28.234Z"
+    "updated_at": "2026-10-30T18:29:55.496Z"
   }
 },
 {
@@ -7522,6 +7893,28 @@
 },
 {
   "model": "core.do",
+  "pk": "61612898-72ca-493f-b27d-2d4fcc5dbc4b",
+  "fields": {
+    "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
+    "title": "Bryggen historic Hanseatic wooden wharf stroll",
+    "activity_type": "Sightseeing",
+    "status": "IDEA",
+    "description": "UNESCO World Heritage site consisting of preserved timber trading quarters along the Vågen harbor.",
+    "address": "Bryggen, 5003 Bergen, Norway",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": null,
+    "_encrypted_confirmation_code": null,
+    "created_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:29:59.382Z",
+    "updated_at": "2026-10-30T18:29:59.503Z"
+  }
+},
+{
+  "model": "core.do",
   "pk": "65e2746f-fb83-4c8f-81e1-380a484f90f1",
   "fields": {
     "trip": "34af9fe3-991e-436f-bec5-275bcd40ac5a",
@@ -7562,6 +7955,28 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:29.479Z",
     "updated_at": "2026-10-30T17:41:29.479Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "71fdb995-d152-4688-8afb-15fb7e8b0393",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Hook & Anchor",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:02.111Z",
+    "updated_at": "2026-10-31T01:23:02.111Z"
   }
 },
 {
@@ -7628,6 +8043,28 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:31.959Z",
     "updated_at": "2026-10-30T17:41:31.959Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "77dbb256-fd4c-4066-907b-a4fdc02d01ed",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Craft House",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:48.519Z",
+    "updated_at": "2026-10-31T01:22:48.519Z"
   }
 },
 {
@@ -7830,6 +8267,28 @@
 },
 {
   "model": "core.do",
+  "pk": "9bab3d22-56ac-4b06-9a55-26f3a6478b41",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Animal Encounters at Zoomars at River Street Ranch",
+    "activity_type": "Sightseeing",
+    "status": "COMPLETE",
+    "description": "",
+    "address": "31791 Los Rios St, San Juan Capistrano, CA 92675",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:39:11.522Z",
+    "updated_at": "2026-10-30T20:14:14.912Z"
+  }
+},
+{
+  "model": "core.do",
   "pk": "a0356a6d-fc25-4995-9b29-1c7d879bea2a",
   "fields": {
     "trip": "5dc50953-8ade-4484-a6d9-3c7114491b60",
@@ -7870,6 +8329,28 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:31.482Z",
     "updated_at": "2026-10-30T17:41:31.482Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "a73ed2a5-7bba-46ce-b341-173a3094d4b4",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Coastal Kitchen",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:30.002Z",
+    "updated_at": "2026-10-31T01:25:00.852Z"
   }
 },
 {
@@ -7958,6 +8439,28 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:26.578Z",
     "updated_at": "2026-10-30T17:41:26.578Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "b6d2966c-4a4a-4011-8ab0-60a4cccedd2f",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Flights & Iron",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "376 Camino de Estrella, San Clemente CA",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "https://www.flightsandirons.com/menus",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:24:07.223Z",
+    "updated_at": "2026-10-31T01:31:31.075Z"
   }
 },
 {
@@ -8077,7 +8580,7 @@
     "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
     "title": "Nidaros Cathedral Historic Tour in Trondheim",
     "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "World northernmost medieval cathedral, built over the burial site of King Olav II dating back to 1070 AD.",
     "address": "Kongsgårdsgata 2, 7013 Trondheim, Norway",
     "start_time": null,
@@ -8087,9 +8590,31 @@
     "link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T17:41:28.197Z",
-    "updated_at": "2026-10-30T17:41:28.197Z"
+    "updated_at": "2026-10-30T18:29:54.060Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "d0518580-9ab1-447f-a3d8-5c093aaab36d",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Wind & Sea",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:13.132Z",
+    "updated_at": "2026-10-31T01:23:13.132Z"
   }
 },
 {
@@ -8160,6 +8685,28 @@
 },
 {
   "model": "core.do",
+  "pk": "ea926b0f-d57c-45cb-8797-1c60db9c6b52",
+  "fields": {
+    "trip": "ad0bb2f3-1e89-4600-b179-a8487e85b2fc",
+    "title": "Hurtigruten exterior deck wind gear preparation",
+    "activity_type": "Travel Tip",
+    "status": "IDEA",
+    "description": "Bring windproof Gore-Tex outer shell, thermal base layers, and fleece balaclava for observation decks when crossing the Arctic Circle.",
+    "address": null,
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": null,
+    "_encrypted_confirmation_code": null,
+    "created_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:30:01.090Z",
+    "updated_at": "2026-10-30T18:30:06.557Z"
+  }
+},
+{
+  "model": "core.do",
   "pk": "f1f0b443-d18f-4063-b903-12e17d9a91ff",
   "fields": {
     "trip": "ad624071-e051-416f-af17-716766fa9658",
@@ -8222,6 +8769,24 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:32.032Z",
     "updated_at": "2026-10-30T17:41:32.032Z"
+  }
+},
+{
+  "model": "core.rec",
+  "pk": "00ea519e-1e83-4de8-b935-af1ae4d7ea6e",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Rosewood Social",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "San Juan Capistrano",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:31.523Z",
+    "updated_at": "2026-10-31T01:28:21.833Z"
   }
 },
 {
@@ -8437,7 +9002,7 @@
     "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-30T18:04:47.898Z",
-    "updated_at": "2026-10-30T18:14:46.154Z"
+    "updated_at": "2026-10-31T01:27:53.834Z"
   }
 },
 {
@@ -8622,6 +9187,24 @@
 },
 {
   "model": "core.rec",
+  "pk": "71fdb995-d152-4688-8afb-15fb7e8b0393",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Hook & Anchor",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:02.039Z",
+    "updated_at": "2026-10-31T01:23:02.039Z"
+  }
+},
+{
+  "model": "core.rec",
   "pk": "750e1f98-1957-4f24-b38c-67d07c687817",
   "fields": {
     "trip": "34af9fe3-991e-436f-bec5-275bcd40ac5a",
@@ -8636,6 +9219,24 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:29.042Z",
     "updated_at": "2026-10-30T17:41:29.042Z"
+  }
+},
+{
+  "model": "core.rec",
+  "pk": "77dbb256-fd4c-4066-907b-a4fdc02d01ed",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Craft House",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:48.458Z",
+    "updated_at": "2026-10-31T01:22:48.458Z"
   }
 },
 {
@@ -8784,6 +9385,24 @@
 },
 {
   "model": "core.rec",
+  "pk": "a73ed2a5-7bba-46ce-b341-173a3094d4b4",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Coastal Kitchen",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:29.935Z",
+    "updated_at": "2026-10-31T01:25:00.773Z"
+  }
+},
+{
+  "model": "core.rec",
   "pk": "accd10dd-2656-4c2c-8e04-bd46c7279b08",
   "fields": {
     "trip": "34af9fe3-991e-436f-bec5-275bcd40ac5a",
@@ -8838,6 +9457,24 @@
 },
 {
   "model": "core.rec",
+  "pk": "b6d2966c-4a4a-4011-8ab0-60a4cccedd2f",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Flights & Iron",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "376 Camino de Estrella, San Clemente CA",
+    "link": "https://www.flightsandirons.com/menus",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:24:07.140Z",
+    "updated_at": "2026-10-31T01:31:31.025Z"
+  }
+},
+{
+  "model": "core.rec",
   "pk": "b6e9d552-8113-46fc-8421-b6e377f11c2c",
   "fields": {
     "trip": "af341857-6b4f-4304-97a0-672b810af0f7",
@@ -8870,6 +9507,24 @@
     "updated_by": null,
     "created_at": "2026-10-30T17:41:30.068Z",
     "updated_at": "2026-10-30T17:41:30.068Z"
+  }
+},
+{
+  "model": "core.rec",
+  "pk": "d0518580-9ab1-447f-a3d8-5c093aaab36d",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Wind & Sea",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:13.085Z",
+    "updated_at": "2026-10-31T01:23:13.085Z"
   }
 },
 {

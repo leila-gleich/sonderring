@@ -2144,6 +2144,127 @@ class MoveStayTastePlayWorkflowTests(TestCase):
         self.assertEqual(del_resp.status_code, 200)
         self.assertFalse(Taste.objects.filter(id=taste.id).exists())
 
+    def test_taste_form_inputs_and_choices(self):
+        """Verify Taste item forms only show Name, category (Food, Drink, Cafe), status, location, notes, and expandable more options."""
+        from core.models import Taste
+        # Create a sample taste
+        taste = Taste.objects.create(
+            trip=self.trip,
+            title='Nordic Bakery & Coffee',
+            taste_type='Cafe',
+            status='CONFIRMED',
+            start_time=timezone.now(),
+            has_start_time=False,
+            price_range='$$',
+            general_link='https://nordicbakery.example.com',
+            menu_link='https://nordicbakery.example.com/menu',
+            address='Storgata 4',
+            notes='Cardamom buns are must-try',
+            created_by=self.owner,
+            updated_by=self.owner
+        )
+
+        resp = self.client.get(reverse('core:trip_workspace', args=[self.trip.id]))
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode('utf-8')
+
+        # 1. Add Taste Modal checks
+        self.assertIn('id="addTasteModal"', html)
+        self.assertIn('id="btnToggleTasteMoreOptions"', html)
+        self.assertIn('id="tasteMoreOptionsContent"', html)
+
+        # 2. Check 3 Categories in Add Modal
+        self.assertIn('<option value="Food" selected>Food</option>', html)
+        self.assertIn('<option value="Drink">Drink</option>', html)
+        self.assertIn('<option value="Cafe">Cafe</option>', html)
+
+        # 3. Check Price Range ($ to $$$) select is present and no float price input in taste modal
+        self.assertIn('name="price_range"', html)
+        self.assertIn('<option value="$">$</option>', html)
+        self.assertIn('<option value="$$">$$</option>', html)
+        self.assertIn('<option value="$$$">$$$</option>', html)
+
+        # 4. Check Link to Menu and General Link in forms
+        self.assertIn('Link to Menu', html)
+        self.assertIn('General Link', html)
+        self.assertIn('name="general_link"', html)
+        self.assertIn('name="menu_link"', html)
+
+        # 5. Check Taste Card display: Menu button and Title link without blue underline
+        self.assertIn('>Menu</a>', html)
+        self.assertIn('href="https://nordicbakery.example.com"', html)
+        self.assertIn('target="_blank"', html)
+        self.assertIn('class="taste-title-link"', html)
+        self.assertIn('style="color: inherit; text-decoration: none;"', html)
+
+        # 6. Edit Taste Modal checks
+        self.assertIn(f'id="editTasteModal_{taste.id}"', html)
+        self.assertIn(f'id="btnToggleEditTasteMoreOptions_{taste.id}"', html)
+        self.assertIn(f'id="editTasteMoreOptionsContent_{taste.id}"', html)
+
+    def test_taste_price_range_and_category_submission(self):
+        """Verify Taste creation and editing with price_range ($ to $$$), category (Food, Drink, Cafe), and menu/general links."""
+        from core.models import Taste
+        from core.md_sync import format_taste
+
+        # Add taste with category 'Drink', price_range '$$', general_link, menu_link
+        add_resp = self.client.post(reverse('core:add_taste', args=[self.trip.id]), {
+            'name': 'Himmeriket Cocktail Bar',
+            'category': 'Drink',
+            'status': 'IDEA',
+            'address': 'Torggata 2',
+            'notes': 'Amazing craft cocktails',
+            'price_range': '$$',
+            'general_link': 'https://himmeriket.no',
+            'menu_link': 'https://himmeriket.no/drinks',
+        }, follow=True)
+        self.assertEqual(add_resp.status_code, 200)
+
+        taste = Taste.objects.filter(trip=self.trip, title='Himmeriket Cocktail Bar').first()
+        self.assertIsNotNone(taste)
+        self.assertEqual(taste.taste_type, 'Drink')
+        self.assertEqual(taste.category, 'Drink')
+        self.assertEqual(taste.status, 'IDEA')
+        self.assertEqual(taste.address, 'Torggata 2')
+        self.assertEqual(taste.notes, 'Amazing craft cocktails')
+        self.assertEqual(taste.price_range, '$$')
+        self.assertEqual(taste.general_link, 'https://himmeriket.no')
+        self.assertEqual(taste.menu_link, 'https://himmeriket.no/drinks')
+        self.assertEqual(taste.link, 'https://himmeriket.no/drinks')
+
+        # Edit taste to category 'Food', price_range '$$$', and updated links
+        edit_resp = self.client.post(reverse('core:edit_taste', args=[self.trip.id, taste.id]), {
+            'name': 'Himmeriket Gastro Bar',
+            'category': 'Food',
+            'status': 'CONFIRMED',
+            'date': '2026-11-20',
+            'time': '20:00',
+            'address': 'Torggata 2, Oslo',
+            'notes': 'Updated to dinner reservation',
+            'price_range': '$$$',
+            'general_link': 'https://himmeriket.no/gastro',
+            'menu_link': 'https://himmeriket.no/food-menu',
+        }, follow=True)
+        self.assertEqual(edit_resp.status_code, 200)
+
+        taste.refresh_from_db()
+        self.assertEqual(taste.title, 'Himmeriket Gastro Bar')
+        self.assertEqual(taste.taste_type, 'Food')
+        self.assertEqual(taste.status, 'CONFIRMED')
+        self.assertEqual(taste.price_range, '$$$')
+        self.assertEqual(taste.general_link, 'https://himmeriket.no/gastro')
+        self.assertEqual(taste.menu_link, 'https://himmeriket.no/food-menu')
+        self.assertEqual(taste.link, 'https://himmeriket.no/food-menu')
+
+        # Check markdown formatting outputs Price Range and Menu Link
+        md_lines = format_taste(taste)
+        md_text = "\n".join(md_lines)
+        self.assertIn('* **Price Range**: $$$', md_text)
+        self.assertIn('* **General Link**: https://himmeriket.no/gastro', md_text)
+        self.assertIn('* **Menu Link**: https://himmeriket.no/food-menu', md_text)
+        md_text = "\n".join(md_lines)
+        self.assertIn('* **Price Range**: $$$', md_text)
+
     def test_play_crud_and_status_toggle(self):
         """Test adding, editing, toggling status, and deleting a Play item."""
         from core.models import Play

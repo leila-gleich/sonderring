@@ -1385,6 +1385,20 @@ body {
     line-height: 1.35;
 }
 
+.item-title a,
+.taste-title-link {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.item-title a:hover,
+.taste-title-link:hover {
+    color: var(--text-main);
+    text-decoration: none;
+    opacity: 0.85;
+}
+
 .item-header-actions {
     display: flex;
     align-items: center;

@@ -6,8 +6,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
 
 urlpatterns = [
+    # Silently respond to Chrome DevTools automatic workspace probe
+    path('.well-known/appspecific/com.chrome.devtools.json', lambda r: HttpResponse('{}', content_type='application/json')),
     path('admin/', admin.site.urls),
     path('oauth/', include('core.oauth_urls')),
     path('', include('core.urls')),

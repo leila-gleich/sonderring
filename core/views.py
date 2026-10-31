@@ -1396,7 +1396,7 @@ def add_taste_view(request, trip_id):
         messages.error(request, "Permission denied: Only Trip Owners and Editors can add food & drink spots.")
         return redirect(f"/trips/{trip_id}/#taste")
 
-    title = request.POST.get('title', '').strip()
+    title = (request.POST.get('name') or request.POST.get('title', '')).strip()
     if not title:
         messages.error(request, "Food & drink title is required.")
         return redirect(f"/trips/{trip_id}/#taste")
@@ -1421,19 +1421,33 @@ def add_taste_view(request, trip_id):
         messages.error(request, "End date/time cannot be before start date/time.")
         return redirect(f"/trips/{trip_id}/#taste")
 
+    raw_price = request.POST.get('price')
+    try:
+        price_val = float(raw_price) if raw_price else None
+    except (ValueError, TypeError):
+        price_val = None
+
+    taste_type = request.POST.get('category') or request.POST.get('taste_type', 'Food')
+    price_range = request.POST.get('price_range', '').strip() or None
+    menu_link = (request.POST.get('menu_link') or request.POST.get('link', '')).strip() or None
+    general_link = request.POST.get('general_link', '').strip() or None
+
     taste = Taste(
         trip=trip,
         title=title,
-        taste_type=request.POST.get('taste_type', 'Restaurant'),
+        taste_type=taste_type,
         status=status,
         address=request.POST.get('address', '').strip(),
         start_time=taste_dt,
         end_time=None,
         has_start_time=has_taste_time,
         has_end_time=False,
-        price=float(request.POST.get('price')) if request.POST.get('price') else None,
+        price=price_val,
+        price_range=price_range,
         currency=request.POST.get('currency', 'USD'),
-        link=request.POST.get('link', '').strip(),
+        link=menu_link,
+        menu_link=menu_link,
+        general_link=general_link,
         description=request.POST.get('description', '').strip(),
         notes=request.POST.get('notes', '').strip(),
         created_by=current_user,
@@ -1491,15 +1505,30 @@ def edit_taste_view(request, trip_id, taste_id):
             messages.error(request, "Confirmed food & drink reservations require a date.")
             return redirect(fallback_redirect)
 
-    taste.title = request.POST.get('title', taste.title).strip()
-    taste.taste_type = request.POST.get('taste_type', taste.taste_type)
+    taste.title = (request.POST.get('name') or request.POST.get('title', taste.title)).strip()
+    taste.taste_type = request.POST.get('category') or request.POST.get('taste_type', taste.taste_type)
     taste.status = new_status
     taste.address = request.POST.get('address', '').strip()
     taste.end_time = None
     taste.has_end_time = False
-    taste.price = float(request.POST.get('price')) if request.POST.get('price') else None
+    if 'price_range' in request.POST:
+        taste.price_range = request.POST.get('price_range', '').strip() or None
+    if 'price' in request.POST:
+        raw_price = request.POST.get('price')
+        if raw_price:
+            try:
+                taste.price = float(raw_price)
+            except (ValueError, TypeError):
+                taste.price = None
+        else:
+            taste.price = None
     taste.currency = request.POST.get('currency', taste.currency)
-    taste.link = request.POST.get('link', '').strip()
+    if 'menu_link' in request.POST or 'link' in request.POST:
+        m_link = (request.POST.get('menu_link') or request.POST.get('link', '')).strip() or None
+        taste.menu_link = m_link
+        taste.link = m_link
+    if 'general_link' in request.POST:
+        taste.general_link = request.POST.get('general_link', '').strip() or None
     taste.description = request.POST.get('description', '').strip()
     taste.notes = request.POST.get('notes', '').strip()
 

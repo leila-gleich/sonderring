@@ -686,7 +686,13 @@
                             {% endif %}
                         </div>
                     </div>
-                    <h4 class="item-title">{{ taste.title }}</h4>
+                    <h4 class="item-title">
+                        {% if taste.general_link %}
+                        <a href="{{ taste.general_link }}" target="_blank" rel="noopener noreferrer" class="taste-title-link" style="color: inherit; text-decoration: none;">{{ taste.title }}</a>
+                        {% else %}
+                        {{ taste.title }}
+                        {% endif %}
+                    </h4>
                 </div>
 
                 {% if taste.address %}
@@ -714,9 +720,13 @@
                 <p class="item-notes"><strong>Notes:</strong> {{ taste.notes }}</p>
                 {% endif %}
 
-                {% if taste.price or taste.has_confirmation_code or taste.link %}
+                {% if taste.price_range or taste.price or taste.has_confirmation_code or taste.menu_link or taste.link %}
                 <div class="item-footer">
-                    {% if taste.price %}
+                    {% if taste.price_range %}
+                    <div class="price-box">
+                        <span class="price-val">{{ taste.price_range }}</span>
+                    </div>
+                    {% elif taste.price %}
                     <div class="price-box">
                         <span class="price-val">${{ taste.price|floatformat:2 }}</span>
                         <span class="price-currency">{{ taste.currency }}</span>
@@ -728,8 +738,8 @@
                         <button type="button" class="btn btn-sm btn-outline" onclick="revealCode('taste', '{{ taste.id }}', this.parentElement)">Reveal Code</button>
                     </div>
                     {% endif %}
-                    {% if taste.link %}
-                    <a href="{{ taste.link }}" target="_blank" class="btn btn-sm btn-outline">Link ↗</a>
+                    {% if taste.menu_link or taste.link %}
+                    <a href="{{ taste.menu_link|default:taste.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">Menu</a>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -761,78 +771,96 @@
                     <form method="POST" action="{% url 'core:edit_taste' trip.id taste.id %}" class="modal-form">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="">
+                        <div class="form-group">
+                            <label class="form-label">Name <span class="required">*</span></label>
+                            <input type="text" name="title" class="form-control" value="{{ taste.title }}" placeholder="e.g., Trattoria da Nino, Bar Raval, Café Loki" required>
+                        </div>
+
                         <div class="form-row">
-                            <div class="form-col" style="flex: 2;">
-                                <label class="form-label">Title <span class="required">*</span></label>
-                                <input type="text" name="title" class="form-control" value="{{ taste.title }}" required>
-                            </div>
                             <div class="form-col">
-                                <label class="form-label">Type</label>
+                                <label class="form-label">Category</label>
                                 <select name="taste_type" class="form-control">
-                                    <option value="Restaurant" {% if taste.taste_type == 'Restaurant' %}selected{% endif %}>Restaurant & Dining</option>
-                                    <option value="Bar & Drinks" {% if taste.taste_type == 'Bar & Drinks' %}selected{% endif %}>Bar & Cocktails</option>
-                                    <option value="Cafe & Bakery" {% if taste.taste_type == 'Cafe & Bakery' %}selected{% endif %}>Café & Bakery</option>
-                                    <option value="Winery & Brewery" {% if taste.taste_type == 'Winery & Brewery' %}selected{% endif %}>Winery & Brewery</option>
-                                    <option value="Food Market" {% if taste.taste_type == 'Food Market' %}selected{% endif %}>Food Market & Street Food</option>
-                                    <option value="Culinary Tour" {% if taste.taste_type == 'Culinary Tour' %}selected{% endif %}>Culinary Tour & Tasting</option>
-                                    <option value="Dessert" {% if taste.taste_type == 'Dessert' %}selected{% endif %}>Dessert & Ice Cream</option>
-                                    <option value="Coffee" {% if taste.taste_type == 'Coffee' %}selected{% endif %}>Coffee & Tea</option>
-                                    <option value="Cooking Class" {% if taste.taste_type == 'Cooking Class' %}selected{% endif %}>Cooking Class & Workshop</option>
+                                    <option value="Food" {% if taste.taste_type == 'Food' or taste.taste_type == 'Restaurant' or taste.taste_type == 'Food Market' or taste.taste_type == 'Culinary Tour' or taste.taste_type == 'Cooking Class' or taste.taste_type == 'Dessert' %}selected{% endif %}>Food</option>
+                                    <option value="Drink" {% if taste.taste_type == 'Drink' or taste.taste_type == 'Bar & Drinks' or taste.taste_type == 'Winery & Brewery' %}selected{% endif %}>Drink</option>
+                                    <option value="Cafe" {% if taste.taste_type == 'Cafe' or taste.taste_type == 'Cafe & Bakery' or taste.taste_type == 'Coffee' %}selected{% endif %}>Cafe</option>
                                 </select>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Location / Address</label>
-                            <input type="text" name="address" class="form-control" value="{{ taste.address|default:'' }}">
-                        </div>
-
-                        <div class="form-row">
                             <div class="form-col">
-                                <label class="form-label">
-                                    Date
-                                    <span class="taste-date-required text-danger" {% if taste.status != 'CONFIRMED' and taste.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
-                                </label>
-                                <input type="date" name="date" class="form-control" value="{{ taste.start_time|date:'Y-m-d' }}" {% if taste.status == 'CONFIRMED' or taste.status == 'COMPLETE' %}required{% endif %}>
-                            </div>
-                            <div class="form-col">
-                                <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
-                                <input type="time" name="time" class="form-control" value="{{ taste.start_time_str }}">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Estimated Cost ($)</label>
-                                <input type="number" step="0.01" name="price" class="form-control" value="{{ taste.price|default:'' }}">
-                            </div>
-                            <div class="form-col">
-                                <label class="form-label">Status</label>
-                                <select name="status" class="form-control">
+                                <label class="form-label">Status <span class="required">*</span></label>
+                                <select name="status" class="form-control" required>
                                     <option value="IDEA" {% if taste.status == 'IDEA' %}selected{% endif %}>Idea (Tentative)</option>
                                     <option value="CONFIRMED" {% if taste.status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
                                     <option value="COMPLETE" {% if taste.status == 'COMPLETE' %}selected{% endif %}>Complete</option>
                                 </select>
                             </div>
-                            <div class="form-col">
-                                <label class="form-label">Confirmation Code</label>
-                                <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Location</label>
+                            <input type="text" name="address" class="form-control" value="{{ taste.address|default:'' }}" placeholder="Street address or area">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="Reservation notes, recommendations, table requests...">{{ taste.notes|default:'' }}</textarea>
+                        </div>
+
+                        <!-- More Options Toggle Button -->
+                        <div class="form-group" style="margin: 0.85rem 0;">
+                            <button type="button" class="btn btn-outline" id="btnToggleEditTasteMoreOptions_{{ taste.id }}" onclick="toggleEditTasteMoreOptions('{{ taste.id }}')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                                <span>⚙️</span>
+                                <span class="more-options-text">More Options</span>
+                                <span class="more-options-chevron">▾</span>
+                            </button>
+                        </div>
+
+                        <!-- More Options Expandable Section (Other Attributes) -->
+                        <div id="editTasteMoreOptionsContent_{{ taste.id }}" style="display: none; border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label class="form-label">
+                                        Date
+                                        <span class="taste-date-required text-danger" {% if taste.status != 'CONFIRMED' and taste.status != 'COMPLETE' %}style="display: none;"{% endif %}>*</span>
+                                    </label>
+                                    <input type="date" name="date" class="form-control" value="{{ taste.start_time|date:'Y-m-d' }}" {% if taste.status == 'CONFIRMED' or taste.status == 'COMPLETE' %}required{% endif %}>
+                                </div>
+                                <div class="form-col">
+                                    <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
+                                    <input type="time" name="time" class="form-control" value="{{ taste.start_time_str }}">
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Guide Link</label>
-                            <input type="url" name="link" class="form-control" value="{{ taste.link|default:'' }}" placeholder="https://...">
-                        </div>
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label class="form-label">Price Range</label>
+                                    <select name="price_range" class="form-control">
+                                        <option value="">Select price range...</option>
+                                        <option value="$" {% if taste.price_range == '$' %}selected{% endif %}>$</option>
+                                        <option value="$$" {% if taste.price_range == '$$' %}selected{% endif %}>$$</option>
+                                        <option value="$$$" {% if taste.price_range == '$$$' %}selected{% endif %}>$$$</option>
+                                    </select>
+                                </div>
+                                <div class="form-col">
+                                    <label class="form-label">Confirmation Code</label>
+                                    <input type="text" name="confirmation_code" class="form-control" placeholder="Leave blank to keep existing">
+                                </div>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Description / Recommendations</label>
-                            <textarea name="description" class="form-control" rows="2">{{ taste.description|default:'' }}</textarea>
-                        </div>
+                            <div class="form-row">
+                                <div class="form-col">
+                                    <label class="form-label">General Link</label>
+                                    <input type="url" name="general_link" class="form-control" value="{{ taste.general_link|default:'' }}" placeholder="https://... (venue website)">
+                                </div>
+                                <div class="form-col">
+                                    <label class="form-label">Link to Menu</label>
+                                    <input type="url" name="menu_link" class="form-control" value="{{ taste.menu_link|default:taste.link|default:'' }}" placeholder="https://... (menu link)">
+                                </div>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Reservation Notes & Table Requests</label>
-                            <textarea name="notes" class="form-control" rows="2">{{ taste.notes|default:'' }}</textarea>
+                            <div class="form-group">
+                                <label class="form-label">Description / Recommendations</label>
+                                <textarea name="description" class="form-control" rows="2" placeholder="Recommended specialties, chef's tasting, terrace seating...">{{ taste.description|default:'' }}</textarea>
+                            </div>
                         </div>
 
                         <div class="modal-footer">
@@ -1713,78 +1741,96 @@
         </div>
         <form method="POST" action="{% url 'core:add_taste' trip.id %}" class="modal-form">
             {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Name <span class="required">*</span></label>
+                <input type="text" name="title" class="form-control" placeholder="e.g., Trattoria da Nino, Friðheimar Greenhouse, Bar Raval" required>
+            </div>
+
             <div class="form-row">
-                <div class="form-col" style="flex: 2;">
-                    <label class="form-label">Venue or Food Title <span class="required">*</span></label>
-                    <input type="text" name="title" class="form-control" placeholder="e.g., Trattoria da Nino, Friðheimar Greenhouse, Bar Raval" required>
-                </div>
                 <div class="form-col">
-                    <label class="form-label">Type</label>
+                    <label class="form-label">Category</label>
                     <select name="taste_type" class="form-control">
-                        <option value="Restaurant">Restaurant & Dining</option>
-                        <option value="Bar & Drinks">Bar & Cocktails</option>
-                        <option value="Cafe & Bakery">Café & Bakery</option>
-                        <option value="Winery & Brewery">Winery & Brewery</option>
-                        <option value="Food Market">Food Market & Street Food</option>
-                        <option value="Culinary Tour">Culinary Tour & Tasting</option>
-                        <option value="Dessert">Dessert & Ice Cream</option>
-                        <option value="Coffee">Coffee & Tea</option>
-                        <option value="Cooking Class">Cooking Class & Workshop</option>
+                        <option value="Food" selected>Food</option>
+                        <option value="Drink">Drink</option>
+                        <option value="Cafe">Cafe</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Address / Neighborhood</label>
-                <input type="text" name="address" class="form-control" placeholder="Street address or area">
-            </div>
-
-            <div class="form-row">
                 <div class="form-col">
-                    <label class="form-label">
-                        Date
-                        <span class="taste-date-required text-danger" style="display: none;">*</span>
-                    </label>
-                    <input type="date" name="date" class="form-control">
-                </div>
-                <div class="form-col">
-                    <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
-                    <input type="time" name="time" class="form-control">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">Estimated Cost ($)</label>
-                    <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00">
-                </div>
-                <div class="form-col">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-control">
+                    <label class="form-label">Status <span class="required">*</span></label>
+                    <select name="status" class="form-control" required>
                         <option value="IDEA" selected>Idea (Tentative)</option>
                         <option value="CONFIRMED">Confirmed (Reservation Made)</option>
                         <option value="COMPLETE">Complete</option>
                     </select>
                 </div>
-                <div class="form-col">
-                    <label class="form-label">Confirmation Code</label>
-                    <input type="text" name="confirmation_code" class="form-control" placeholder="Resy/booking code">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Location</label>
+                <input type="text" name="address" class="form-control" placeholder="Street address or area">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Reservation notes, recommendations, table requests..."></textarea>
+            </div>
+
+            <!-- More Options Toggle Button -->
+            <div class="form-group" style="margin: 0.85rem 0;">
+                <button type="button" class="btn btn-outline" id="btnToggleTasteMoreOptions" onclick="toggleTasteMoreOptions()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem 1rem; border: 1px dashed var(--border-color, #cbd5e1); font-size: 0.88rem; font-weight: 500; border-radius: 6px; background: transparent; cursor: pointer;">
+                    <span id="tasteMoreOptionsIcon">⚙️</span>
+                    <span id="tasteMoreOptionsText">More Options</span>
+                    <span id="tasteMoreOptionsChevron">▾</span>
+                </button>
+            </div>
+
+            <!-- More Options Expandable Section (Other Attributes) -->
+            <div id="tasteMoreOptionsContent" style="display: none; border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 1rem; margin-top: 0.5rem;">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">
+                            Date
+                            <span class="taste-date-required text-danger" style="display: none;">*</span>
+                        </label>
+                        <input type="date" name="date" class="form-control">
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Time <small class="text-muted">(Optional)</small></label>
+                        <input type="time" name="time" class="form-control">
+                    </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label class="form-label">Guide / Menu Link</label>
-                <input type="url" name="link" class="form-control" placeholder="https://...">
-            </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">Price Range</label>
+                        <select name="price_range" class="form-control">
+                            <option value="">Select price range...</option>
+                            <option value="$">$</option>
+                            <option value="$$">$$</option>
+                            <option value="$$$">$$$</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Confirmation Code</label>
+                        <input type="text" name="confirmation_code" class="form-control" placeholder="Resy/booking code">
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label class="form-label">Description & What to Order</label>
-                <textarea name="description" class="form-control" rows="2" placeholder="Recommended specialties, chef's tasting, terrace seating..."></textarea>
-            </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">General Link</label>
+                        <input type="url" name="general_link" class="form-control" placeholder="https://... (venue website)">
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Link to Menu</label>
+                        <input type="url" name="menu_link" class="form-control" placeholder="https://... (menu link)">
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label class="form-label">Reservation Notes & Table Details</label>
-                <textarea name="notes" class="form-control" rows="2" placeholder="Dietary notes, table request, cancellation window..."></textarea>
+                <div class="form-group">
+                    <label class="form-label">Description & What to Order</label>
+                    <textarea name="description" class="form-control" rows="2" placeholder="Recommended specialties, chef's tasting, terrace seating..."></textarea>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -2135,6 +2181,48 @@
     function toggleEditPlayMoreOptions(playId) {
         const content = document.getElementById('editPlayMoreOptionsContent_' + playId);
         const btn = document.getElementById('btnToggleEditPlayMoreOptions_' + playId);
+        if (!content || !btn) return;
+        const isExpanded = (content.style.display !== 'none');
+        if (isExpanded) {
+            content.style.display = 'none';
+            const label = btn.querySelector('.more-options-text');
+            const chevron = btn.querySelector('.more-options-chevron');
+            if (label) label.textContent = 'More Options';
+            if (chevron) chevron.textContent = '▾';
+        } else {
+            content.style.display = 'block';
+            const label = btn.querySelector('.more-options-text');
+            const chevron = btn.querySelector('.more-options-chevron');
+            if (label) label.textContent = 'Fewer Options';
+            if (chevron) chevron.textContent = '▴';
+        }
+    }
+
+    // Toggle More Options for Add Taste Modal
+    function toggleTasteMoreOptions() {
+        const content = document.getElementById('tasteMoreOptionsContent');
+        const btn = document.getElementById('btnToggleTasteMoreOptions');
+        if (!content || !btn) return;
+        const isExpanded = (content.style.display !== 'none');
+        if (isExpanded) {
+            content.style.display = 'none';
+            const label = btn.querySelector('#tasteMoreOptionsText');
+            const chevron = btn.querySelector('#tasteMoreOptionsChevron');
+            if (label) label.textContent = 'More Options';
+            if (chevron) chevron.textContent = '▾';
+        } else {
+            content.style.display = 'block';
+            const label = btn.querySelector('#tasteMoreOptionsText');
+            const chevron = btn.querySelector('#tasteMoreOptionsChevron');
+            if (label) label.textContent = 'Fewer Options';
+            if (chevron) chevron.textContent = '▴';
+        }
+    }
+
+    // Toggle More Options for Edit Taste Modal
+    function toggleEditTasteMoreOptions(tasteId) {
+        const content = document.getElementById('editTasteMoreOptionsContent_' + tasteId);
+        const btn = document.getElementById('btnToggleEditTasteMoreOptions_' + tasteId);
         if (!content || !btn) return;
         const isExpanded = (content.style.display !== 'none');
         if (isExpanded) {

@@ -588,6 +588,24 @@
                 container.querySelectorAll(`.${elementType}-date-required`).forEach(el => {
                     el.style.display = isConfirmed ? 'inline' : 'none';
                 });
+                if (isConfirmed && dateInput.offsetParent === null) {
+                    const optContent = container.querySelector('#tasteMoreOptionsContent, [id^="editTasteMoreOptionsContent_"], #playMoreOptionsContent, [id^="editPlayMoreOptionsContent_"]');
+                    if (optContent && optContent.style.display === 'none') {
+                        if (typeof toggleTasteMoreOptions === 'function' && optContent.id === 'tasteMoreOptionsContent') {
+                            toggleTasteMoreOptions();
+                        } else if (typeof toggleEditTasteMoreOptions === 'function' && optContent.id.startsWith('editTasteMoreOptionsContent_')) {
+                            const tid = optContent.id.replace('editTasteMoreOptionsContent_', '');
+                            toggleEditTasteMoreOptions(tid);
+                        } else if (typeof togglePlayMoreOptions === 'function' && optContent.id === 'playMoreOptionsContent') {
+                            togglePlayMoreOptions();
+                        } else if (typeof toggleEditPlayMoreOptions === 'function' && optContent.id.startsWith('editPlayMoreOptionsContent_')) {
+                            const pid = optContent.id.replace('editPlayMoreOptionsContent_', '');
+                            toggleEditPlayMoreOptions(pid);
+                        } else {
+                            optContent.style.display = 'block';
+                        }
+                    }
+                }
             }
 
             if (statusSelect) {
@@ -601,6 +619,10 @@
                         if (!dateInput.value) {
                             e.preventDefault();
                             alert(alertMsg || `Confirmed ${elementType}s require a date.`);
+                            const optContent = container.querySelector('#tasteMoreOptionsContent, [id^="editTasteMoreOptionsContent_"], #playMoreOptionsContent, [id^="editPlayMoreOptionsContent_"]');
+                            if (optContent && optContent.style.display === 'none') {
+                                optContent.style.display = 'block';
+                            }
                             dateInput.focus();
                             return false;
                         }
