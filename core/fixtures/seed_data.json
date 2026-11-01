@@ -150,28 +150,6 @@
 },
 {
   "model": "core.trip",
-  "pk": "1ec1d123-832d-409b-851e-badf5f2d5930",
-  "fields": {
-    "title": "Norway Fjords Coastal Voyage",
-    "description": "Arctic coastal voyage and fjord navigation from Kirkenes (near the Russian border) south to Bergen aboard the historic Hurtigruten Coastal Express. Features scenic fjord excursions, coastal bus transfers, and historical maritime explorations.",
-    "location": "Kirkenes, Tromsø, Sommarøy, Trondheim, Ålesund, Geiranger, Bergen, Norway",
-    "status": "PAST",
-    "time_granularity": "MONTH",
-    "season": null,
-    "year": 2026,
-    "start_date": null,
-    "end_date": null,
-    "start_month": 9,
-    "end_month": 10,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "rec_token": "UMUvd5q_WW_z4VVagZGuRQ",
-    "created_at": "2026-10-31T20:31:19.465Z",
-    "updated_at": "2026-11-01T21:35:05.806Z"
-  }
-},
-{
-  "model": "core.trip",
   "pk": "4f604302-e0be-45cd-9b6f-d051be293e57",
   "fields": {
     "title": "Hawaii",
@@ -243,7 +221,7 @@
     "title": "Malticilia 26",
     "description": "Flagship Mediterranean journey exploring the ancient forts of Valletta, coastal swimming at Gozo Blue Lagoon, and Sicilian wine & dining in Taormina and Syracuse. Features complex multi-country logistics with flights, inter-island ferries, and coastal rail.",
     "location": "Malta, Sicily (Taormina, Syracuse), Gozo",
-    "status": "UPCOMING",
+    "status": "PAST",
     "time_granularity": "SEASON_YEAR",
     "season": "SUMMER",
     "year": 2026,
@@ -255,17 +233,17 @@
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "2BPcVO6a31K-smYD647JvQ",
     "created_at": "2026-10-31T20:31:17.152Z",
-    "updated_at": "2026-11-01T21:40:54.404Z"
+    "updated_at": "2026-11-01T21:51:13.111Z"
   }
 },
 {
   "model": "core.trip",
   "pk": "7e6a32ac-25a5-467f-9f72-52e907096e98",
   "fields": {
-    "title": "Iceland Ring Road Expedition",
+    "title": "Iceland",
     "description": "8-day road trip to Golden Circle & Reykjavik",
     "location": "Iceland",
-    "status": "UPCOMING",
+    "status": "PAST",
     "time_granularity": "EXACT_RANGE",
     "season": null,
     "year": 2026,
@@ -277,7 +255,7 @@
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "lCUgA6ApWHbHRqVF77drZw",
     "created_at": "2026-10-31T20:31:18.196Z",
-    "updated_at": "2026-11-01T21:40:54.263Z"
+    "updated_at": "2026-11-01T21:52:14.846Z"
   }
 },
 {
@@ -448,16 +426,6 @@
 },
 {
   "model": "core.tripmember",
-  "pk": "b8614d94-1e51-47d1-9f3a-e7a39fdc03c9",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "role": "OWNER",
-    "joined_at": "2026-10-31T20:31:19.481Z"
-  }
-},
-{
-  "model": "core.tripmember",
   "pk": "b9ce42c6-269e-4b26-bf7c-3cc3c1d678f6",
   "fields": {
     "trip": "07de19e4-47dc-4a97-b0b3-f4031841de59",
@@ -494,16 +462,6 @@
     "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "role": "OWNER",
     "joined_at": "2026-10-30T17:54:51.551Z"
-  }
-},
-{
-  "model": "core.tripmember",
-  "pk": "dba79ae7-e4a8-487c-9868-a8068c7d685c",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "user": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "role": "EDITOR",
-    "joined_at": "2026-10-31T20:31:19.497Z"
   }
 },
 {
@@ -558,36 +516,6 @@
 },
 {
   "model": "core.stay",
-  "pk": "0d8edb6a-2e04-4dbf-b09a-9263985158f1",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten Coastal Cruise Stateroom (MS Polarlys / Nordlys)",
-    "status": "CONFIRMED",
-    "place_type": "Hotel",
-    "stay_length": null,
-    "stay_length_unit": "Days",
-    "num_beds": 2,
-    "num_rooms": 1,
-    "num_guests": 2,
-    "description": null,
-    "address": "Port of Kirkenes to Port of Bergen, Norway",
-    "check_in": null,
-    "check_out": null,
-    "has_check_in_time": false,
-    "has_check_out_time": false,
-    "total_price": "2450.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": "v1:D/B2k4FP/0k7KG3/E5dvuqf/iRKuVWE8NYNo/imNM6zNH4/6BBoHL3A=",
-    "notes": "Arctic outside cabin with unobstructed sea view. Full board dining included in voyage package.",
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.513Z",
-    "updated_at": "2026-10-31T20:31:19.513Z"
-  }
-},
-{
-  "model": "core.stay",
   "pk": "11c95ad6-6d6d-43f0-a546-db49fe2bab48",
   "fields": {
     "trip": "4f604302-e0be-45cd-9b6f-d051be293e57",
@@ -614,36 +542,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:27.465Z",
     "updated_at": "2026-10-31T20:31:27.465Z"
-  }
-},
-{
-  "model": "core.stay",
-  "pk": "14313e5b-6267-4995-b55f-7af7da6e1847",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Arctic Hotel",
-    "status": "IDEA",
-    "place_type": "Hotel",
-    "stay_length": null,
-    "stay_length_unit": "Days",
-    "num_beds": 2,
-    "num_rooms": 1,
-    "num_guests": 2,
-    "description": null,
-    "address": "Skipsholmen, 9110 Sommarøy, Norway",
-    "check_in": null,
-    "check_out": null,
-    "has_check_in_time": false,
-    "has_check_out_time": false,
-    "total_price": "280.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.600Z",
-    "updated_at": "2026-10-31T20:31:19.601Z"
   }
 },
 {
@@ -1158,36 +1056,6 @@
 },
 {
   "model": "core.stay",
-  "pk": "c72948ad-4481-4ca5-9d4a-7d97bd6a457b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Kirkenes Snowhotel 365",
-    "status": "IDEA",
-    "place_type": "Room",
-    "stay_length": null,
-    "stay_length_unit": "Days",
-    "num_beds": 2,
-    "num_rooms": 1,
-    "num_guests": 2,
-    "description": null,
-    "address": "Sandnesdalen 14, 9910 Bjørnevatn, Kirkenes, Norway",
-    "check_in": null,
-    "check_out": null,
-    "has_check_in_time": false,
-    "has_check_out_time": false,
-    "total_price": "420.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": "Thermal sleeping bags provided inside ice sculptures; includes husky kennel visit.",
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.567Z",
-    "updated_at": "2026-10-31T20:31:19.567Z"
-  }
-},
-{
-  "model": "core.stay",
   "pk": "c94b3bfa-865f-4160-ac83-c3b38bf3634d",
   "fields": {
     "trip": "8ecdcbc4-83e9-4fbe-93dc-8bbed6a429eb",
@@ -1364,36 +1232,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:22.325Z",
     "updated_at": "2026-10-31T20:31:22.325Z"
-  }
-},
-{
-  "model": "core.stay",
-  "pk": "eea4ccd0-f5ff-4d63-8ab3-a8b683a9995c",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Bergen Børs Hotel",
-    "status": "CONFIRMED",
-    "place_type": "Hotel",
-    "stay_length": null,
-    "stay_length_unit": "Days",
-    "num_beds": 1,
-    "num_rooms": 1,
-    "num_guests": 2,
-    "description": null,
-    "address": "Vågsallmenningen 1, 5014 Bergen, Norway",
-    "check_in": null,
-    "check_out": null,
-    "has_check_in_time": false,
-    "has_check_out_time": false,
-    "total_price": "540.00",
-    "currency": "USD",
-    "booking_link": "https://example.com/bergen-bors",
-    "_encrypted_confirmation_code": null,
-    "notes": "Historic converted stock exchange hotel overlooking the Vågen harbor.",
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.539Z",
-    "updated_at": "2026-10-31T20:31:19.539Z"
   }
 },
 {
@@ -1742,38 +1580,6 @@
 },
 {
   "model": "core.move",
-  "pk": "3fc784e3-2310-4b34-895f-ba6db99c86d5",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten Coastal Cruise (Kirkenes > Bergen)",
-    "mode": "Car",
-    "company": null,
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Kirkenes Hurtigruten Port, Norway",
-    "destination_address": "Bergen Hurtigruten Terminal, Norway",
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": "Multi-port coastal liner stopping in Tromsø, Trondheim, Ålesund, and Geirangerfjord.",
-    "price": "2450.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": "v1:cC0wv0sUHLHTw+CehBzYQHOO/161asnRvgkxoTNfVPmH8lHTLV5uOqo=",
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.798Z",
-    "updated_at": "2026-10-31T20:31:19.798Z"
-  }
-},
-{
-  "model": "core.move",
   "pk": "491c020e-984a-48c7-b64c-43e54b8b7cd0",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
@@ -1802,38 +1608,6 @@
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.337Z",
     "updated_at": "2026-11-01T21:38:22.595Z"
-  }
-},
-{
-  "model": "core.move",
-  "pk": "5b6ed5e1-964a-4e91-8402-0719f4150d9b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Inbound Flight into Kirkenes Airport (KKN)",
-    "mode": "Planes",
-    "company": null,
-    "trip_stage": "START_END",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Oslo Gardermoen (OSL)",
-    "destination_address": "Kirkenes Airport Høybuktmoen (KKN), Norway",
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "220.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.667Z",
-    "updated_at": "2026-10-31T20:31:19.667Z"
   }
 },
 {
@@ -2094,38 +1868,6 @@
 },
 {
   "model": "core.move",
-  "pk": "8e9a3e87-601e-4b9a-9d65-530cc0e5307a",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Barents Airport Shuttle to Hurtigruten Port",
-    "mode": "Car",
-    "company": null,
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Kirkenes Airport (KKN)",
-    "destination_address": "Hurtigruten Cruise Terminal, Kirkenes Port",
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "30.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.727Z",
-    "updated_at": "2026-10-31T20:31:19.727Z"
-  }
-},
-{
-  "model": "core.move",
   "pk": "9060aeb9-b25d-47b7-92a5-1b9faf7866be",
   "fields": {
     "trip": "4f604302-e0be-45cd-9b6f-d051be293e57",
@@ -2346,70 +2088,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:17.337Z",
     "updated_at": "2026-10-31T20:31:17.337Z"
-  }
-},
-{
-  "model": "core.move",
-  "pk": "a1be9297-d99e-4626-b496-aa5992b1d460",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Outbound Flight from Bergen (BGO)",
-    "mode": "Planes",
-    "company": null,
-    "trip_stage": "START_END",
-    "direction": "LEAVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Bergen Airport Flesland (BGO), Norway",
-    "destination_address": "Los Angeles International (LAX)",
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "680.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.871Z",
-    "updated_at": "2026-10-31T20:31:19.871Z"
-  }
-},
-{
-  "model": "core.move",
-  "pk": "a5372b48-2117-447d-a93a-918a14d4be6f",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Fjord Speedboat / RIB Express Transfer",
-    "mode": "Car",
-    "company": null,
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "IDEA",
-    "passenger_name": null,
-    "description": null,
-    "origin_address": null,
-    "destination_address": null,
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "TENTATIVE",
-    "time_confidence": "TENTATIVE",
-    "flexibility_notes": "Weather-dependent coastal transit between Tromsø and Sommarøy fishing archipelago.",
-    "price": "95.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.946Z",
-    "updated_at": "2026-10-31T20:31:19.946Z"
   }
 },
 {
@@ -3982,38 +3660,6 @@
 },
 {
   "model": "core.taste",
-  "pk": "ee05f59a-bf8d-4e17-9e30-d212bbaa20f0",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Fisketorget Bergen Fish Market seafood chowder",
-    "taste_type": "Food",
-    "cuisine": "European",
-    "drink_category": null,
-    "status": "IDEA",
-    "description": "Historic open-air harbor fish market serving traditional creamy Bergen fish soup with fresh cod and shrimp.",
-    "address": "Strandkaien 3, 5012 Bergen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": null,
-    "price_range": "$$",
-    "currency": "USD",
-    "link": null,
-    "menu_link": null,
-    "general_link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.608Z",
-    "updated_at": "2026-10-31T20:31:20.608Z"
-  }
-},
-{
-  "model": "core.taste",
   "pk": "f296d812-bf53-4b48-a0c6-14e293ce3e37",
   "fields": {
     "trip": "54141f0b-ea74-4102-9deb-e770cc7b59d7",
@@ -4670,34 +4316,6 @@
 },
 {
   "model": "core.play",
-  "pk": "41e55db4-b66e-46a2-af0a-60d27c36512e",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Nidaros Cathedral Historic Tour in Trondheim",
-    "play_type": "Sightseeing",
-    "price_tier": "$",
-    "status": "CONFIRMED",
-    "description": "World northernmost medieval cathedral, built over the burial site of King Olav II dating back to 1070 AD.",
-    "address": "Kongsgårdsgata 2, 7013 Trondheim, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "18.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.028Z",
-    "updated_at": "2026-10-31T20:31:20.028Z"
-  }
-},
-{
-  "model": "core.play",
   "pk": "474b07c7-04d0-4dc6-a78c-e95977b6742f",
   "fields": {
     "trip": "6a2db047-704d-4fe9-9ef6-a00bfbb0ef6c",
@@ -4750,34 +4368,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:25.600Z",
     "updated_at": "2026-10-31T20:31:25.600Z"
-  }
-},
-{
-  "model": "core.play",
-  "pk": "4ceccb58-cf4f-47b1-892a-d3a5cb8e3145",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Arctic Cathedral midnight organ concert",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "IDEA",
-    "description": "Special candlelit acoustics concert inside the striking triangular stained-glass modernist church.",
-    "address": "Hans Nilsens veg 41, 9020 Tromsdalen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.706Z",
-    "updated_at": "2026-10-31T20:31:20.706Z"
   }
 },
 {
@@ -4862,34 +4452,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:22.992Z",
     "updated_at": "2026-10-31T20:31:22.992Z"
-  }
-},
-{
-  "model": "core.play",
-  "pk": "532b6ef8-f8c3-43ce-a31d-64de10e6f647",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Bryggen historic Hanseatic wooden wharf stroll",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "CONFIRMED",
-    "description": "UNESCO World Heritage site consisting of preserved timber trading quarters along the Vågen harbor.",
-    "address": "Bryggen, 5003 Bergen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.425Z",
-    "updated_at": "2026-10-31T20:31:20.425Z"
   }
 },
 {
@@ -5286,34 +4848,6 @@
 },
 {
   "model": "core.play",
-  "pk": "8c49df16-0a86-40da-a585-e25fa016266e",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Fjellheisen Cable Car & Midnight Aurora Watch",
-    "play_type": "Sightseeing",
-    "price_tier": "$$",
-    "status": "IDEA",
-    "description": "Aerial tramway up Mount Storsteinen (421 meters) for nighttime views over Tromsø island.",
-    "address": "Sollivegen 12, 9020 Tromsdalen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "38.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.344Z",
-    "updated_at": "2026-10-31T20:31:20.344Z"
-  }
-},
-{
-  "model": "core.play",
   "pk": "9121ffb5-4df0-40fd-97a8-a3d701b21ec0",
   "fields": {
     "trip": "54141f0b-ea74-4102-9deb-e770cc7b59d7",
@@ -5590,62 +5124,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:23.524Z",
     "updated_at": "2026-10-31T20:31:23.524Z"
-  }
-},
-{
-  "model": "core.play",
-  "pk": "b8ea8566-9594-459c-89a3-79cab471bc3c",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten exterior deck wind gear preparation",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "CONFIRMED",
-    "description": "Bring windproof Gore-Tex outer shell, thermal base layers, and fleece balaclava for observation decks when crossing the Arctic Circle.",
-    "address": null,
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.519Z",
-    "updated_at": "2026-10-31T20:31:20.519Z"
-  }
-},
-{
-  "model": "core.play",
-  "pk": "c01ea591-579e-4bf7-a251-0334b7114d8b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Arctic White Sand Beach Walk",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "IDEA",
-    "description": "Walk across Caribbean-like turquoise waters and Arctic shell sand beaches in the far north.",
-    "address": "Sommarøy, 9110 Troms, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "0.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.277Z",
-    "updated_at": "2026-10-31T20:31:20.277Z"
   }
 },
 {
@@ -6042,34 +5520,6 @@
 },
 {
   "model": "core.play",
-  "pk": "f4fb2c31-4732-423a-8935-3ef9485aa438",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Aksla Viewpoint 418 Steps Climb in Ålesund",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "CONFIRMED",
-    "description": "Climb 418 stone steps from the town park to panoramic viewpoint over Ålesund Art Nouveau peninsula and surrounding fjords.",
-    "address": "Fjellstua, Aksla, 6003 Ålesund, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "0.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.097Z",
-    "updated_at": "2026-10-31T20:31:20.098Z"
-  }
-},
-{
-  "model": "core.play",
   "pk": "fabf1808-ea42-4307-a5ea-1cd0e2dabb54",
   "fields": {
     "trip": "f64536ce-4442-478b-9732-bf5e09bfd996",
@@ -6122,34 +5572,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:26.421Z",
     "updated_at": "2026-10-31T20:31:26.421Z"
-  }
-},
-{
-  "model": "core.play",
-  "pk": "ffd51c7d-14dc-419d-961c-d7d4f5a98a81",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Geirangerfjord UNESCO Waterfall Cruise Excursion",
-    "play_type": "Sightseeing",
-    "price_tier": "$$$",
-    "status": "CONFIRMED",
-    "description": "Spectacular tender excursion sailing right beneath the Seven Sisters and Suitor cascading waterfalls.",
-    "address": "Geirangerfjord, Møre og Romsdal, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "115.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.179Z",
-    "updated_at": "2026-10-31T20:31:20.179Z"
   }
 },
 {
@@ -6357,35 +5779,6 @@
 },
 {
   "model": "core.nav",
-  "pk": "3fc784e3-2310-4b34-895f-ba6db99c86d5",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten Coastal Cruise (Kirkenes > Bergen)",
-    "mode": "Car",
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Kirkenes Hurtigruten Port, Norway",
-    "destination_address": "Bergen Hurtigruten Terminal, Norway",
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": "Multi-port coastal liner stopping in Tromsø, Trondheim, Ålesund, and Geirangerfjord.",
-    "price": "2450.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": "v1:cC0wv0sUHLHTw+CehBzYQHOO/161asnRvgkxoTNfVPmH8lHTLV5uOqo=",
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.761Z",
-    "updated_at": "2026-10-31T20:31:41.268Z"
-  }
-},
-{
-  "model": "core.nav",
   "pk": "491c020e-984a-48c7-b64c-43e54b8b7cd0",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
@@ -6411,35 +5804,6 @@
     "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.316Z",
     "updated_at": "2026-11-01T21:38:22.658Z"
-  }
-},
-{
-  "model": "core.nav",
-  "pk": "5b6ed5e1-964a-4e91-8402-0719f4150d9b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Inbound Flight into Kirkenes Airport (KKN)",
-    "mode": "Planes",
-    "trip_stage": "START_END",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Oslo Gardermoen (OSL)",
-    "destination_address": "Kirkenes Airport Høybuktmoen (KKN), Norway",
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "220.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.637Z",
-    "updated_at": "2026-10-31T20:31:40.975Z"
   }
 },
 {
@@ -6676,35 +6040,6 @@
 },
 {
   "model": "core.nav",
-  "pk": "8e9a3e87-601e-4b9a-9d65-530cc0e5307a",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Barents Airport Shuttle to Hurtigruten Port",
-    "mode": "Car",
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Kirkenes Airport (KKN)",
-    "destination_address": "Hurtigruten Cruise Terminal, Kirkenes Port",
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "30.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.695Z",
-    "updated_at": "2026-10-31T20:31:41.118Z"
-  }
-},
-{
-  "model": "core.nav",
   "pk": "9060aeb9-b25d-47b7-92a5-1b9faf7866be",
   "fields": {
     "trip": "4f604302-e0be-45cd-9b6f-d051be293e57",
@@ -6904,64 +6239,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:17.311Z",
     "updated_at": "2026-10-31T20:31:40.323Z"
-  }
-},
-{
-  "model": "core.nav",
-  "pk": "a1be9297-d99e-4626-b496-aa5992b1d460",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Outbound Flight from Bergen (BGO)",
-    "mode": "Planes",
-    "trip_stage": "START_END",
-    "direction": "LEAVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Bergen Airport Flesland (BGO), Norway",
-    "destination_address": "Los Angeles International (LAX)",
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "680.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.834Z",
-    "updated_at": "2026-10-31T20:31:41.423Z"
-  }
-},
-{
-  "model": "core.nav",
-  "pk": "a5372b48-2117-447d-a93a-918a14d4be6f",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Fjord Speedboat / RIB Express Transfer",
-    "mode": "Car",
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "IDEA",
-    "passenger_name": null,
-    "description": null,
-    "origin_address": null,
-    "destination_address": null,
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "TENTATIVE",
-    "time_confidence": "TENTATIVE",
-    "flexibility_notes": "Weather-dependent coastal transit between Tromsø and Sommarøy fishing archipelago.",
-    "price": "95.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.908Z",
-    "updated_at": "2026-10-31T20:31:41.592Z"
   }
 },
 {
@@ -8112,28 +7389,6 @@
 },
 {
   "model": "core.do",
-  "pk": "41e55db4-b66e-46a2-af0a-60d27c36512e",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Nidaros Cathedral Historic Tour in Trondheim",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "World northernmost medieval cathedral, built over the burial site of King Olav II dating back to 1070 AD.",
-    "address": "Kongsgårdsgata 2, 7013 Trondheim, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "18.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.986Z",
-    "updated_at": "2026-10-31T20:31:53.591Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "42377a56-121e-4046-9ae8-3f272256c92e",
   "fields": {
     "trip": "f64536ce-4442-478b-9732-bf5e09bfd996",
@@ -8244,28 +7499,6 @@
 },
 {
   "model": "core.do",
-  "pk": "4ceccb58-cf4f-47b1-892a-d3a5cb8e3145",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Arctic Cathedral midnight organ concert",
-    "activity_type": "Sightseeing",
-    "status": "IDEA",
-    "description": "Special candlelit acoustics concert inside the striking triangular stained-glass modernist church.",
-    "address": "Hans Nilsens veg 41, 9020 Tromsdalen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:54.447Z",
-    "updated_at": "2026-10-31T20:31:54.447Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "4e493944-4950-4c65-bfcf-ad1e39f4c066",
   "fields": {
     "trip": "07de19e4-47dc-4a97-b0b3-f4031841de59",
@@ -8328,28 +7561,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:55.962Z",
     "updated_at": "2026-10-31T20:31:55.962Z"
-  }
-},
-{
-  "model": "core.do",
-  "pk": "532b6ef8-f8c3-43ce-a31d-64de10e6f647",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Bryggen historic Hanseatic wooden wharf stroll",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "UNESCO World Heritage site consisting of preserved timber trading quarters along the Vågen harbor.",
-    "address": "Bryggen, 5003 Bergen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:54.247Z",
-    "updated_at": "2026-10-31T20:31:54.247Z"
   }
 },
 {
@@ -8882,28 +8093,6 @@
 },
 {
   "model": "core.do",
-  "pk": "8c49df16-0a86-40da-a585-e25fa016266e",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Fjellheisen Cable Car & Midnight Aurora Watch",
-    "activity_type": "Sightseeing",
-    "status": "IDEA",
-    "description": "Aerial tramway up Mount Storsteinen (421 meters) for nighttime views over Tromsø island.",
-    "address": "Sollivegen 12, 9020 Tromsdalen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "38.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.308Z",
-    "updated_at": "2026-10-31T20:31:54.129Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "9121ffb5-4df0-40fd-97a8-a3d701b21ec0",
   "fields": {
     "trip": "54141f0b-ea74-4102-9deb-e770cc7b59d7",
@@ -9256,50 +8445,6 @@
 },
 {
   "model": "core.do",
-  "pk": "b8ea8566-9594-459c-89a3-79cab471bc3c",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten exterior deck wind gear preparation",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "Bring windproof Gore-Tex outer shell, thermal base layers, and fleece balaclava for observation decks when crossing the Arctic Circle.",
-    "address": null,
-    "start_time": null,
-    "end_time": null,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:54.344Z",
-    "updated_at": "2026-10-31T20:31:54.344Z"
-  }
-},
-{
-  "model": "core.do",
-  "pk": "c01ea591-579e-4bf7-a251-0334b7114d8b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Arctic White Sand Beach Walk",
-    "activity_type": "Sightseeing",
-    "status": "IDEA",
-    "description": "Walk across Caribbean-like turquoise waters and Arctic shell sand beaches in the far north.",
-    "address": "Sommarøy, 9110 Troms, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "0.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.231Z",
-    "updated_at": "2026-10-31T20:31:53.974Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "c321d87e-9ec0-460e-a961-137e46068d2e",
   "fields": {
     "trip": "6a2db047-704d-4fe9-9ef6-a00bfbb0ef6c",
@@ -9608,28 +8753,6 @@
 },
 {
   "model": "core.do",
-  "pk": "ee05f59a-bf8d-4e17-9e30-d212bbaa20f0",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Fisketorget Bergen Fish Market seafood chowder",
-    "activity_type": "Dining",
-    "status": "IDEA",
-    "description": "Historic open-air harbor fish market serving traditional creamy Bergen fish soup with fresh cod and shrimp.",
-    "address": "Strandkaien 3, 5012 Bergen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:48.224Z",
-    "updated_at": "2026-10-31T20:31:48.224Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "ef5d4c0b-9e43-49f0-a228-79bfea280bbe",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
@@ -9718,28 +8841,6 @@
 },
 {
   "model": "core.do",
-  "pk": "f4fb2c31-4732-423a-8935-3ef9485aa438",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Aksla Viewpoint 418 Steps Climb in Ålesund",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "Climb 418 stone steps from the town park to panoramic viewpoint over Ålesund Art Nouveau peninsula and surrounding fjords.",
-    "address": "Fjellstua, Aksla, 6003 Ålesund, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "0.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.066Z",
-    "updated_at": "2026-10-31T20:31:53.673Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "f6e7963f-08ab-4b9c-831a-14c0b3a80d49",
   "fields": {
     "trip": "4f604302-e0be-45cd-9b6f-d051be293e57",
@@ -9824,28 +8925,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:26.392Z",
     "updated_at": "2026-10-31T20:31:57.961Z"
-  }
-},
-{
-  "model": "core.do",
-  "pk": "ffd51c7d-14dc-419d-961c-d7d4f5a98a81",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Geirangerfjord UNESCO Waterfall Cruise Excursion",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "Spectacular tender excursion sailing right beneath the Seven Sisters and Suitor cascading waterfalls.",
-    "address": "Geirangerfjord, Møre og Romsdal, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "115.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.135Z",
-    "updated_at": "2026-10-31T20:31:53.853Z"
   }
 },
 {
@@ -10282,24 +9361,6 @@
 },
 {
   "model": "core.rec",
-  "pk": "4ceccb58-cf4f-47b1-892a-d3a5cb8e3145",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Arctic Cathedral midnight organ concert",
-    "category": "Activity",
-    "status": "IDEA",
-    "description": "Special candlelit acoustics concert inside the striking triangular stained-glass modernist church.",
-    "address": "Hans Nilsens veg 41, 9020 Tromsdalen, Norway",
-    "link": null,
-    "guest_name": null,
-    "recommended_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.655Z",
-    "updated_at": "2026-10-31T20:31:20.655Z"
-  }
-},
-{
-  "model": "core.rec",
   "pk": "52094086-ce4c-4398-a484-62bf8f0f34d2",
   "fields": {
     "trip": "07de19e4-47dc-4a97-b0b3-f4031841de59",
@@ -10314,24 +9375,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:22.926Z",
     "updated_at": "2026-10-31T20:31:22.926Z"
-  }
-},
-{
-  "model": "core.rec",
-  "pk": "532b6ef8-f8c3-43ce-a31d-64de10e6f647",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Bryggen historic Hanseatic wooden wharf stroll",
-    "category": "Spot",
-    "status": "CONFIRMED",
-    "description": "UNESCO World Heritage site consisting of preserved timber trading quarters along the Vågen harbor.",
-    "address": "Bryggen, 5003 Bergen, Norway",
-    "link": null,
-    "guest_name": null,
-    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.382Z",
-    "updated_at": "2026-10-31T20:31:20.382Z"
   }
 },
 {
@@ -10732,24 +9775,6 @@
 },
 {
   "model": "core.rec",
-  "pk": "b8ea8566-9594-459c-89a3-79cab471bc3c",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten exterior deck wind gear preparation",
-    "category": "Tip",
-    "status": "CONFIRMED",
-    "description": "Bring windproof Gore-Tex outer shell, thermal base layers, and fleece balaclava for observation decks when crossing the Arctic Circle.",
-    "address": null,
-    "link": null,
-    "guest_name": null,
-    "recommended_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.469Z",
-    "updated_at": "2026-10-31T20:31:20.469Z"
-  }
-},
-{
-  "model": "core.rec",
   "pk": "c321d87e-9ec0-460e-a961-137e46068d2e",
   "fields": {
     "trip": "6a2db047-704d-4fe9-9ef6-a00bfbb0ef6c",
@@ -10818,24 +9843,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:25.844Z",
     "updated_at": "2026-10-31T20:31:25.844Z"
-  }
-},
-{
-  "model": "core.rec",
-  "pk": "ee05f59a-bf8d-4e17-9e30-d212bbaa20f0",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Fisketorget Bergen Fish Market seafood chowder",
-    "category": "Food",
-    "status": "IDEA",
-    "description": "Historic open-air harbor fish market serving traditional creamy Bergen fish soup with fresh cod and shrimp.",
-    "address": "Strandkaien 3, 5012 Bergen, Norway",
-    "link": null,
-    "guest_name": null,
-    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.561Z",
-    "updated_at": "2026-10-31T20:31:48.174Z"
   }
 },
 {

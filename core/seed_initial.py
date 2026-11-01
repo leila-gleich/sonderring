@@ -61,8 +61,11 @@ def bootstrap_canonical_trips(stdout=None):
     jordan.set_password('Sonderring2026!')
     jordan.save()
 
-    # Clear existing trips to allow clean idempotent re-seeding
-    Trip.objects.all().delete()
+    # Only bootstrap canonical trips if no trips exist in database;
+    # NEVER delete or overwrite existing user-created trips!
+    if Trip.objects.exists():
+        log("Trips already exist in database. Preserving all existing user trips and skipping baseline overwrite.")
+        return
 
     # ==========================================
     # TRIP 1: Malticilia 26

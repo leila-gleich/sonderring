@@ -297,6 +297,16 @@
   5. `## Play` (`### Confirmed`, `### Potential`, `### Complete`)
 - **AC-SYNC-01.2**: Database saves automatically emit markdown updates, and file updates trigger synchronization hooks.
 
+### US-SYNC-02: User Data Preservation and Live Seed Synchronization
+**As a** user and travel planner,  
+**I want** all changes and data I enter on the website (including status toggles, edits, and custom trips) to be immediately captured in the version-controlled seed data fixture and never wiped out by seeding scripts,  
+**So that** my real travel plans and updates are preserved permanently across restarts, database refreshes, and multi-machine setups.
+
+#### Acceptance Criteria
+- **AC-SYNC-02.1**: Seed management commands and bootstrap routines must NEVER execute bulk deletions (e.g. `Trip.objects.all().delete()`) or wipe user-input data.
+- **AC-SYNC-02.2**: Any creation, modification, status update, or deletion made via the web application automatically triggers an atomic export to `core/fixtures/seed_data.json`.
+- **AC-SYNC-02.3**: When `python manage.py seed_data` is run, it loads `core/fixtures/seed_data.json` without destroying or overwriting user data. Canonical initial bootstrap only runs if the database is completely empty and no seed fixture exists.
+
 ---
 
 ## 📊 Traceability Matrix
@@ -316,3 +326,4 @@
 | **US-SEC-01** | All | Security | `CYBERSECURITY.md` § 2, `README.md` § Security | `core/fields.py`, `core/encryption.py` |
 | **US-SEC-02** | All | Vault | `CYBERSECURITY.md` § 4, `DATA_MODEL.md` § 2.8 | `core/views.py`, `media/vault/` |
 | **US-SYNC-01**| All | Data / Tooling| `MARKDOWN_SYNC_SPEC.md` § 2-4, `Trips/README.md` | `core/fixture_sync.py`, `core/signals.py` |
+| **US-SYNC-02**| All | Data / Fixture| `AGENTS.md` § 6, `docs/MARKDOWN_SYNC_SPEC.md` | `core/fixture_sync.py`, `core/management/commands/seed_data.py`, `core/seed_initial.py` |
