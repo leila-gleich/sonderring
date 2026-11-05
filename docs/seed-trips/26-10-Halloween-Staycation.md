@@ -1,11 +1,11 @@
 # Halloween Staycation '26
 
-## Trip MetaData
+## Trip Metadata
 * **Trip Title**: Halloween Staycation '26
 * **Location**: Orange County, CA
 * **Time Granularity**: `EXACT_RANGE`
 * **Dates**: Oct 30 – Nov 02, 2026
-* **Status**: `CURRENT`
+* **Status**: `CURRENT` (Current)
 * **Owner (`created_by`)**: `@leila` (Leila Gleich)
 * **Trippers (`trip_members`)**:
   * `@leila` — Owner
@@ -15,91 +15,117 @@
 
 ## Move
 
+### Confirmed
+*None recorded.*
+
+### Potential
+*None recorded.*
+
+### Complete
 *None recorded.*
 
 ---
 
 ## Stay
 
-* Name: Hyatt Regency
-  * Status: `CONFIRMED`
-  * Start Date: 10/30/26
-  * End Date: 11/02/26
-  * Location: 21500 Pacific Coast Hwy, Huntington Beach, CA 92648
-  * Confirmation/Reference: `150482RA061068`
-  * Notes: Hyatt Regency Huntington Beach Resort and Spa
+### Confirmed
+* **Hyatt Regency**
+  * **Place Type**: Hotel
+  * **Address**: 21500 Pacific Coast Hwy, Huntington Beach, CA 92648
+  * **Dates**: Oct 30, 2026, 03:00 PM – Nov 02, 2026, 11:00 AM
+  * **Confirmation Code**: `150482RA061068` (Encrypted AES-256)
+  * **Notes**: Hyatt Regency Huntington Beach Resort and Spa
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
+* **Residence Inn SJC**
+  * **Place Type**: Hotel
+  * **Address**: 33711 Camino Capistrano, Dana Point, CA 92624
+  * **Dates**: Oct 30, 2026, 03:00 PM – Oct 31, 2026, 11:00 AM
+  * **Confirmation Code**: `2536415838` (Encrypted AES-256)
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
 
-* Name: Residence Inn SJC
-  * Status: `CONFIRMED`
-  * Start Date: 10/30/26
-  * End Date: 10/31/26
-  * Location: 33711 Camino Capistrano, Dana Point, CA 92624
-  * Confirmation/Reference: `2536415838`
+### Potential
+*None recorded.*
+
+### Complete
+*None recorded.*
 
 ---
 
 ## Taste
 
-* Name: Craft House
-  * Status: `IDEA`
-  * Location: 34094 Pacific Coast Hwy, Dana Point, CA 92629
-  * Price: $$
-  * Description: Farm-to-table coastal American dining and fresh seafood
+### Confirmed
+*None recorded.*
 
-* Name: Rosewood Social
-  * Status: `IDEA`
-  * Location: 31781 Camino Capistrano, Suite 301, San Juan Capistrano, CA 92675
-  * Price: $$
-  * Description: Rooftop social lounge and fusion dining in Franciscan Plaza
+### Potential
+* **Craft House**
+  * **Taste Type**: Food
+  * **Address / Venue**: 34094 Pacific Coast Hwy, Dana Point, CA 92629
+  * **Price Range**: $$
+  * **Description**: Farm-to-table coastal American dining and fresh seafood
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
+* **Rosewood Social**
+  * **Taste Type**: Food
+  * **Address / Venue**: 31781 Camino Capistrano, Suite 301, San Juan Capistrano, CA 92675
+  * **Price Range**: $$
+  * **Description**: Rooftop social lounge and fusion dining in Franciscan Plaza
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
+* **Finca**
+  * **Taste Type**: Food
+  * **Address / Venue**: 31888 Paseo Adelanto #120, San Juan Capistrano, CA 92675
+  * **Price Range**: $$
+  * **Description**: Modern farm-fresh dishes and bold regional flavors
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
+* **Coastal Kitchen**
+  * **Taste Type**: Food
+  * **Address / Venue**: 34091 Pacific Coast Hwy, Dana Point, CA 92629
+  * **Price Range**: $$
+  * **Description**: Fresh seafood, salads, and coastal New American plates
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
+* **Hook & Anchor**
+  * **Taste Type**: Drink
+  * **Address / Venue**: 34091 La Plaza, Dana Point, CA 92629
+  * **Price Range**: $$
+  * **Description**: Fresh catch seafood, raw bar oyster selections, and crudos
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
+* **Wind & Sea**
+  * **Taste Type**: Food
+  * **Address / Venue**: 34699 Golden Lantern, Dana Point, CA 92629
+  * **Price Range**: $$
+  * **Description**: Waterfront steak, seafood, and harbor dining
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
+* **Flights & Irons**
+  * **Taste Type**: Food
+  * **Address / Venue**: 376 Camino de Estrella, San Clemente, CA 92672
+  * **Price Range**: $$
+  * **Description**: Elevated American grill and craft beverage gastropub
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
 
-* Name: Finca
-  * Status: `IDEA`
-  * Location: 31888 Paseo Adelanto #120, San Juan Capistrano, CA 92675
-  * Price: $$
-  * Description: Modern farm-fresh dishes and bold regional flavors
-
-* Name: Coastal Kitchen
-  * Status: `IDEA`
-  * Location: 34091 Pacific Coast Hwy, Dana Point, CA 92629
-  * Price: $$
-  * Description: Fresh seafood, salads, and coastal New American plates
-
-* Name: Hook & Anchor
-  * Status: `IDEA`
-  * Location: 34091 La Plaza, Dana Point, CA 92629
-  * Price: $$
-  * Description: Fresh catch seafood, raw bar oyster selections, and crudos
-
-* Name: Wind & Sea
-  * Status: `IDEA`
-  * Location: 34699 Golden Lantern, Dana Point, CA 92629
-  * Price: $$
-  * Description: Waterfront steak, seafood, and harbor dining
-
-* Name: Flights & Irons
-  * Status: `IDEA`
-  * Location: 376 Camino de Estrella, San Clemente, CA 92672
-  * Price: $$
-  * Description: Elevated American grill and craft beverage gastropub
+### Complete
+*None recorded.*
 
 ---
 
 ## Play
 
-* Name: Los Rios Historic District
-  * Status: `IDEA`
-  * Location: Los Rios St, San Juan Capistrano, CA 92675
-  * Price: Free
-  * Description: Walking tour through California's oldest historic neighborhood
+### Confirmed
+*None recorded.*
 
-* Name: Animal Encounters at Zoomars at River Street Ranch
-  * Status: `IDEA`
-  * Location: 31791 Los Rios St, San Juan Capistrano, CA 92675
-  * Price: $
-  * Description: Petting zoo and family animal encounters in Los Rios
+### Potential
+* **Los Rios Historic District**
+  * **Play Type**: Tours
+  * **Address / Venue**: Los Rios St, San Juan Capistrano, CA 92675
+  * **Description**: Walking tour through California's oldest historic neighborhood
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
+* **Animal Encounters at Zoomars at River Street Ranch**
+  * **Play Type**: Sightseeing
+  * **Address / Venue**: 31791 Los Rios St, San Juan Capistrano, CA 92675
+  * **Description**: Petting zoo and family animal encounters in Los Rios
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
+* **Whale Watching**
+  * **Play Type**: Sightseeing
+  * **Address / Venue**: 34675 Golden Lantern, Dana Point, CA 92629
+  * **Description**: Pacific whale watching and dolphin cruise from Dana Point Harbor
+  * **Attribution**: Added by `@leila` · Last edited by `@leila`
 
-* Name: Whale Watching
-  * Status: `IDEA`
-  * Location: 34675 Golden Lantern, Dana Point, CA 92629
-  * Price: $$
-  * Description: Pacific whale watching and dolphin cruise from Dana Point Harbor
+### Complete
+*None recorded.*

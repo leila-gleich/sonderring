@@ -60,15 +60,44 @@ def clean_val(val: str) -> str:
     return val
 
 
+def normalize_status(val: str, default: str = 'PAST') -> str:
+    if not val:
+        return default
+    v = clean_val(val).upper()
+    if 'CURRENT' in v:
+        return 'CURRENT'
+    if 'UPCOMING' in v:
+        return 'UPCOMING'
+    if 'PAST' in v:
+        return 'PAST'
+    if 'IDEA' in v:
+        return 'IDEA'
+    if 'CONFIRMED' in v:
+        return 'CONFIRMED'
+    if 'COMPLETE' in v:
+        return 'COMPLETE'
+    return default
+
+
+def normalize_granularity(val: str) -> str:
+    if not val:
+        return 'EXACT_RANGE'
+    v = clean_val(val).upper()
+    for opt in ['EXACT_RANGE', 'SEASON_YEAR', 'MONTH', 'YEAR']:
+        if opt in v:
+            return opt
+    return 'EXACT_RANGE'
+
+
 def parse_time(time_str: str):
     if not time_str:
         return None
-    time_str = time_str.strip().lower()
-    m = re.match(r'(\d+):(\d+)\s*(am|pm)?', time_str)
+    time_str = time_str.strip()
+    m = re.search(r'(\d{1,2}):(\d{2})\s*(am|pm)?', time_str, re.IGNORECASE)
     if m:
         hr = int(m.group(1))
         mn = int(m.group(2))
-        ampm = m.group(3)
+        ampm = m.group(3).lower() if m.group(3) else None
         if ampm == 'pm' and hr < 12:
             hr += 12
         elif ampm == 'am' and hr == 12:
@@ -81,6 +110,7 @@ def parse_date(date_str: str):
     if not date_str:
         return None
     date_str = date_str.strip()
+    # 1. M/D/YY or MM/DD/YYYY
     m = re.match(r'(\d{1,2})/(\d{1,2})/(\d{2,4})', date_str)
     if m:
         mo = int(m.group(1))
@@ -89,6 +119,17 @@ def parse_date(date_str: str):
         if yr < 100:
             yr += 2000
         return date(yr, mo, day)
+    # 2. Month Day, Year (e.g. Dec 08, 2021)
+    m2 = re.search(r'([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})', date_str)
+    if m2 and m2.group(1).lower() in MONTH_NAMES:
+        mo = MONTH_NAMES[m2.group(1).lower()]
+        day = int(m2.group(2))
+        yr = int(m2.group(3))
+        return date(yr, mo, day)
+    # 3. YYYY-MM-DD
+    m3 = re.match(r'(\d{4})-(\d{1,2})-(\d{1,2})', date_str)
+    if m3:
+        return date(int(m3.group(1)), int(m3.group(2)), int(m3.group(3)))
     return None
 
 
@@ -149,6 +190,7 @@ def parse_md_file(filepath: Path):
     }
 
     current_section = None
+    current_status = 'CONFIRMED'
     current_item = None
 
     for line in lines:
@@ -160,24 +202,28 @@ def parse_md_file(filepath: Path):
             doc['title'] = stripped[2:].strip()
             continue
 
-        if stripped.lower().startswith('## trip metadata'):
+        if stripped.lower().startswith('## trip metadata') or stripped.lower().startswith('## trip metadata'):
             current_section = 'metadata'
             current_item = None
             continue
         elif stripped.lower().startswith('## move'):
             current_section = 'move'
+            current_status = 'CONFIRMED'
             current_item = None
             continue
         elif stripped.lower().startswith('## stay'):
             current_section = 'stay'
+            current_status = 'CONFIRMED'
             current_item = None
             continue
         elif stripped.lower().startswith('## taste'):
             current_section = 'taste'
+            current_status = 'IDEA'
             current_item = None
             continue
         elif stripped.lower().startswith('## play'):
             current_section = 'play'
+            current_status = 'IDEA'
             current_item = None
             continue
         elif stripped.startswith('## '):
@@ -198,18 +244,58 @@ def parse_md_file(filepath: Path):
         if current_section in ('move', 'stay', 'taste', 'play'):
             if stripped == '*None recorded.*':
                 continue
+
+            # Subsection headers (### Confirmed / ### Potential / ### Complete)
+            if stripped.lower().startswith('### confirmed'):
+                current_status = 'CONFIRMED'
+                current_item = None
+                continue
+            elif stripped.lower().startswith('### potential'):
+                current_status = 'IDEA'
+                current_item = None
+                continue
+            elif stripped.lower().startswith('### complete'):
+                current_status = 'COMPLETE'
+                current_item = None
+                continue
+
+            # Item header: * Name: Flight or * **Flight**
             item_match = re.match(r'^\*\s+(?:Name:\s+|\*\*)([^*]+)(?:\*\*)?$', stripped)
             if item_match and not stripped.startswith('  '):
                 name = item_match.group(1).strip()
-                current_item = {'name': name}
+                current_item = {'name': name, 'Status': current_status}
                 doc[current_section].append(current_item)
                 continue
             
+            # Item property: * Key: Value or * **Key**: Value
             prop_match = re.match(r'^\*\s+(?:\*\*)?([^*:]+)(?:\*\*)?:\s*(.*)$', stripped)
             if prop_match and current_item is not None:
                 prop_key = prop_match.group(1).strip()
                 prop_val = clean_val(prop_match.group(2))
-                current_item[prop_key] = prop_val
+
+                # Normalize synonymous field names
+                if prop_key in ('Origin Address', 'Origin'):
+                    current_item['Origin'] = prop_val
+                elif prop_key in ('Destination Address', 'Destination'):
+                    current_item['Destination'] = prop_val
+                elif prop_key in ('Address / Venue', 'Address', 'Location', 'Venue'):
+                    current_item['Location'] = prop_val
+                elif prop_key in ('Confirmation Code', 'Confirmation/Reference', 'Booking Reference'):
+                    code_clean = re.sub(r'\(.*?\)', '', prop_val).strip(' `')
+                    current_item['Confirmation/Reference'] = code_clean
+                elif prop_key in ('Price Range', 'Price Tier'):
+                    current_item['Price'] = prop_val
+                elif prop_key == 'Dates' and current_section == 'stay':
+                    parts = re.split(r'[-–—]', prop_val)
+                    if len(parts) == 2:
+                        current_item['Start Date'] = parts[0].strip()
+                        current_item['End Date'] = parts[1].strip()
+                elif prop_key == 'Departure' and current_section == 'move':
+                    current_item['Departure'] = prop_val
+                elif prop_key == 'Schedule' and current_section in ('taste', 'play'):
+                    current_item['Schedule'] = prop_val
+                else:
+                    current_item[prop_key] = prop_val
 
     return doc
 
@@ -258,8 +344,8 @@ class Command(BaseCommand):
 
                 title = meta.get('Trip Title') or doc['title']
                 location = meta.get('Location', '')
-                time_granularity = meta.get('Time Granularity', 'EXACT_RANGE')
-                status = meta.get('Status', 'PAST')
+                time_granularity = normalize_granularity(meta.get('Time Granularity', 'EXACT_RANGE'))
+                status = normalize_status(meta.get('Status', 'PAST'), default='PAST')
                 description = meta.get('Description', f"Trip to {location}")
 
                 dates_str = meta.get('Dates', '')
@@ -327,11 +413,11 @@ class Command(BaseCommand):
                 # 1. Moves
                 for m_item in doc['move']:
                     m_title = m_item.get('name', 'Move Item')
-                    m_status = m_item.get('Status', 'CONFIRMED')
-                    m_date_str = m_item.get('Date', '')
+                    m_status = normalize_status(m_item.get('Status', 'CONFIRMED'), default='CONFIRMED')
+                    m_date_str = m_item.get('Date') or m_item.get('Departure', '')
                     d = parse_date(m_date_str)
-                    t_dept = parse_time(m_item.get('Departure Time', ''))
-                    t_arr = parse_time(m_item.get('Arrival Time', ''))
+                    t_dept = parse_time(m_item.get('Departure Time') or m_item.get('Departure', ''))
+                    t_arr = parse_time(m_item.get('Arrival Time') or m_item.get('Arrival', ''))
 
                     dept_dt = None
                     has_dept = False
@@ -394,7 +480,7 @@ class Command(BaseCommand):
                 # 2. Stays
                 for s_item in doc['stay']:
                     s_title = s_item.get('name', 'Stay Item')
-                    s_status = s_item.get('Status', 'CONFIRMED')
+                    s_status = normalize_status(s_item.get('Status', 'CONFIRMED'), default='CONFIRMED')
                     s_d_str = s_item.get('Start Date', '')
                     e_d_str = s_item.get('End Date', '')
                     s_d = parse_date(s_d_str)
@@ -477,8 +563,8 @@ class Command(BaseCommand):
                     else:
                         play_type = 'Sightseeing'
 
-                    p_date = parse_date(p_item.get('Date', ''))
-                    time_range = p_item.get('Time', '')
+                    p_date = parse_date(p_item.get('Date') or p_item.get('Schedule', ''))
+                    time_range = p_item.get('Time') or p_item.get('Schedule', '')
                     st_dt = None
                     end_dt = None
                     has_st = False
