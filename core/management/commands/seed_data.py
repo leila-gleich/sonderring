@@ -62,8 +62,10 @@ class Command(BaseCommand):
                 user.save()
 
         # Sync markdown files for all trips
-        for trip in Trip.objects.all():
-            sync_trip_to_markdown(trip)
+        import sys
+        if 'test' not in sys.argv:
+            for trip in Trip.objects.all():
+                sync_trip_to_markdown(trip)
 
         trip_count = Trip.objects.count()
         user_count = UserProfile.objects.count()

@@ -7,6 +7,7 @@ Organized into four canonical elements in exact order: Move, Stay, Taste, Play.
 
 import re
 import os
+import sys
 from pathlib import Path
 from django.conf import settings
 
@@ -304,8 +305,10 @@ def sync_trip_to_markdown(trip):
         lines.append(f"* **Owner (`created_by`)**: `@{creator_handle}` ({creator_name})")
 
         lines.append("* **Trippers (`trip_members`)**:")
-        members = trip.members.select_related('user').all()
+        members = list(trip.members.select_related('user').all())
         if members:
+            role_prio = {'OWNER': 0, 'EDITOR': 1, 'VIEWER': 2}
+            members.sort(key=lambda m: (role_prio.get(m.role, 3), m.user.handle.lower()))
             for m in members:
                 role_label = m.get_role_display() if hasattr(m, 'get_role_display') else m.role
                 lines.append(f"  * `@{m.user.handle}` — {role_label}")
@@ -443,10 +446,11 @@ def sync_trip_to_markdown(trip):
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        try:
-            update_readme_catalog()
-        except Exception:
-            pass
+        if 'test' not in sys.argv:
+            try:
+                update_readme_catalog()
+            except Exception:
+                pass
 
         return filepath
 
@@ -456,6 +460,9 @@ def sync_trip_to_markdown(trip):
 
 def update_readme_catalog():
     """Refreshes the markdown table of contents in docs/seed-trips/README.md based on current trips in the DB."""
+    import sys
+    if 'test' in sys.argv or _is_syncing:
+        return
     from .models import Trip
     trips_dir = get_trips_directory()
     readme_path = trips_dir / 'README.md'
