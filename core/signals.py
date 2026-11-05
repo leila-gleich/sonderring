@@ -16,7 +16,13 @@ _in_model_sync = False
 
 
 def _should_sync_md() -> bool:
-    return 'test' not in sys.argv
+    import core.md_sync
+    if getattr(core.md_sync, '_is_syncing', False):
+        return False
+    disallowed = {'test', 'import_seed_trips', 'seed_data', 'loaddata', 'dumpdata'}
+    if any(arg in disallowed for arg in sys.argv):
+        return False
+    return True
 
 
 @receiver(post_save, sender=Trip)

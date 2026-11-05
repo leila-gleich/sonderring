@@ -38,6 +38,20 @@ TRIP_FILENAME_MAP = {
 _is_syncing = False
 
 
+class disable_markdown_sync:
+    """Context manager to temporarily silence markdown file serialization and deletion."""
+    def __enter__(self):
+        global _is_syncing
+        self.prev = _is_syncing
+        import core.md_sync
+        core.md_sync._is_syncing = True
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        import core.md_sync
+        core.md_sync._is_syncing = self.prev
+
+
 def get_trips_directory() -> Path:
     trips_dir = settings.BASE_DIR / 'docs' / 'seed-trips'
     trips_dir.mkdir(parents=True, exist_ok=True)
@@ -503,6 +517,9 @@ To read the in-depth comparative analysis, identified limitations in the current
 
 def delete_trip_markdown(trip):
     """Removes the trip markdown file when a trip is deleted from the database."""
+    global _is_syncing
+    if _is_syncing:
+        return
     trips_dir = get_trips_directory()
     filename = get_trip_filename(trip)
     filepath = trips_dir / filename
