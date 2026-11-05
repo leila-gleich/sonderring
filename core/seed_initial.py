@@ -61,8 +61,11 @@ def bootstrap_canonical_trips(stdout=None):
     jordan.set_password('Sonderring2026!')
     jordan.save()
 
-    # Clear existing trips to allow clean idempotent re-seeding
-    Trip.objects.all().delete()
+    # Only bootstrap canonical trips if no trips exist in database;
+    # NEVER delete or overwrite existing user-created trips!
+    if Trip.objects.exists():
+        log("Trips already exist in database. Preserving all existing user trips and skipping baseline overwrite.")
+        return
 
     # ==========================================
     # TRIP 1: Malticilia 26
@@ -2517,6 +2520,152 @@ def bootstrap_canonical_trips(stdout=None):
         address='65-1227 Opelo Rd, Kamuela, HI 96743',
         description='Pioneering restaurant by Chef Peter Merriman featuring local grass-fed Big Island beef, macadamia nut crusted mahi-mahi, and organic Upcountry produce.',
         recommended_by=leila
+    )
+
+    # ==========================================
+    # TRIP 12: Halloween Staycation 26
+    # ==========================================
+    trip_halloween = Trip.objects.create(
+        title='Halloween Staycation 26',
+        description='San Juan Capistrano and Huntington Beach',
+        location='Orange County',
+        status='CURRENT',
+        time_granularity='EXACT_RANGE',
+        start_date=datetime.date(2026, 10, 30),
+        end_date=datetime.date(2026, 11, 2),
+        year=2026,
+        created_by=leila
+    )
+    TripMember.objects.create(trip=trip_halloween, user=leila, role='OWNER')
+
+    # Stays
+    stay_hyatt = Stay(
+        trip=trip_halloween,
+        title='Hyatt Regency',
+        status='CONFIRMED',
+        place_type='Hotel Room',
+        address='Hyatt Regency Huntington Beach Resort and Spa 21500 Pacific Coast Highway, Huntington Beach, CA 92648',
+        check_in=timezone.make_aware(datetime.datetime(2026, 10, 30, 15, 0)),
+        check_out=timezone.make_aware(datetime.datetime(2026, 11, 2, 11, 0)),
+        created_by=leila,
+        updated_by=leila
+    )
+    stay_hyatt.confirmation_code = '150482RA061068'
+    stay_hyatt.save()
+
+    stay_residence = Stay(
+        trip=trip_halloween,
+        title='Residence Inn SJC',
+        status='COMPLETE',
+        place_type='Hotel Room',
+        address='33711 Camino Capistrano, Dana Point, CA 92624',
+        check_in=timezone.make_aware(datetime.datetime(2026, 10, 30, 15, 0)),
+        check_out=timezone.make_aware(datetime.datetime(2026, 10, 31, 11, 0)),
+        created_by=leila,
+        updated_by=leila
+    )
+    stay_residence.confirmation_code = '2536415838'
+    stay_residence.save()
+
+    # Tastes (Food & Drink)
+    Taste.objects.create(
+        trip=trip_halloween,
+        title='Finca',
+        taste_type='Food',
+        status='IDEA',
+        address='31888 Paseo Adelanto #120, San Juan Capistrano, CA 92675',
+        notes='Located on Paseo Adelanto, offering a vibrant menu with a distinct focus on modern, farm-fresh dishes and bold regional flavors.',
+        menu_link='https://finca-sjc.com/dinner-menu/',
+        created_by=leila,
+        updated_by=leila
+    )
+    Taste.objects.create(
+        trip=trip_halloween,
+        title='Coastal Kitchen',
+        taste_type='Food',
+        status='IDEA',
+        address='Dana Point',
+        notes='New American / Coastal: Fresh seafood, green salads, seared proteins, and vegetable sides.',
+        created_by=leila,
+        updated_by=leila
+    )
+    Taste.objects.create(
+        trip=trip_halloween,
+        title='Hook & Anchor',
+        taste_type='Food',
+        status='IDEA',
+        address='Dana Point',
+        notes='Seafood & New American: Fresh catches, raw bar, oyster selections, and lighter crudos alongside comfort plates.',
+        created_by=leila,
+        updated_by=leila
+    )
+    Taste.objects.create(
+        trip=trip_halloween,
+        title='Wind & Sea',
+        taste_type='Food',
+        status='IDEA',
+        address='Dana Point',
+        notes='American / Seafood: Steaks, fish, and classic salads, though leaning heavier on traditional preparations.',
+        created_by=leila,
+        updated_by=leila
+    )
+    Taste.objects.create(
+        trip=trip_halloween,
+        title='Flights & Iron',
+        taste_type='Food',
+        status='IDEA',
+        address='376 Camino de Estrella, San Clemente CA',
+        notes='Focuses on a curated dining and drink experience pairing craft beverages with elevated American grill and gastropub favorites.',
+        menu_link='https://www.flightsandirons.com/menus',
+        created_by=leila,
+        updated_by=leila
+    )
+    Taste.objects.create(
+        trip=trip_halloween,
+        title='Craft House',
+        taste_type='Food',
+        status='COMPLETE',
+        address='Dana Point',
+        notes='Contemporary American: Farm-to-table focus, fresh seafood, artisan salads, and gourmet comfort plates.',
+        created_by=leila,
+        updated_by=leila
+    )
+    Taste.objects.create(
+        trip=trip_halloween,
+        title='Rosewood Social',
+        taste_type='Food',
+        status='COMPLETE',
+        address='San Juan Capistrano',
+        notes='Features a fusion concept, bringing together diverse culinary influences and contemporary flavor combinations.',
+        created_by=leila,
+        updated_by=leila
+    )
+
+    # Plays (Activities & Sights)
+    Play.objects.create(
+        trip=trip_halloween,
+        title='Whale Watching',
+        play_type='Sightseeing & Landmark',
+        status='IDEA',
+        created_by=leila,
+        updated_by=leila
+    )
+    Play.objects.create(
+        trip=trip_halloween,
+        title='Los Rios Historic District',
+        play_type='Sightseeing & Landmark',
+        status='COMPLETE',
+        created_by=leila,
+        updated_by=leila
+    )
+    Play.objects.create(
+        trip=trip_halloween,
+        title='Animal Encounters at Zoomars at River Street Ranch',
+        play_type='Sightseeing & Landmark',
+        status='COMPLETE',
+        address='31791 Los Rios St, San Juan Capistrano, CA 92675',
+        created_by=leila,
+        updated_by=leila
     )
 
     # Mark confirmed elements on historical past trips as COMPLETE

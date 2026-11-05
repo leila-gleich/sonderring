@@ -3,8 +3,16 @@
 > **Document Status**: Canonical & Living  
 > **Last Updated**: 2026-10-31  
 > **Traceability & Source Documents**:  
+> • [`docs/PRD.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PRD.md) (Product Requirements Document)  
+> • [`docs/MVP.md`](file:///Users/leilagleich/Desktop/sonderring/docs/MVP.md) (MVP Scope & Roadmap)  
+> • [`docs/CYBERSECURITY.md`](file:///Users/leilagleich/Desktop/sonderring/docs/CYBERSECURITY.md) (Security Architecture & Threat Model)  
+> • [`docs/PAGE_OUTLINE.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PAGE_OUTLINE.md) (Site Architecture & UI Flows)  
+> • [`docs/DATA_MODEL.md`](file:///Users/leilagleich/Desktop/sonderring/docs/DATA_MODEL.md) (Canonical Data Model & Schema)  
+> • [`docs/API_SPECIFICATION.md`](file:///Users/leilagleich/Desktop/sonderring/docs/API_SPECIFICATION.md) (REST API Contract)  
+> • [`docs/MARKDOWN_SYNC_SPEC.md`](file:///Users/leilagleich/Desktop/sonderring/docs/MARKDOWN_SYNC_SPEC.md) (Markdown Sync Spec)  
 > • [`docs/tripItemAttributesReference.md`](file:///Users/leilagleich/Desktop/sonderring/docs/tripItemAttributesReference.md)  
-> • [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md)  
+> • [`docs/TASKS.md`](file:///Users/leilagleich/Desktop/sonderring/docs/TASKS.md) (Engineering & Feature Tasks)  
+> • [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md) (Domain Nomenclature)  
 > • [`README.md`](file:///Users/leilagleich/Desktop/sonderring/README.md)  
 > • [`Trips/README.md`](file:///Users/leilagleich/Desktop/Trips/README.md)  
 
@@ -15,6 +23,7 @@
 1. **Continuous Synchronization**: Whenever changes, additions, or deprecations are made to specifications, form guidelines, schema models, or reference documents (such as `docs/tripItemAttributesReference.md` or `AGENTS.md`), this document **must immediately be updated** to maintain parity.
 2. **Nomenclature Compliance**: All stories, acceptance criteria, and technical references must adhere strictly to the [TripSpace Nomenclature Architecture](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md#L1-L101) (TripSpace $\rightarrow$ Dimension $\rightarrow$ Item $\rightarrow$ Category, Input vs. Attribute, Readiness States: `IDEA`, `CONFIRMED`, `COMPLETE`).
 3. **Traceability**: Every story must link back to its originating specification requirement and verify both frontend (Item Input) and backend (Item Attribute) behavioral criteria.
+4. **Foundational Pillars Enforcement**: All user stories and criteria must enforce **Authenticity** (zero fabricated data), **Conciseness** (functional, fluff-free descriptions), **Standardization** (uniform fields across dimensions), and **Transparency** (explicit provenance and backlog tracking in [`docs/TASKS.md`](TASKS.md)).
 
 ---
 
@@ -126,7 +135,7 @@
   - Submit button indicates idea capture (e.g., "Save Transit Idea", "Save Stay Idea", "Save Taste Idea", "Save Activity Idea").
 - **AC-FLOW-02.2**: **`CONFIRMED` State**:
   - For **Move**, **Taste**, and **Play**: A single `date` is **mandatory**; time is optional. Required indicator (`*`) is displayed.
-  - For **Stay**: Both `check_in` (Start Date) and `check_out` (End Date) are **mandatory**; times are optional.
+  - For **Stay**: Both `check_in` (Start Date) and `check_out` (End Date) are **mandatory**; time attributes are omitted (policies live in `Notes`).
   - Submit button indicates confirmation (e.g., "Save Confirmed Stay", "Save Confirmed Transit").
 - **AC-FLOW-02.3**: **`COMPLETE` State**:
   - Archived past item; dates remain valid.
@@ -188,10 +197,10 @@
   - **Start Date** (`check_in`, date input; required if status is `CONFIRMED`).
   - **End Date** (`check_out`, date input; required if status is `CONFIRMED`).
   - **Price** (`total_price`, float/decimal input, e.g., `450.00`).
-  - **Confirmation Code** (`confirmation_code`, text input; encrypted at rest).
+  - **Confirmation/Reference** (`confirmation_code`, text input; encrypted at rest).
   - **Upload Documents** (`documents`, file input).
 - **AC-STAY-01.3**: Chronological validation ensures `check_out` cannot precede `check_in`.
-- **AC-STAY-01.4**: Check-in time (`check_in_time`) and check-out time (`check_out_time`) are optional.
+- **AC-STAY-01.4**: Check-in and check-out times are omitted from model attributes and UI forms; check-in/out policies live in `Notes` if needed.
 
 ---
 
@@ -290,20 +299,33 @@
   5. `## Play` (`### Confirmed`, `### Potential`, `### Complete`)
 - **AC-SYNC-01.2**: Database saves automatically emit markdown updates, and file updates trigger synchronization hooks.
 
+### US-SYNC-02: User Data Preservation and Live Seed Synchronization
+**As a** user and travel planner,  
+**I want** all changes and data I enter on the website (including status toggles, edits, and custom trips) to be immediately captured in the version-controlled seed data fixture and never wiped out by seeding scripts,  
+**So that** my real travel plans and updates are preserved permanently across restarts, database refreshes, and multi-machine setups.
+
+#### Acceptance Criteria
+- **AC-SYNC-02.1**: Seed management commands and bootstrap routines must NEVER execute bulk deletions (e.g. `Trip.objects.all().delete()`) or wipe user-input data.
+- **AC-SYNC-02.2**: Any creation, modification, status update, or deletion made via the web application automatically triggers an atomic export to `core/fixtures/seed_data.json`.
+- **AC-SYNC-02.3**: When `python manage.py seed_data` is run, it loads `core/fixtures/seed_data.json` without destroying or overwriting user data. Canonical initial bootstrap only runs if the database is completely empty and no seed fixture exists.
+
 ---
 
 ## 📊 Traceability Matrix
 
 | Epic / Story ID | Dimension | Scope | Reference Document Section | Primary Template / Code Location |
 | :--- | :--- | :--- | :--- | :--- |
-| **US-TS-01** | Global | Full Stack | `tripItemAttributesReference.md` § TripSpace Metadata | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L90), `templates/trip_workspace.html` |
-| **US-TS-02** | Global | UI / View | `AGENTS.md` § 1.1 | `core/views.py`, `templates/home.html` |
-| **US-DIM-01** | All | Full Stack | `AGENTS.md` § 1.2 | `templates/trip_workspace.html` |
-| **US-FLOW-01**| All | Frontend | `tripItemAttributesReference.md` § ITEM INPUTS | `templates/trip_workspace.html#L1400-L2400` |
-| **US-FLOW-02**| All | Full Stack | `AGENTS.md` § 3 | `core/forms.py`, `core/views.py`, `templates/trip_workspace.html` |
-| **US-MOVE-01**| Move | Full Stack | `tripItemAttributesReference.md` § Move | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L250), `templates/trip_workspace.html` |
-| **US-STAY-01**| Stay | Full Stack | `tripItemAttributesReference.md` § Stay | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L380), `templates/trip_workspace.html` |
-| **US-TASTE-01**| Taste | Full Stack | `tripItemAttributesReference.md` § Taste | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L520), `templates/trip_workspace.html` |
-| **US-PLAY-01**| Play | Full Stack | `tripItemAttributesReference.md` § Plays | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L650), `templates/trip_workspace.html` |
-| **US-SEC-01** | All | Security | `README.md` § Tech Stack & Security | `core/fields.py`, `core/encryption.py` |
-| **US-SYNC-01**| All | Data / Tooling| `Trips/README.md` § Structural Uniformity | `core/fixture_sync.py`, `core/signals.py` |
+| **US-TS-01** | Global | Full Stack | `PRD.md` § 4.1, `tripItemAttributesReference.md` § 1 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L90), `templates/trip_workspace.html` |
+| **US-TS-02** | Global | UI / View | `PRD.md` § 4.1, `PAGE_OUTLINE.md` § 2.1 | `core/views.py`, `templates/home.html` |
+| **US-TS-03** | Global | Collaboration | `PRD.md` § 4.1, `PAGE_OUTLINE.md` § 2.3 | `core/models.py`, `templates/trip_workspace.html` |
+| **US-DIM-01** | All | Full Stack | `AGENTS.md` § 1.2, `PRD.md` § 4.3 | `templates/trip_workspace.html` |
+| **US-FLOW-01**| All | Frontend | `PRD.md` § 4.2, `PAGE_OUTLINE.md` § 3 | `templates/trip_workspace.html#L1400-L2400` |
+| **US-FLOW-02**| All | Full Stack | `AGENTS.md` § 3, `DATA_MODEL.md` § 3 | `core/forms.py`, `core/views.py`, `templates/trip_workspace.html` |
+| **US-MOVE-01**| Move | Full Stack | `tripItemAttributesReference.md` § 3.1, `DATA_MODEL.md` § 2.4 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L250), `templates/trip_workspace.html` |
+| **US-STAY-01**| Stay | Full Stack | `tripItemAttributesReference.md` § 3.2, `DATA_MODEL.md` § 2.5 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L380), `templates/trip_workspace.html` |
+| **US-TASTE-01**| Taste | Full Stack | `tripItemAttributesReference.md` § 3.3, `DATA_MODEL.md` § 2.6 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L520), `templates/trip_workspace.html` |
+| **US-PLAY-01**| Play | Full Stack | `tripItemAttributesReference.md` § 3.4, `DATA_MODEL.md` § 2.7 | [`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L650), `templates/trip_workspace.html` |
+| **US-SEC-01** | All | Security | `CYBERSECURITY.md` § 2, `README.md` § Security | `core/fields.py`, `core/encryption.py` |
+| **US-SEC-02** | All | Vault | `CYBERSECURITY.md` § 4, `DATA_MODEL.md` § 2.8 | `core/views.py`, `media/vault/` |
+| **US-SYNC-01**| All | Data / Tooling| `MARKDOWN_SYNC_SPEC.md` § 2-4, `Trips/README.md` | `core/fixture_sync.py`, `core/signals.py` |
+| **US-SYNC-02**| All | Data / Fixture| `AGENTS.md` § 6, `docs/MARKDOWN_SYNC_SPEC.md` | `core/fixture_sync.py`, `core/management/commands/seed_data.py`, `core/seed_initial.py` |

@@ -21,13 +21,46 @@ flowchart TD
 
 ---
 
-## 1. Core Terminology Definitions
+## 1. Foundational Project Pillars
 
-### 1.1. TripSpace (Level 1)
+All AI agents, engineers, and contributors must prioritize four critical pillars above all else. They are the non-negotiable foundation of Sonderring:
+
+1. **Authenticity**:
+   - **Zero Hallucination Policy**: Never fabricate, synthesize, or invent trip details, venues, flight numbers, confirmation codes, prices, dates, or lodging.
+   - **Ground Truth**: Every item must originate from authentic source material (e.g., canonical planning site, verified booking confirmation, user-provided itineraries).
+   - If data is absent or ambiguous, keep it minimal or flag it transparently. Do not fill gaps with "plausible" fiction.
+
+2. **Conciseness**:
+   - Eliminate marketing fluff, verbose travelogue prose, and flowery adjectives (e.g., replace *"High-elevation mountain parkway drive through rock tunnels with frosty winter vistas..."* with *"Mountain parkway with good views"*).
+   - Keep descriptions functional, brief, and essential. Data structures and UI inputs must only capture what travelers actually need.
+
+3. **Standardization**:
+   - Uniform terminology across all dimensions (Move, Stay, Taste, Play).
+   - Uniform seed file naming: `yy-mm-[trip name].md` (e.g., `21-12-Asheville.md`, `26-08-Hawaii.md`).
+   - Standardized field nomenclature:
+     - Use **`Location`** everywhere (not `Address` or `Venue`).
+     - Use **`Confirmation/Reference`** everywhere (not `Confirmation Code` or `Booking Code`).
+     - For **Stay**: Use strictly **`Start Date`** and **`End Date`** (no combined `Dates` string; no `Check-in Time` or `Check-out Time` attributes).
+     - For **Move**: Use **`Departure Time`** and **`Arrival Time`** (no direction field).
+     - For **Play**: Single **`Date`** with time range (e.g., `Time: 7:30pm – 10:00pm`) when scheduled; price is `Free` (play only), or `$`, `$$`, `$$$`.
+     - For **Taste**: Minimalist—no date or time unless bound to a confirmed reservation (`Confirmation/Reference`). Price is `$`, `$$`, `$$$`.
+   - Readiness states: strictly **`Status: `CONFIRMED``** or **`Status: `IDEA``** (never `COMPLETE`).
+   - **Selective Schema Token Formatting**: Use monospace backticks (`` `...` ``) specifically for controlled database enums (e.g., `Status: `CONFIRMED``, `Status: `IDEA``, `Time Granularity: `EXACT_RANGE``, `Status: `PAST``) and alphanumeric codes/identifiers (e.g., `Flight: `DL 2661``, `Confirmation/Reference: `3208541836``, airport IATA codes `LAX`, `AVL`). Keep dates, times, locations, prices, notes, and descriptions in clean plaintext.
+
+4. **Transparency**:
+   - Explicitly document data origins, limitations, and confidence states.
+   - Distinctly distinguish between exploratory brainstorming (`Status: Idea`) and verified bookings (`Status: Confirmed`).
+   - Track future feature requests, architectural improvements, and backlog tasks openly in [`docs/TASKS.md`](docs/TASKS.md).
+
+---
+
+## 2. Core Terminology Definitions
+
+### 2.1. TripSpace (Level 1)
 - **Definition**: The top-level travel canvas and collaborative workspace representing a specific trip or journey (e.g., *Iceland 26*, *Malticilia 26*).
 - **Code Entity**: [`Trip`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L90) model in Django.
 
-### 1.2. Dimension (Level 2)
+### 2.2. Dimension (Level 2)
 - **Definition**: One of the four foundational pillars that structure every journey:
   1. ✈️ **Move** — Transit, flights, rail, ferries, driving routes, car rentals.
   2. 🏨 **Stay** — Lodging, hotels, villas, campgrounds, apartments.
@@ -51,7 +84,7 @@ flowchart TD
 
 ---
 
-## 2. UI Controls vs. Database Schema Boundaries
+## 3. UI Controls vs. Database Schema Boundaries
 
 To avoid ambiguity when implementing changes, we strictly distinguish between **Inputs** and **Attributes**:
 
@@ -62,7 +95,7 @@ To avoid ambiguity when implementing changes, we strictly distinguish between **
 
 ---
 
-## 3. Item Readiness & Lifecycle States
+## 4. Item Readiness & Lifecycle States
 
 Every item carries a readiness state that determines input validation rules:
 
@@ -78,14 +111,14 @@ Every item carries a readiness state that determines input validation rules:
 
 ---
 
-## 4. Place / Anchor vs. Trip Item
+## 5. Place / Anchor vs. Trip Item
 
 - **The Place (The Real-World Anchor)**: The physical venue or entity (e.g., *Hotel Grímsborgir*, *Kol Restaurant*). It holds canonical data: name, address, coordinates, website, phone. A Place can be referenced or recommended across multiple TripSpaces.
 - **The Item (The TripSpace Occurrence)**: The specific reservation or plan for that Place inside a particular TripSpace. It holds its own UUID (`id`), dates, confirmation codes, assigned travelers, and notes. Even if two TripSpaces reference the same hotel, each TripSpace holds an independent **Stay Item**.
 
 ---
 
-## 5. Directive Phrasing Cheat Sheet
+## 6. Directive Phrasing Cheat Sheet
 
 When prompts or user stories use these terms, interpret them according to these conventions:
 
@@ -102,9 +135,28 @@ When prompts or user stories use these terms, interpret them according to these 
 
 ---
 
-## 6. Living User Stories & Acceptance Criteria Protocol
+## 7. Living User Stories & Acceptance Criteria Protocol
 
 - **Canonical Document**: [`docs/livingUserStoriesAndAcceptanceCriteria.md`](docs/livingUserStoriesAndAcceptanceCriteria.md)
 - **Mandatory Agent Rule**: **Always update the Living User Stories & Acceptance Criteria as changes are made in the documents.**
   Whenever modifications, additions, or deprecations are introduced in reference specifications (such as `docs/tripItemAttributesReference.md`), data models, form flows, or domain rules, AI agents and contributors must immediately update `docs/livingUserStoriesAndAcceptanceCriteria.md` to keep user stories and testable acceptance criteria synchronized.
+
+---
+
+## 8. Foundational Documentation Catalog
+
+All agents, developers, and contributors must treat the following documentation suite as the language-agnostic source of truth:
+
+| Document | Purpose | File Link |
+| :--- | :--- | :--- |
+| **Product Requirements (PRD)** | High-level vision, personas, functional requirements, and non-functional requirements. | [`docs/PRD.md`](docs/PRD.md) |
+| **MVP Scope & Roadmap** | Phase 1 (MVP In-Scope) features vs. Phase 2 and Phase 3 roadmaps. | [`docs/MVP.md`](docs/MVP.md) |
+| **Cybersecurity Architecture** | AES-256-GCM envelope encryption, Document Vault, RBAC, and STRIDE threat modeling. | [`docs/CYBERSECURITY.md`](docs/CYBERSECURITY.md) |
+| **Site Architecture & Flows** | Sitemap, screen inventory, status-first modal flows, and responsive breakpoints. | [`docs/PAGE_OUTLINE.md`](docs/PAGE_OUTLINE.md) |
+| **Canonical Data Model** | Entity-relationship diagrams, attribute definitions, state machines, and constraints. | [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) |
+| **API Contract Specification** | RESTful HTTP/JSON endpoints, request/response payloads, and error envelopes. | [`docs/API_SPECIFICATION.md`](docs/API_SPECIFICATION.md) |
+| **Markdown Sync Specification** | Canonical grammar, section ordering, and bidirectional sync protocols with `Trips/*.md`. | [`docs/MARKDOWN_SYNC_SPEC.md`](docs/MARKDOWN_SYNC_SPEC.md) |
+| **Living User Stories & AC** | Active user stories and testable acceptance criteria synchronized with specifications. | [`docs/livingUserStoriesAndAcceptanceCriteria.md`](docs/livingUserStoriesAndAcceptanceCriteria.md) |
+| **Item Attributes Reference** | Field and form input guidelines across all four dimensions. | [`docs/tripItemAttributesReference.md`](docs/tripItemAttributesReference.md) |
+
 

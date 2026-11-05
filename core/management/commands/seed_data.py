@@ -14,16 +14,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--reset',
-            action='store_true',
-            help='Wipes existing Trip records before seeding.'
-        )
-        parser.add_argument(
-            '--initial',
-            action='store_true',
-            help='Forces rebuilding from canonical 11 initial trips and updates seed_data.json.'
-        )
-        parser.add_argument(
             '--export',
             action='store_true',
             help='Exports the live database directly to core/fixtures/seed_data.json without loading.'
@@ -32,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options.get('export'):
             self.stdout.write("Exporting live database to core/fixtures/seed_data.json...")
-            success = export_seed_data_immediate()
+            success = export_seed_data_immediate(force=True)
             if success:
                 self.stdout.write(self.style.SUCCESS("Successfully exported seed_data.json!"))
             else:
@@ -40,40 +30,40 @@ class Command(BaseCommand):
             return
 
         fixture_file = get_fixture_path()
-        use_initial = options.get('initial') or not fixture_file.exists()
 
-        if options.get('reset'):
-            self.stdout.write("Clearing existing trips for clean re-seeding...")
-            Trip.objects.all().delete()
-
-        if use_initial:
-            self.stdout.write("Bootstrapping canonical Sonderring trips and users...")
-            bootstrap_canonical_trips(stdout=self.stdout)
-            self.stdout.write("Exporting canonical dataset to core/fixtures/seed_data.json...")
-            export_seed_data_immediate()
-        else:
-            self.stdout.write(f"Loading seed data from {fixture_file}...")
+        if fixture_file.exists():
+            self.stdout.write(f"Loading user-updated seed data from {fixture_file}...")
             loaded = load_seed_fixture()
             if not loaded:
-                self.stderr.write(self.style.ERROR(f"Could not load {fixture_file}, falling back to initial data."))
-                bootstrap_canonical_trips(stdout=self.stdout)
-                export_seed_data_immediate()
+                self.stderr.write(self.style.ERROR(
+                    f"Notice: Could not load fixture from {fixture_file}. "
+                    "Preserving existing database and fixture to prevent data loss."
+                ))
+                return
+        else:
+            if Trip.objects.exists():
+                self.stdout.write("Database contains trips. Preserving and exporting to core/fixtures/seed_data.json...")
+                export_seed_data_immediate(force=True)
             else:
-                # Ensure demo user passwords remain valid
-                for email, pwd in [
-                    ('leila@sonderring.com', 'Sonderring2026!'),
-                    ('sam@sonderring.com', 'Sonderring2026!'),
-                    ('alex@sonderring.com', 'Sonderring2026!'),
-                    ('jordan@sonderring.com', 'Sonderring2026!'),
-                ]:
-                    user = UserProfile.objects.filter(email=email).first()
-                    if user and not user.has_usable_password():
-                        user.set_password(pwd)
-                        user.save()
+                self.stdout.write("No fixture file found and database is empty. Bootstrapping initial canonical trips...")
+                bootstrap_canonical_trips(stdout=self.stdout)
+                export_seed_data_immediate(force=True)
 
-                # Sync markdown files for all trips
-                for trip in Trip.objects.all():
-                    sync_trip_to_markdown(trip)
+        # Ensure demo user passwords remain valid
+        for email, pwd in [
+            ('leila@sonderring.com', 'Sonderring2026!'),
+            ('sam@sonderring.com', 'Sonderring2026!'),
+            ('alex@sonderring.com', 'Sonderring2026!'),
+            ('jordan@sonderring.com', 'Sonderring2026!'),
+        ]:
+            user = UserProfile.objects.filter(email=email).first()
+            if user and not user.has_usable_password():
+                user.set_password(pwd)
+                user.save()
+
+        # Sync markdown files for all trips
+        for trip in Trip.objects.all():
+            sync_trip_to_markdown(trip)
 
         trip_count = Trip.objects.count()
         user_count = UserProfile.objects.count()

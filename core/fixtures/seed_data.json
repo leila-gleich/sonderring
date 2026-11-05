@@ -84,6 +84,28 @@
 },
 {
   "model": "core.trip",
+  "pk": "02989e8a-098a-46fa-8be7-213cbea8732a",
+  "fields": {
+    "title": "Halloween Staycation 26",
+    "description": "San Juan Capistrano and Huntington Beach",
+    "location": "Orange County",
+    "status": "CURRENT",
+    "time_granularity": "EXACT_RANGE",
+    "season": null,
+    "year": 2026,
+    "start_date": "2026-10-30",
+    "end_date": "2026-11-02",
+    "start_month": null,
+    "end_month": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "rec_token": "T4s9LQw89oHH6NU0i1gDcQ",
+    "created_at": "2026-10-30T17:54:51.493Z",
+    "updated_at": "2026-10-30T18:44:15.534Z"
+  }
+},
+{
+  "model": "core.trip",
   "pk": "07de19e4-47dc-4a97-b0b3-f4031841de59",
   "fields": {
     "title": "NYE 21-22",
@@ -128,34 +150,12 @@
 },
 {
   "model": "core.trip",
-  "pk": "1ec1d123-832d-409b-851e-badf5f2d5930",
-  "fields": {
-    "title": "Norway Fjords Coastal Voyage",
-    "description": "Arctic coastal voyage and fjord navigation from Kirkenes (near the Russian border) south to Bergen aboard the historic Hurtigruten Coastal Express. Features scenic fjord excursions, coastal bus transfers, and historical maritime explorations.",
-    "location": "Kirkenes, Tromsø, Sommarøy, Trondheim, Ålesund, Geiranger, Bergen, Norway",
-    "status": "UPCOMING",
-    "time_granularity": "MONTH",
-    "season": null,
-    "year": 2026,
-    "start_date": null,
-    "end_date": null,
-    "start_month": 9,
-    "end_month": 10,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "rec_token": "UMUvd5q_WW_z4VVagZGuRQ",
-    "created_at": "2026-10-31T20:31:19.465Z",
-    "updated_at": "2026-10-31T20:31:19.465Z"
-  }
-},
-{
-  "model": "core.trip",
   "pk": "4f604302-e0be-45cd-9b6f-d051be293e57",
   "fields": {
     "title": "Hawaii",
     "description": "Multi-island tropical journey exploring volcanic lava fields, marine life sanctuaries, rainforest lodges, and coastal road trips across the Big Island and Maui.",
     "location": "Kona (Big Island), Volcano Village, Maui, Hawaii",
-    "status": "UPCOMING",
+    "status": "PAST",
     "time_granularity": "MONTH",
     "season": null,
     "year": 2026,
@@ -164,10 +164,10 @@
     "start_month": 5,
     "end_month": 6,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "8fYUiKDiQ5nRMmxJehC6UQ",
     "created_at": "2026-10-31T20:31:27.395Z",
-    "updated_at": "2026-10-31T20:31:27.396Z"
+    "updated_at": "2026-11-01T21:35:03.690Z"
   }
 },
 {
@@ -221,7 +221,7 @@
     "title": "Malticilia 26",
     "description": "Flagship Mediterranean journey exploring the ancient forts of Valletta, coastal swimming at Gozo Blue Lagoon, and Sicilian wine & dining in Taormina and Syracuse. Features complex multi-country logistics with flights, inter-island ferries, and coastal rail.",
     "location": "Malta, Sicily (Taormina, Syracuse), Gozo",
-    "status": "UPCOMING",
+    "status": "PAST",
     "time_granularity": "SEASON_YEAR",
     "season": "SUMMER",
     "year": 2026,
@@ -230,20 +230,20 @@
     "start_month": null,
     "end_month": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "2BPcVO6a31K-smYD647JvQ",
     "created_at": "2026-10-31T20:31:17.152Z",
-    "updated_at": "2026-10-31T20:31:17.152Z"
+    "updated_at": "2026-11-01T21:51:13.111Z"
   }
 },
 {
   "model": "core.trip",
   "pk": "7e6a32ac-25a5-467f-9f72-52e907096e98",
   "fields": {
-    "title": "Iceland Ring Road Expedition",
-    "description": "8-day road trip across the Golden Circle, South Coast waterfalls, and geothermal hot springs in a 4x4 campervan. Highlights include tectonic rift hiking, glacier viewing, and chasing the Aurora Borealis.",
-    "location": "Ring Road, Reykjavik, South Coast, Selfoss, Iceland",
-    "status": "UPCOMING",
+    "title": "Iceland",
+    "description": "8-day road trip to Golden Circle & Reykjavik",
+    "location": "Iceland",
+    "status": "PAST",
     "time_granularity": "EXACT_RANGE",
     "season": null,
     "year": 2026,
@@ -252,10 +252,10 @@
     "start_month": null,
     "end_month": null,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "rec_token": "lCUgA6ApWHbHRqVF77drZw",
     "created_at": "2026-10-31T20:31:18.196Z",
-    "updated_at": "2026-10-31T20:31:18.196Z"
+    "updated_at": "2026-11-01T21:52:14.846Z"
   }
 },
 {
@@ -346,22 +346,22 @@
 },
 {
   "model": "core.tripmember",
-  "pk": "2108f6eb-f98f-432d-93a2-5706d66b441b",
-  "fields": {
-    "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "user": "952e98df-e345-4fe0-b298-e6eefd97ac99",
-    "role": "VIEWER",
-    "joined_at": "2026-10-31T20:31:18.235Z"
-  }
-},
-{
-  "model": "core.tripmember",
   "pk": "29f7c15e-7b88-4ae1-82d6-8adae0a43090",
   "fields": {
     "trip": "7b0c1fb2-39b1-4acc-86bd-6e1443f384be",
     "user": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
     "role": "EDITOR",
     "joined_at": "2026-10-31T20:31:17.199Z"
+  }
+},
+{
+  "model": "core.tripmember",
+  "pk": "3ef2be73-83f1-4ca3-9379-fc69af736dab",
+  "fields": {
+    "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
+    "user": "952e98df-e345-4fe0-b298-e6eefd97ac99",
+    "role": "VIEWER",
+    "joined_at": "2026-11-01T21:40:54.359Z"
   }
 },
 {
@@ -416,12 +416,12 @@
 },
 {
   "model": "core.tripmember",
-  "pk": "b8614d94-1e51-47d1-9f3a-e7a39fdc03c9",
+  "pk": "848e6879-68f8-4675-86f8-56f2d1ef7e91",
   "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "role": "OWNER",
-    "joined_at": "2026-10-31T20:31:19.481Z"
+    "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
+    "user": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
+    "role": "EDITOR",
+    "joined_at": "2026-11-01T21:40:54.314Z"
   }
 },
 {
@@ -456,12 +456,12 @@
 },
 {
   "model": "core.tripmember",
-  "pk": "dba79ae7-e4a8-487c-9868-a8068c7d685c",
+  "pk": "da1714fa-6484-4d9f-8225-4558f2ee435f",
   "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "user": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "role": "EDITOR",
-    "joined_at": "2026-10-31T20:31:19.497Z"
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "role": "OWNER",
+    "joined_at": "2026-10-30T17:54:51.551Z"
   }
 },
 {
@@ -472,16 +472,6 @@
     "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "role": "OWNER",
     "joined_at": "2026-10-31T20:31:23.208Z"
-  }
-},
-{
-  "model": "core.tripmember",
-  "pk": "ea51d897-ce00-4f24-96f1-59b50a68f208",
-  "fields": {
-    "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "user": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "role": "EDITOR",
-    "joined_at": "2026-10-31T20:31:18.222Z"
   }
 },
 {
@@ -526,36 +516,6 @@
 },
 {
   "model": "core.stay",
-  "pk": "0d8edb6a-2e04-4dbf-b09a-9263985158f1",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten Coastal Cruise Stateroom (MS Polarlys / Nordlys)",
-    "status": "CONFIRMED",
-    "place_type": "Hotel",
-    "stay_length": null,
-    "stay_length_unit": "Days",
-    "num_beds": 2,
-    "num_rooms": 1,
-    "num_guests": 2,
-    "description": null,
-    "address": "Port of Kirkenes to Port of Bergen, Norway",
-    "check_in": null,
-    "check_out": null,
-    "has_check_in_time": false,
-    "has_check_out_time": false,
-    "total_price": "2450.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": "v1:D/B2k4FP/0k7KG3/E5dvuqf/iRKuVWE8NYNo/imNM6zNH4/6BBoHL3A=",
-    "notes": "Arctic outside cabin with unobstructed sea view. Full board dining included in voyage package.",
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.513Z",
-    "updated_at": "2026-10-31T20:31:19.513Z"
-  }
-},
-{
-  "model": "core.stay",
   "pk": "11c95ad6-6d6d-43f0-a546-db49fe2bab48",
   "fields": {
     "trip": "4f604302-e0be-45cd-9b6f-d051be293e57",
@@ -586,32 +546,62 @@
 },
 {
   "model": "core.stay",
-  "pk": "14313e5b-6267-4995-b55f-7af7da6e1847",
+  "pk": "1ba55be6-39ae-4378-8825-56b72430d6e6",
   "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Arctic Hotel",
-    "status": "IDEA",
-    "place_type": "Hotel",
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Hyatt Regency",
+    "status": "CONFIRMED",
+    "place_type": "Hotel Room",
     "stay_length": null,
     "stay_length_unit": "Days",
-    "num_beds": 2,
-    "num_rooms": 1,
-    "num_guests": 2,
+    "num_beds": null,
+    "num_rooms": -4,
+    "num_guests": null,
     "description": null,
-    "address": "Skipsholmen, 9110 Sommarøy, Norway",
-    "check_in": null,
-    "check_out": null,
+    "address": "Hyatt Regency Huntington Beach Resort and Spa 21500 Pacific Coast Highway, Huntington Beach, CA 92648",
+    "check_in": "2026-10-30T00:00:00Z",
+    "check_out": "2026-11-02T00:00:00Z",
     "has_check_in_time": false,
     "has_check_out_time": false,
-    "total_price": "280.00",
+    "total_price": null,
     "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
+    "booking_link": "",
+    "_encrypted_confirmation_code": "v1:Hfxfy6e36bxvFR40BVppn1WXt1ISJ89ytbJkyymdX9+NVQhOKww26g2I",
+    "notes": "",
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.600Z",
-    "updated_at": "2026-10-31T20:31:19.601Z"
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:03:45.539Z",
+    "updated_at": "2026-10-30T18:03:45.539Z"
+  }
+},
+{
+  "model": "core.stay",
+  "pk": "27d816a6-dc4c-43ea-b908-ca78f07f66bd",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Residence Inn SJC",
+    "status": "COMPLETE",
+    "place_type": "Hotel Room",
+    "stay_length": null,
+    "stay_length_unit": "Days",
+    "num_beds": null,
+    "num_rooms": null,
+    "num_guests": null,
+    "description": null,
+    "address": "33711 Camino Capistrano, Dana Point, CA 92624",
+    "check_in": "2026-10-30T00:00:00Z",
+    "check_out": "2026-10-31T00:00:00Z",
+    "has_check_in_time": false,
+    "has_check_out_time": false,
+    "total_price": null,
+    "currency": "USD",
+    "booking_link": "",
+    "_encrypted_confirmation_code": "v1:BLO6GvaXzK1nsUl8o462amF08UR5BNDu1GMtarCJz2N7hgrtazQ=",
+    "notes": "",
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T17:56:35.801Z",
+    "updated_at": "2026-10-31T04:59:37.657Z"
   }
 },
 {
@@ -1066,36 +1056,6 @@
 },
 {
   "model": "core.stay",
-  "pk": "c72948ad-4481-4ca5-9d4a-7d97bd6a457b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Kirkenes Snowhotel 365",
-    "status": "IDEA",
-    "place_type": "Room",
-    "stay_length": null,
-    "stay_length_unit": "Days",
-    "num_beds": 2,
-    "num_rooms": 1,
-    "num_guests": 2,
-    "description": null,
-    "address": "Sandnesdalen 14, 9910 Bjørnevatn, Kirkenes, Norway",
-    "check_in": null,
-    "check_out": null,
-    "has_check_in_time": false,
-    "has_check_out_time": false,
-    "total_price": "420.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": "Thermal sleeping bags provided inside ice sculptures; includes husky kennel visit.",
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.567Z",
-    "updated_at": "2026-10-31T20:31:19.567Z"
-  }
-},
-{
-  "model": "core.stay",
   "pk": "c94b3bfa-865f-4160-ac83-c3b38bf3634d",
   "fields": {
     "trip": "8ecdcbc4-83e9-4fbe-93dc-8bbed6a429eb",
@@ -1272,36 +1232,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:22.325Z",
     "updated_at": "2026-10-31T20:31:22.325Z"
-  }
-},
-{
-  "model": "core.stay",
-  "pk": "eea4ccd0-f5ff-4d63-8ab3-a8b683a9995c",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Bergen Børs Hotel",
-    "status": "CONFIRMED",
-    "place_type": "Hotel",
-    "stay_length": null,
-    "stay_length_unit": "Days",
-    "num_beds": 1,
-    "num_rooms": 1,
-    "num_guests": 2,
-    "description": null,
-    "address": "Vågsallmenningen 1, 5014 Bergen, Norway",
-    "check_in": null,
-    "check_out": null,
-    "has_check_in_time": false,
-    "has_check_out_time": false,
-    "total_price": "540.00",
-    "currency": "USD",
-    "booking_link": "https://example.com/bergen-bors",
-    "_encrypted_confirmation_code": null,
-    "notes": "Historic converted stock exchange hotel overlooking the Vågen harbor.",
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.539Z",
-    "updated_at": "2026-10-31T20:31:19.539Z"
   }
 },
 {
@@ -1650,98 +1580,34 @@
 },
 {
   "model": "core.move",
-  "pk": "3fc784e3-2310-4b34-895f-ba6db99c86d5",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten Coastal Cruise (Kirkenes > Bergen)",
-    "mode": "Car",
-    "company": null,
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Kirkenes Hurtigruten Port, Norway",
-    "destination_address": "Bergen Hurtigruten Terminal, Norway",
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": "Multi-port coastal liner stopping in Tromsø, Trondheim, Ålesund, and Geirangerfjord.",
-    "price": "2450.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": "v1:cC0wv0sUHLHTw+CehBzYQHOO/161asnRvgkxoTNfVPmH8lHTLV5uOqo=",
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.798Z",
-    "updated_at": "2026-10-31T20:31:19.798Z"
-  }
-},
-{
-  "model": "core.move",
   "pk": "491c020e-984a-48c7-b64c-43e54b8b7cd0",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "title": "Delta Flights LAX > KEF Non-stop",
+    "title": "LAX > JFK > KEF",
     "mode": "Planes",
-    "company": null,
+    "company": "Delta",
     "trip_stage": "START_END",
     "direction": "ARRIVING",
     "status": "CONFIRMED",
-    "passenger_name": "@leila, @jordan, @sam",
+    "passenger_name": "",
     "description": null,
     "origin_address": "Los Angeles International Airport (LAX)",
     "destination_address": "Keflavík International Airport (KEF), Iceland",
-    "departure_time": "2026-10-14T06:00:00Z",
+    "departure_time": "2026-10-14T03:30:00Z",
     "arrival_time": null,
-    "has_departure_time": false,
+    "has_departure_time": true,
     "has_arrival_time": false,
     "date_confidence": "CONFIRMED",
     "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
+    "flexibility_notes": "",
     "price": "780.00",
     "currency": "USD",
-    "booking_link": null,
+    "booking_link": "",
     "_encrypted_confirmation_code": "v1:SPwk+PNimHy0JBMQ4MJu9rhYnpC0bdEz6ojB6WbtwFo7/uCALGCC",
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.337Z",
-    "updated_at": "2026-10-31T20:31:18.337Z"
-  }
-},
-{
-  "model": "core.move",
-  "pk": "5b6ed5e1-964a-4e91-8402-0719f4150d9b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Inbound Flight into Kirkenes Airport (KKN)",
-    "mode": "Planes",
-    "company": null,
-    "trip_stage": "START_END",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Oslo Gardermoen (OSL)",
-    "destination_address": "Kirkenes Airport Høybuktmoen (KKN), Norway",
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "220.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.667Z",
-    "updated_at": "2026-10-31T20:31:19.667Z"
+    "updated_at": "2026-11-01T21:38:22.595Z"
   }
 },
 {
@@ -2002,38 +1868,6 @@
 },
 {
   "model": "core.move",
-  "pk": "8e9a3e87-601e-4b9a-9d65-530cc0e5307a",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Barents Airport Shuttle to Hurtigruten Port",
-    "mode": "Car",
-    "company": null,
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Kirkenes Airport (KKN)",
-    "destination_address": "Hurtigruten Cruise Terminal, Kirkenes Port",
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "30.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.727Z",
-    "updated_at": "2026-10-31T20:31:19.727Z"
-  }
-},
-{
-  "model": "core.move",
   "pk": "9060aeb9-b25d-47b7-92a5-1b9faf7866be",
   "fields": {
     "trip": "4f604302-e0be-45cd-9b6f-d051be293e57",
@@ -2258,70 +2092,6 @@
 },
 {
   "model": "core.move",
-  "pk": "a1be9297-d99e-4626-b496-aa5992b1d460",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Outbound Flight from Bergen (BGO)",
-    "mode": "Planes",
-    "company": null,
-    "trip_stage": "START_END",
-    "direction": "LEAVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Bergen Airport Flesland (BGO), Norway",
-    "destination_address": "Los Angeles International (LAX)",
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "680.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.871Z",
-    "updated_at": "2026-10-31T20:31:19.871Z"
-  }
-},
-{
-  "model": "core.move",
-  "pk": "a5372b48-2117-447d-a93a-918a14d4be6f",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Fjord Speedboat / RIB Express Transfer",
-    "mode": "Car",
-    "company": null,
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "IDEA",
-    "passenger_name": null,
-    "description": null,
-    "origin_address": null,
-    "destination_address": null,
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "TENTATIVE",
-    "time_confidence": "TENTATIVE",
-    "flexibility_notes": "Weather-dependent coastal transit between Tromsø and Sommarøy fishing archipelago.",
-    "price": "95.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.946Z",
-    "updated_at": "2026-10-31T20:31:19.946Z"
-  }
-},
-{
-  "model": "core.move",
   "pk": "a66bfefb-989b-43ef-b47f-f346c953422e",
   "fields": {
     "trip": "07de19e4-47dc-4a97-b0b3-f4031841de59",
@@ -2357,31 +2127,31 @@
   "pk": "a98f506a-5bdc-4ef3-ae58-6763a9285522",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "title": "4x4 SUV / Campervan Rental",
+    "title": "4x4 SUV",
     "mode": "Car",
-    "company": null,
+    "company": "Hertz",
     "trip_stage": "MID_TRIP",
     "direction": "ARRIVING",
     "status": "CONFIRMED",
-    "passenger_name": null,
+    "passenger_name": "",
     "description": null,
     "origin_address": "Keflavík Airport Car Rental Desk, 235 Keflavík, Iceland",
     "destination_address": "Ring Road & Selfoss Basecamp",
     "departure_time": "2026-10-14T21:30:00Z",
     "arrival_time": null,
-    "has_departure_time": false,
+    "has_departure_time": true,
     "has_arrival_time": false,
     "date_confidence": "CONFIRMED",
     "time_confidence": "CONFIRMED",
-    "flexibility_notes": "Studded winter tires and full gravel insurance included for F-roads.",
+    "flexibility_notes": "",
     "price": "640.00",
     "currency": "USD",
-    "booking_link": null,
+    "booking_link": "",
     "_encrypted_confirmation_code": "v1:4d9yw0iSTEHQeG1ga4t2GtKEc2BstrWkx3e9VTuHo04s6dMGTbzn2FA=",
     "created_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.385Z",
-    "updated_at": "2026-10-31T20:31:18.385Z"
+    "updated_at": "2026-11-01T21:38:53.791Z"
   }
 },
 {
@@ -2770,38 +2540,6 @@
 },
 {
   "model": "core.move",
-  "pk": "f617768a-4135-48f4-8bb6-bf0de0e83c5f",
-  "fields": {
-    "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "title": "Contingency Storm Transit & Highland Route Bypass",
-    "mode": "Car",
-    "company": null,
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "IDEA",
-    "passenger_name": null,
-    "description": null,
-    "origin_address": null,
-    "destination_address": null,
-    "departure_time": null,
-    "arrival_time": null,
-    "has_departure_time": false,
-    "has_arrival_time": false,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": "Backup southern highway routing in case of high-wind closures on Route 1 near Vík.",
-    "price": "0.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:18.492Z",
-    "updated_at": "2026-10-31T20:31:18.492Z"
-  }
-},
-{
-  "model": "core.move",
   "pk": "f9a08dee-e7c9-4378-a549-e8909084d5f1",
   "fields": {
     "trip": "54141f0b-ea74-4102-9deb-e770cc7b59d7",
@@ -2894,6 +2632,38 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:21.942Z",
     "updated_at": "2026-10-31T20:31:21.942Z"
+  }
+},
+{
+  "model": "core.taste",
+  "pk": "00ea519e-1e83-4de8-b935-af1ae4d7ea6e",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Rosewood Social",
+    "taste_type": "Food",
+    "cuisine": null,
+    "drink_category": null,
+    "status": "COMPLETE",
+    "description": "",
+    "address": "San Juan Capistrano",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "Features a fusion concept, bringing together diverse culinary influences and contemporary flavor combinations.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:31.424Z",
+    "updated_at": "2026-10-31T04:59:54.455Z"
   }
 },
 {
@@ -3253,12 +3023,12 @@
   "pk": "4cb9bd54-120c-4afb-8f48-faf40c9dea88",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "title": "Friðheimar Greenhouse Tomato Soup & Horse Farm",
+    "title": "Friðheimar Greenhouse",
     "taste_type": "Food",
     "cuisine": "European",
     "drink_category": null,
-    "status": "CONFIRMED",
-    "description": "Freshly baked bread buffet and unlimited tomato soup served directly inside a geothermal greenhouse.",
+    "status": "IDEA",
+    "description": "",
     "address": "Friðheimar, 801 Reykholt, Iceland",
     "start_time": "2026-10-16T12:30:00Z",
     "end_time": null,
@@ -3271,13 +3041,13 @@
     "menu_link": null,
     "general_link": null,
     "_encrypted_confirmation_code": "v1:l4/OljFMRnWseYqcLxw3+t2mH3TYCpf1owCdJit8FLk65+o+qQ==",
-    "notes": null,
+    "notes": "",
     "guest_name": null,
     "recommended_by": null,
     "created_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.603Z",
-    "updated_at": "2026-10-31T20:31:18.603Z"
+    "updated_at": "2026-11-01T21:39:12.106Z"
   }
 },
 {
@@ -3310,6 +3080,38 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:21.522Z",
     "updated_at": "2026-10-31T20:31:21.522Z"
+  }
+},
+{
+  "model": "core.taste",
+  "pk": "54d15ade-69f7-4a1d-85b2-f1262627b707",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Finca",
+    "taste_type": "Food",
+    "cuisine": null,
+    "drink_category": null,
+    "status": "IDEA",
+    "description": "",
+    "address": "31888 Paseo Adelanto #120, San Juan Capistrano, CA 92675",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "https://finca-sjc.com/dinner-menu/",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "Located on Paseo Adelanto, offering a vibrant menu with a distinct focus on modern, farm-fresh dishes and bold regional flavors.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:04:47.843Z",
+    "updated_at": "2026-10-31T01:27:53.712Z"
   }
 },
 {
@@ -3378,6 +3180,38 @@
 },
 {
   "model": "core.taste",
+  "pk": "71fdb995-d152-4688-8afb-15fb7e8b0393",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Hook & Anchor",
+    "taste_type": "Food",
+    "cuisine": null,
+    "drink_category": null,
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "Seafood & New American: Fresh catches, raw bar, oyster selections, and lighter crudos alongside comfort plates.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:01.950Z",
+    "updated_at": "2026-10-31T01:23:01.950Z"
+  }
+},
+{
+  "model": "core.taste",
   "pk": "76e5b7f4-0734-4fca-8222-b42be28b8193",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
@@ -3385,7 +3219,7 @@
     "taste_type": "Food",
     "cuisine": "European",
     "drink_category": null,
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Order \"eina með öllu\" (one with everything: ketchup, sweet mustard, fried onions, raw onions, remoulade).",
     "address": "Tryggvagata 1, 101 Reykjavik, Iceland",
     "start_time": null,
@@ -3403,9 +3237,41 @@
     "guest_name": null,
     "recommended_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
     "created_by": null,
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:19.089Z",
-    "updated_at": "2026-10-31T20:31:19.089Z"
+    "updated_at": "2026-11-01T21:39:51.124Z"
+  }
+},
+{
+  "model": "core.taste",
+  "pk": "77dbb256-fd4c-4066-907b-a4fdc02d01ed",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Craft House",
+    "taste_type": "Food",
+    "cuisine": null,
+    "drink_category": null,
+    "status": "COMPLETE",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "Contemporary American: Farm-to-table focus, fresh seafood, artisan salads, and gourmet comfort plates.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:48.387Z",
+    "updated_at": "2026-10-31T04:59:49.299Z"
   }
 },
 {
@@ -3570,6 +3436,38 @@
 },
 {
   "model": "core.taste",
+  "pk": "a73ed2a5-7bba-46ce-b341-173a3094d4b4",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Coastal Kitchen",
+    "taste_type": "Food",
+    "cuisine": null,
+    "drink_category": null,
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "New American / Coastal: Fresh seafood, green salads, seared proteins, and vegetable sides.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:29.847Z",
+    "updated_at": "2026-10-31T01:25:00.668Z"
+  }
+},
+{
+  "model": "core.taste",
   "pk": "b34d2bd1-09fc-4546-a761-0f8635ec52dc",
   "fields": {
     "trip": "07de19e4-47dc-4a97-b0b3-f4031841de59",
@@ -3634,6 +3532,38 @@
 },
 {
   "model": "core.taste",
+  "pk": "b6d2966c-4a4a-4011-8ab0-60a4cccedd2f",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Flights & Iron",
+    "taste_type": "Food",
+    "cuisine": null,
+    "drink_category": null,
+    "status": "IDEA",
+    "description": "",
+    "address": "376 Camino de Estrella, San Clemente CA",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "https://www.flightsandirons.com/menus",
+    "menu_link": "https://www.flightsandirons.com/menus",
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "Focuses on a curated dining and drink experience pairing craft beverages with elevated American grill and gastropub favorites.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:24:07.037Z",
+    "updated_at": "2026-10-31T01:31:30.966Z"
+  }
+},
+{
+  "model": "core.taste",
   "pk": "c321d87e-9ec0-460e-a961-137e46068d2e",
   "fields": {
     "trip": "6a2db047-704d-4fe9-9ef6-a00bfbb0ef6c",
@@ -3666,6 +3596,38 @@
 },
 {
   "model": "core.taste",
+  "pk": "d0518580-9ab1-447f-a3d8-5c093aaab36d",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Wind & Sea",
+    "taste_type": "Food",
+    "cuisine": null,
+    "drink_category": null,
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "price_range": null,
+    "currency": "USD",
+    "link": "",
+    "menu_link": null,
+    "general_link": null,
+    "_encrypted_confirmation_code": null,
+    "notes": "American / Seafood: Steaks, fish, and classic salads, though leaning heavier on traditional preparations.",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:13.024Z",
+    "updated_at": "2026-10-31T01:23:13.024Z"
+  }
+},
+{
+  "model": "core.taste",
   "pk": "dfca33cf-25c4-4950-8344-3a13247bb799",
   "fields": {
     "trip": "7b0c1fb2-39b1-4acc-86bd-6e1443f384be",
@@ -3694,38 +3656,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:17.544Z",
     "updated_at": "2026-10-31T20:31:17.544Z"
-  }
-},
-{
-  "model": "core.taste",
-  "pk": "ee05f59a-bf8d-4e17-9e30-d212bbaa20f0",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Fisketorget Bergen Fish Market seafood chowder",
-    "taste_type": "Food",
-    "cuisine": "European",
-    "drink_category": null,
-    "status": "IDEA",
-    "description": "Historic open-air harbor fish market serving traditional creamy Bergen fish soup with fresh cod and shrimp.",
-    "address": "Strandkaien 3, 5012 Bergen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": null,
-    "price_range": "$$",
-    "currency": "USD",
-    "link": null,
-    "menu_link": null,
-    "general_link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.608Z",
-    "updated_at": "2026-10-31T20:31:20.608Z"
   }
 },
 {
@@ -3888,7 +3818,7 @@
     "title": "Reynisfjara sneaker waves safety warning",
     "play_type": "Sightseeing",
     "price_tier": "Free",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Never turn your back to the ocean on the black sand beach. Sneaker waves pull tourists into freezing rip currents with zero warning.",
     "address": "Reynisfjara Black Sand Beach, Vík, Iceland",
     "start_time": null,
@@ -3903,9 +3833,9 @@
     "guest_name": null,
     "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_by": null,
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:19.195Z",
-    "updated_at": "2026-10-31T20:31:19.195Z"
+    "updated_at": "2026-11-01T21:39:57.019Z"
   }
 },
 {
@@ -3962,6 +3892,34 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:28.173Z",
     "updated_at": "2026-10-31T20:31:28.173Z"
+  }
+},
+{
+  "model": "core.play",
+  "pk": "13bb7f6e-ae8f-4595-9517-03f91caf0f6b",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Los Rios Historic District",
+    "play_type": "Sightseeing",
+    "price_tier": null,
+    "status": "COMPLETE",
+    "description": "",
+    "address": "",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "notes": "",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:05:24.090Z",
+    "updated_at": "2026-10-30T20:14:16.589Z"
   }
 },
 {
@@ -4084,7 +4042,7 @@
     "title": "Brúarfoss Blue Waterfall Hike",
     "play_type": "Sightseeing",
     "price_tier": "Free",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "7 km roundtrip river path hike leading to intense icy-azure cascading glacial falls.",
     "address": "Brúarvegur, 801 Laugarvatn, Iceland",
     "start_time": "2026-10-17T10:30:00Z",
@@ -4099,9 +4057,9 @@
     "guest_name": null,
     "recommended_by": null,
     "created_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.741Z",
-    "updated_at": "2026-10-31T20:31:18.741Z"
+    "updated_at": "2026-11-01T21:39:23.357Z"
   }
 },
 {
@@ -4358,34 +4316,6 @@
 },
 {
   "model": "core.play",
-  "pk": "41e55db4-b66e-46a2-af0a-60d27c36512e",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Nidaros Cathedral Historic Tour in Trondheim",
-    "play_type": "Sightseeing",
-    "price_tier": "$",
-    "status": "CONFIRMED",
-    "description": "World northernmost medieval cathedral, built over the burial site of King Olav II dating back to 1070 AD.",
-    "address": "Kongsgårdsgata 2, 7013 Trondheim, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "18.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.028Z",
-    "updated_at": "2026-10-31T20:31:20.028Z"
-  }
-},
-{
-  "model": "core.play",
   "pk": "474b07c7-04d0-4dc6-a78c-e95977b6742f",
   "fields": {
     "trip": "6a2db047-704d-4fe9-9ef6-a00bfbb0ef6c",
@@ -4438,34 +4368,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:25.600Z",
     "updated_at": "2026-10-31T20:31:25.600Z"
-  }
-},
-{
-  "model": "core.play",
-  "pk": "4ceccb58-cf4f-47b1-892a-d3a5cb8e3145",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Arctic Cathedral midnight organ concert",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "IDEA",
-    "description": "Special candlelit acoustics concert inside the striking triangular stained-glass modernist church.",
-    "address": "Hans Nilsens veg 41, 9020 Tromsdalen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.706Z",
-    "updated_at": "2026-10-31T20:31:20.706Z"
   }
 },
 {
@@ -4554,34 +4456,6 @@
 },
 {
   "model": "core.play",
-  "pk": "532b6ef8-f8c3-43ce-a31d-64de10e6f647",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Bryggen historic Hanseatic wooden wharf stroll",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "CONFIRMED",
-    "description": "UNESCO World Heritage site consisting of preserved timber trading quarters along the Vågen harbor.",
-    "address": "Bryggen, 5003 Bergen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.425Z",
-    "updated_at": "2026-10-31T20:31:20.425Z"
-  }
-},
-{
-  "model": "core.play",
   "pk": "53412d67-b5f5-4948-a090-5bcd6ccc1f14",
   "fields": {
     "trip": "1d4fd902-9c67-4922-a9c5-424acb3541a4",
@@ -4606,6 +4480,34 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:24.547Z",
     "updated_at": "2026-10-31T20:31:24.547Z"
+  }
+},
+{
+  "model": "core.play",
+  "pk": "5418d2f4-ed54-419c-886a-5217d39da276",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Whale Watching",
+    "play_type": "Sightseeing",
+    "price_tier": null,
+    "status": "IDEA",
+    "description": "",
+    "address": "",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "notes": "",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T20:45:02.890Z",
+    "updated_at": "2026-10-30T20:45:02.890Z"
   }
 },
 {
@@ -4946,34 +4848,6 @@
 },
 {
   "model": "core.play",
-  "pk": "8c49df16-0a86-40da-a585-e25fa016266e",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Fjellheisen Cable Car & Midnight Aurora Watch",
-    "play_type": "Sightseeing",
-    "price_tier": "$$",
-    "status": "IDEA",
-    "description": "Aerial tramway up Mount Storsteinen (421 meters) for nighttime views over Tromsø island.",
-    "address": "Sollivegen 12, 9020 Tromsdalen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "38.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.344Z",
-    "updated_at": "2026-10-31T20:31:20.344Z"
-  }
-},
-{
-  "model": "core.play",
   "pk": "9121ffb5-4df0-40fd-97a8-a3d701b21ec0",
   "fields": {
     "trip": "54141f0b-ea74-4102-9deb-e770cc7b59d7",
@@ -5054,6 +4928,34 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:21.303Z",
     "updated_at": "2026-10-31T20:31:21.303Z"
+  }
+},
+{
+  "model": "core.play",
+  "pk": "9bab3d22-56ac-4b06-9a55-26f3a6478b41",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Animal Encounters at Zoomars at River Street Ranch",
+    "play_type": "Sightseeing",
+    "price_tier": null,
+    "status": "COMPLETE",
+    "description": "",
+    "address": "31791 Los Rios St, San Juan Capistrano, CA 92675",
+    "start_time": null,
+    "end_time": null,
+    "has_start_time": false,
+    "has_end_time": false,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "notes": "",
+    "guest_name": null,
+    "recommended_by": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:39:11.457Z",
+    "updated_at": "2026-10-30T20:14:14.845Z"
   }
 },
 {
@@ -5222,62 +5124,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:23.524Z",
     "updated_at": "2026-10-31T20:31:23.524Z"
-  }
-},
-{
-  "model": "core.play",
-  "pk": "b8ea8566-9594-459c-89a3-79cab471bc3c",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten exterior deck wind gear preparation",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "CONFIRMED",
-    "description": "Bring windproof Gore-Tex outer shell, thermal base layers, and fleece balaclava for observation decks when crossing the Arctic Circle.",
-    "address": null,
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.519Z",
-    "updated_at": "2026-10-31T20:31:20.519Z"
-  }
-},
-{
-  "model": "core.play",
-  "pk": "c01ea591-579e-4bf7-a251-0334b7114d8b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Arctic White Sand Beach Walk",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "IDEA",
-    "description": "Walk across Caribbean-like turquoise waters and Arctic shell sand beaches in the far north.",
-    "address": "Sommarøy, 9110 Troms, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "0.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.277Z",
-    "updated_at": "2026-10-31T20:31:20.277Z"
   }
 },
 {
@@ -5596,7 +5442,7 @@
     "title": "Hella Coastal Town & Waterfall Exploration",
     "play_type": "Sightseeing",
     "price_tier": "Free",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Southern waterfall stops including Seljalandsfoss and Skógafoss with staircase climb to upper cataract.",
     "address": "Route 1 South Coast, Hella, Iceland",
     "start_time": "2026-10-18T11:00:00Z",
@@ -5611,9 +5457,9 @@
     "guest_name": null,
     "recommended_by": null,
     "created_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.815Z",
-    "updated_at": "2026-10-31T20:31:18.815Z"
+    "updated_at": "2026-11-01T21:39:26.786Z"
   }
 },
 {
@@ -5674,34 +5520,6 @@
 },
 {
   "model": "core.play",
-  "pk": "f4fb2c31-4732-423a-8935-3ef9485aa438",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Aksla Viewpoint 418 Steps Climb in Ålesund",
-    "play_type": "Sightseeing",
-    "price_tier": "Free",
-    "status": "CONFIRMED",
-    "description": "Climb 418 stone steps from the town park to panoramic viewpoint over Ålesund Art Nouveau peninsula and surrounding fjords.",
-    "address": "Fjellstua, Aksla, 6003 Ålesund, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "0.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.097Z",
-    "updated_at": "2026-10-31T20:31:20.098Z"
-  }
-},
-{
-  "model": "core.play",
   "pk": "fabf1808-ea42-4307-a5ea-1cd0e2dabb54",
   "fields": {
     "trip": "f64536ce-4442-478b-9732-bf5e09bfd996",
@@ -5754,34 +5572,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:26.421Z",
     "updated_at": "2026-10-31T20:31:26.421Z"
-  }
-},
-{
-  "model": "core.play",
-  "pk": "ffd51c7d-14dc-419d-961c-d7d4f5a98a81",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Geirangerfjord UNESCO Waterfall Cruise Excursion",
-    "play_type": "Sightseeing",
-    "price_tier": "$$$",
-    "status": "CONFIRMED",
-    "description": "Spectacular tender excursion sailing right beneath the Seven Sisters and Suitor cascading waterfalls.",
-    "address": "Geirangerfjord, Møre og Romsdal, Norway",
-    "start_time": null,
-    "end_time": null,
-    "has_start_time": false,
-    "has_end_time": false,
-    "price": "115.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "notes": null,
-    "guest_name": null,
-    "recommended_by": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.179Z",
-    "updated_at": "2026-10-31T20:31:20.179Z"
   }
 },
 {
@@ -5989,89 +5779,31 @@
 },
 {
   "model": "core.nav",
-  "pk": "3fc784e3-2310-4b34-895f-ba6db99c86d5",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten Coastal Cruise (Kirkenes > Bergen)",
-    "mode": "Car",
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Kirkenes Hurtigruten Port, Norway",
-    "destination_address": "Bergen Hurtigruten Terminal, Norway",
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": "Multi-port coastal liner stopping in Tromsø, Trondheim, Ålesund, and Geirangerfjord.",
-    "price": "2450.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": "v1:cC0wv0sUHLHTw+CehBzYQHOO/161asnRvgkxoTNfVPmH8lHTLV5uOqo=",
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.761Z",
-    "updated_at": "2026-10-31T20:31:41.268Z"
-  }
-},
-{
-  "model": "core.nav",
   "pk": "491c020e-984a-48c7-b64c-43e54b8b7cd0",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "title": "Delta Flights LAX > KEF Non-stop",
+    "title": "LAX > JFK > KEF",
     "mode": "Planes",
     "trip_stage": "START_END",
     "direction": "ARRIVING",
     "status": "CONFIRMED",
-    "passenger_name": "@leila, @jordan, @sam",
+    "passenger_name": "",
     "description": null,
     "origin_address": "Los Angeles International Airport (LAX)",
     "destination_address": "Keflavík International Airport (KEF), Iceland",
-    "departure_time": "2026-10-14T06:00:00Z",
+    "departure_time": "2026-10-14T03:30:00Z",
     "arrival_time": null,
     "date_confidence": "CONFIRMED",
     "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
+    "flexibility_notes": "",
     "price": "780.00",
     "currency": "USD",
-    "booking_link": null,
+    "booking_link": "",
     "_encrypted_confirmation_code": "v1:SPwk+PNimHy0JBMQ4MJu9rhYnpC0bdEz6ojB6WbtwFo7/uCALGCC",
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.316Z",
-    "updated_at": "2026-10-31T20:31:40.589Z"
-  }
-},
-{
-  "model": "core.nav",
-  "pk": "5b6ed5e1-964a-4e91-8402-0719f4150d9b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Inbound Flight into Kirkenes Airport (KKN)",
-    "mode": "Planes",
-    "trip_stage": "START_END",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Oslo Gardermoen (OSL)",
-    "destination_address": "Kirkenes Airport Høybuktmoen (KKN), Norway",
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "220.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.637Z",
-    "updated_at": "2026-10-31T20:31:40.975Z"
+    "updated_at": "2026-11-01T21:38:22.658Z"
   }
 },
 {
@@ -6308,35 +6040,6 @@
 },
 {
   "model": "core.nav",
-  "pk": "8e9a3e87-601e-4b9a-9d65-530cc0e5307a",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Barents Airport Shuttle to Hurtigruten Port",
-    "mode": "Car",
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Kirkenes Airport (KKN)",
-    "destination_address": "Hurtigruten Cruise Terminal, Kirkenes Port",
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "30.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.695Z",
-    "updated_at": "2026-10-31T20:31:41.118Z"
-  }
-},
-{
-  "model": "core.nav",
   "pk": "9060aeb9-b25d-47b7-92a5-1b9faf7866be",
   "fields": {
     "trip": "4f604302-e0be-45cd-9b6f-d051be293e57",
@@ -6540,64 +6243,6 @@
 },
 {
   "model": "core.nav",
-  "pk": "a1be9297-d99e-4626-b496-aa5992b1d460",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Outbound Flight from Bergen (BGO)",
-    "mode": "Planes",
-    "trip_stage": "START_END",
-    "direction": "LEAVING",
-    "status": "CONFIRMED",
-    "passenger_name": "@leila, @alex",
-    "description": null,
-    "origin_address": "Bergen Airport Flesland (BGO), Norway",
-    "destination_address": "Los Angeles International (LAX)",
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": null,
-    "price": "680.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.834Z",
-    "updated_at": "2026-10-31T20:31:41.423Z"
-  }
-},
-{
-  "model": "core.nav",
-  "pk": "a5372b48-2117-447d-a93a-918a14d4be6f",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Fjord Speedboat / RIB Express Transfer",
-    "mode": "Car",
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "IDEA",
-    "passenger_name": null,
-    "description": null,
-    "origin_address": null,
-    "destination_address": null,
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "TENTATIVE",
-    "time_confidence": "TENTATIVE",
-    "flexibility_notes": "Weather-dependent coastal transit between Tromsø and Sommarøy fishing archipelago.",
-    "price": "95.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.908Z",
-    "updated_at": "2026-10-31T20:31:41.592Z"
-  }
-},
-{
-  "model": "core.nav",
   "pk": "a66bfefb-989b-43ef-b47f-f346c953422e",
   "fields": {
     "trip": "07de19e4-47dc-4a97-b0b3-f4031841de59",
@@ -6630,12 +6275,12 @@
   "pk": "a98f506a-5bdc-4ef3-ae58-6763a9285522",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "title": "4x4 SUV / Campervan Rental",
+    "title": "4x4 SUV",
     "mode": "Car",
     "trip_stage": "MID_TRIP",
     "direction": "ARRIVING",
     "status": "CONFIRMED",
-    "passenger_name": null,
+    "passenger_name": "",
     "description": null,
     "origin_address": "Keflavík Airport Car Rental Desk, 235 Keflavík, Iceland",
     "destination_address": "Ring Road & Selfoss Basecamp",
@@ -6643,15 +6288,15 @@
     "arrival_time": null,
     "date_confidence": "CONFIRMED",
     "time_confidence": "CONFIRMED",
-    "flexibility_notes": "Studded winter tires and full gravel insurance included for F-roads.",
+    "flexibility_notes": "",
     "price": "640.00",
     "currency": "USD",
-    "booking_link": null,
+    "booking_link": "",
     "_encrypted_confirmation_code": "v1:4d9yw0iSTEHQeG1ga4t2GtKEc2BstrWkx3e9VTuHo04s6dMGTbzn2FA=",
     "created_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.358Z",
-    "updated_at": "2026-10-31T20:31:40.691Z"
+    "updated_at": "2026-11-01T21:38:53.883Z"
   }
 },
 {
@@ -7004,35 +6649,6 @@
 },
 {
   "model": "core.nav",
-  "pk": "f617768a-4135-48f4-8bb6-bf0de0e83c5f",
-  "fields": {
-    "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "title": "Contingency Storm Transit & Highland Route Bypass",
-    "mode": "Car",
-    "trip_stage": "MID_TRIP",
-    "direction": "ARRIVING",
-    "status": "IDEA",
-    "passenger_name": null,
-    "description": null,
-    "origin_address": null,
-    "destination_address": null,
-    "departure_time": null,
-    "arrival_time": null,
-    "date_confidence": "CONFIRMED",
-    "time_confidence": "CONFIRMED",
-    "flexibility_notes": "Backup southern highway routing in case of high-wind closures on Route 1 near Vík.",
-    "price": "0.00",
-    "currency": "USD",
-    "booking_link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:18.461Z",
-    "updated_at": "2026-10-31T20:31:40.872Z"
-  }
-},
-{
-  "model": "core.nav",
   "pk": "f9a08dee-e7c9-4378-a549-e8909084d5f1",
   "fields": {
     "trip": "54141f0b-ea74-4102-9deb-e770cc7b59d7",
@@ -7113,6 +6729,28 @@
 },
 {
   "model": "core.do",
+  "pk": "00ea519e-1e83-4de8-b935-af1ae4d7ea6e",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Rosewood Social",
+    "activity_type": "Dining",
+    "status": "COMPLETE",
+    "description": "",
+    "address": "San Juan Capistrano",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:31.569Z",
+    "updated_at": "2026-10-31T04:59:54.625Z"
+  }
+},
+{
+  "model": "core.do",
   "pk": "02f4d61a-43b4-4675-83fb-3d4641df6b08",
   "fields": {
     "trip": "54141f0b-ea74-4102-9deb-e770cc7b59d7",
@@ -7162,7 +6800,7 @@
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
     "title": "Reynisfjara sneaker waves safety warning",
     "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Never turn your back to the ocean on the black sand beach. Sneaker waves pull tourists into freezing rip currents with zero warning.",
     "address": "Reynisfjara Black Sand Beach, Vík, Iceland",
     "start_time": null,
@@ -7172,9 +6810,9 @@
     "link": null,
     "_encrypted_confirmation_code": null,
     "created_by": null,
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:53.317Z",
-    "updated_at": "2026-10-31T20:31:53.317Z"
+    "updated_at": "2026-11-01T21:39:57.069Z"
   }
 },
 {
@@ -7263,6 +6901,28 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:48.775Z",
     "updated_at": "2026-10-31T20:31:48.775Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "13bb7f6e-ae8f-4595-9517-03f91caf0f6b",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Los Rios Historic District",
+    "activity_type": "Sightseeing",
+    "status": "COMPLETE",
+    "description": "",
+    "address": "",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:05:24.128Z",
+    "updated_at": "2026-10-30T20:14:16.665Z"
   }
 },
 {
@@ -7492,7 +7152,7 @@
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
     "title": "Brúarfoss Blue Waterfall Hike",
     "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "7 km roundtrip river path hike leading to intense icy-azure cascading glacial falls.",
     "address": "Brúarvegur, 801 Laugarvatn, Iceland",
     "start_time": "2026-10-17T10:30:00Z",
@@ -7502,9 +7162,9 @@
     "link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.704Z",
-    "updated_at": "2026-10-31T20:31:52.968Z"
+    "updated_at": "2026-11-01T21:39:23.472Z"
   }
 },
 {
@@ -7729,28 +7389,6 @@
 },
 {
   "model": "core.do",
-  "pk": "41e55db4-b66e-46a2-af0a-60d27c36512e",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Nidaros Cathedral Historic Tour in Trondheim",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "World northernmost medieval cathedral, built over the burial site of King Olav II dating back to 1070 AD.",
-    "address": "Kongsgårdsgata 2, 7013 Trondheim, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "18.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:19.986Z",
-    "updated_at": "2026-10-31T20:31:53.591Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "42377a56-121e-4046-9ae8-3f272256c92e",
   "fields": {
     "trip": "f64536ce-4442-478b-9732-bf5e09bfd996",
@@ -7842,10 +7480,10 @@
   "pk": "4cb9bd54-120c-4afb-8f48-faf40c9dea88",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "title": "Friðheimar Greenhouse Tomato Soup & Horse Farm",
+    "title": "Friðheimar Greenhouse",
     "activity_type": "Dining",
-    "status": "CONFIRMED",
-    "description": "Freshly baked bread buffet and unlimited tomato soup served directly inside a geothermal greenhouse.",
+    "status": "IDEA",
+    "description": "",
     "address": "Friðheimar, 801 Reykholt, Iceland",
     "start_time": "2026-10-16T12:30:00Z",
     "end_time": null,
@@ -7854,31 +7492,9 @@
     "link": null,
     "_encrypted_confirmation_code": "v1:l4/OljFMRnWseYqcLxw3+t2mH3TYCpf1owCdJit8FLk65+o+qQ==",
     "created_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.573Z",
-    "updated_at": "2026-10-31T20:31:47.909Z"
-  }
-},
-{
-  "model": "core.do",
-  "pk": "4ceccb58-cf4f-47b1-892a-d3a5cb8e3145",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Arctic Cathedral midnight organ concert",
-    "activity_type": "Sightseeing",
-    "status": "IDEA",
-    "description": "Special candlelit acoustics concert inside the striking triangular stained-glass modernist church.",
-    "address": "Hans Nilsens veg 41, 9020 Tromsdalen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:54.447Z",
-    "updated_at": "2026-10-31T20:31:54.447Z"
+    "updated_at": "2026-11-01T21:39:12.294Z"
   }
 },
 {
@@ -7949,28 +7565,6 @@
 },
 {
   "model": "core.do",
-  "pk": "532b6ef8-f8c3-43ce-a31d-64de10e6f647",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Bryggen historic Hanseatic wooden wharf stroll",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "UNESCO World Heritage site consisting of preserved timber trading quarters along the Vågen harbor.",
-    "address": "Bryggen, 5003 Bergen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:54.247Z",
-    "updated_at": "2026-10-31T20:31:54.247Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "53412d67-b5f5-4948-a090-5bcd6ccc1f14",
   "fields": {
     "trip": "1d4fd902-9c67-4922-a9c5-424acb3541a4",
@@ -7993,6 +7587,28 @@
 },
 {
   "model": "core.do",
+  "pk": "5418d2f4-ed54-419c-886a-5217d39da276",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Whale Watching",
+    "activity_type": "Sightseeing",
+    "status": "IDEA",
+    "description": "",
+    "address": "",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T20:45:03.030Z",
+    "updated_at": "2026-10-30T20:45:03.030Z"
+  }
+},
+{
+  "model": "core.do",
   "pk": "5450342e-9ba9-41b7-bb20-6654209a3e92",
   "fields": {
     "trip": "8ecdcbc4-83e9-4fbe-93dc-8bbed6a429eb",
@@ -8011,6 +7627,28 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:48.600Z",
     "updated_at": "2026-10-31T20:31:48.600Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "54d15ade-69f7-4a1d-85b2-f1262627b707",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Finca",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "31888 Paseo Adelanto #120, San Juan Capistrano, CA 92675",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "https://finca-sjc.com/dinner-menu/",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:04:47.938Z",
+    "updated_at": "2026-10-31T01:27:53.886Z"
   }
 },
 {
@@ -8235,6 +7873,28 @@
 },
 {
   "model": "core.do",
+  "pk": "71fdb995-d152-4688-8afb-15fb7e8b0393",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Hook & Anchor",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:02.111Z",
+    "updated_at": "2026-10-31T01:23:02.111Z"
+  }
+},
+{
+  "model": "core.do",
   "pk": "740d3f4b-326b-4e80-ac1b-7efa4d38171d",
   "fields": {
     "trip": "8ecdcbc4-83e9-4fbe-93dc-8bbed6a429eb",
@@ -8262,7 +7922,7 @@
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
     "title": "Bæjarins Beztu Pylsur famous hot dog stand",
     "activity_type": "Dining",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Order \"eina með öllu\" (one with everything: ketchup, sweet mustard, fried onions, raw onions, remoulade).",
     "address": "Tryggvagata 1, 101 Reykjavik, Iceland",
     "start_time": null,
@@ -8272,9 +7932,31 @@
     "link": "https://bbp.is",
     "_encrypted_confirmation_code": null,
     "created_by": null,
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:48.058Z",
-    "updated_at": "2026-10-31T20:31:48.058Z"
+    "updated_at": "2026-11-01T21:39:51.321Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "77dbb256-fd4c-4066-907b-a4fdc02d01ed",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Craft House",
+    "activity_type": "Dining",
+    "status": "COMPLETE",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:48.519Z",
+    "updated_at": "2026-10-31T04:59:49.395Z"
   }
 },
 {
@@ -8411,28 +8093,6 @@
 },
 {
   "model": "core.do",
-  "pk": "8c49df16-0a86-40da-a585-e25fa016266e",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Fjellheisen Cable Car & Midnight Aurora Watch",
-    "activity_type": "Sightseeing",
-    "status": "IDEA",
-    "description": "Aerial tramway up Mount Storsteinen (421 meters) for nighttime views over Tromsø island.",
-    "address": "Sollivegen 12, 9020 Tromsdalen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "38.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.308Z",
-    "updated_at": "2026-10-31T20:31:54.129Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "9121ffb5-4df0-40fd-97a8-a3d701b21ec0",
   "fields": {
     "trip": "54141f0b-ea74-4102-9deb-e770cc7b59d7",
@@ -8495,6 +8155,28 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:21.267Z",
     "updated_at": "2026-10-31T20:31:54.812Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "9bab3d22-56ac-4b06-9a55-26f3a6478b41",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Animal Encounters at Zoomars at River Street Ranch",
+    "activity_type": "Sightseeing",
+    "status": "COMPLETE",
+    "description": "",
+    "address": "31791 Los Rios St, San Juan Capistrano, CA 92675",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:39:11.522Z",
+    "updated_at": "2026-10-30T20:14:14.912Z"
   }
 },
 {
@@ -8609,6 +8291,28 @@
 },
 {
   "model": "core.do",
+  "pk": "a73ed2a5-7bba-46ce-b341-173a3094d4b4",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Coastal Kitchen",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:30.002Z",
+    "updated_at": "2026-10-31T01:25:00.852Z"
+  }
+},
+{
+  "model": "core.do",
   "pk": "b10a0941-844c-40e5-9890-178b6451a691",
   "fields": {
     "trip": "4f604302-e0be-45cd-9b6f-d051be293e57",
@@ -8719,46 +8423,24 @@
 },
 {
   "model": "core.do",
-  "pk": "b8ea8566-9594-459c-89a3-79cab471bc3c",
+  "pk": "b6d2966c-4a4a-4011-8ab0-60a4cccedd2f",
   "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten exterior deck wind gear preparation",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "Bring windproof Gore-Tex outer shell, thermal base layers, and fleece balaclava for observation decks when crossing the Arctic Circle.",
-    "address": null,
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Flights & Iron",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "376 Camino de Estrella, San Clemente CA",
     "start_time": null,
     "end_time": null,
     "price": null,
     "currency": "USD",
-    "link": null,
+    "link": "https://www.flightsandirons.com/menus",
     "_encrypted_confirmation_code": null,
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:54.344Z",
-    "updated_at": "2026-10-31T20:31:54.344Z"
-  }
-},
-{
-  "model": "core.do",
-  "pk": "c01ea591-579e-4bf7-a251-0334b7114d8b",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Sommarøy Arctic White Sand Beach Walk",
-    "activity_type": "Sightseeing",
-    "status": "IDEA",
-    "description": "Walk across Caribbean-like turquoise waters and Arctic shell sand beaches in the far north.",
-    "address": "Sommarøy, 9110 Troms, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "0.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.231Z",
-    "updated_at": "2026-10-31T20:31:53.974Z"
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:24:07.223Z",
+    "updated_at": "2026-10-31T01:31:31.075Z"
   }
 },
 {
@@ -8891,6 +8573,28 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:28.068Z",
     "updated_at": "2026-10-31T20:31:58.926Z"
+  }
+},
+{
+  "model": "core.do",
+  "pk": "d0518580-9ab1-447f-a3d8-5c093aaab36d",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Wind & Sea",
+    "activity_type": "Dining",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "start_time": null,
+    "end_time": null,
+    "price": null,
+    "currency": "USD",
+    "link": "",
+    "_encrypted_confirmation_code": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:13.132Z",
+    "updated_at": "2026-10-31T01:23:13.132Z"
   }
 },
 {
@@ -9049,34 +8753,12 @@
 },
 {
   "model": "core.do",
-  "pk": "ee05f59a-bf8d-4e17-9e30-d212bbaa20f0",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Fisketorget Bergen Fish Market seafood chowder",
-    "activity_type": "Dining",
-    "status": "IDEA",
-    "description": "Historic open-air harbor fish market serving traditional creamy Bergen fish soup with fresh cod and shrimp.",
-    "address": "Strandkaien 3, 5012 Bergen, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": null,
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": null,
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:48.224Z",
-    "updated_at": "2026-10-31T20:31:48.224Z"
-  }
-},
-{
-  "model": "core.do",
   "pk": "ef5d4c0b-9e43-49f0-a228-79bfea280bbe",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
     "title": "Hella Coastal Town & Waterfall Exploration",
     "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Southern waterfall stops including Seljalandsfoss and Skógafoss with staircase climb to upper cataract.",
     "address": "Route 1 South Coast, Hella, Iceland",
     "start_time": "2026-10-18T11:00:00Z",
@@ -9086,9 +8768,9 @@
     "link": null,
     "_encrypted_confirmation_code": null,
     "created_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:18.777Z",
-    "updated_at": "2026-10-31T20:31:53.059Z"
+    "updated_at": "2026-11-01T21:39:26.844Z"
   }
 },
 {
@@ -9155,28 +8837,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:58.240Z",
     "updated_at": "2026-10-31T20:31:58.240Z"
-  }
-},
-{
-  "model": "core.do",
-  "pk": "f4fb2c31-4732-423a-8935-3ef9485aa438",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Aksla Viewpoint 418 Steps Climb in Ålesund",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "Climb 418 stone steps from the town park to panoramic viewpoint over Ålesund Art Nouveau peninsula and surrounding fjords.",
-    "address": "Fjellstua, Aksla, 6003 Ålesund, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "0.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.066Z",
-    "updated_at": "2026-10-31T20:31:53.673Z"
   }
 },
 {
@@ -9268,28 +8928,6 @@
   }
 },
 {
-  "model": "core.do",
-  "pk": "ffd51c7d-14dc-419d-961c-d7d4f5a98a81",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Geirangerfjord UNESCO Waterfall Cruise Excursion",
-    "activity_type": "Sightseeing",
-    "status": "CONFIRMED",
-    "description": "Spectacular tender excursion sailing right beneath the Seven Sisters and Suitor cascading waterfalls.",
-    "address": "Geirangerfjord, Møre og Romsdal, Norway",
-    "start_time": null,
-    "end_time": null,
-    "price": "115.00",
-    "currency": "USD",
-    "link": null,
-    "_encrypted_confirmation_code": null,
-    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.135Z",
-    "updated_at": "2026-10-31T20:31:53.853Z"
-  }
-},
-{
   "model": "core.rec",
   "pk": "006d4b0e-05a5-462c-bbc6-3d52486df62a",
   "fields": {
@@ -9305,6 +8943,24 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:48.904Z",
     "updated_at": "2026-10-31T20:31:48.904Z"
+  }
+},
+{
+  "model": "core.rec",
+  "pk": "00ea519e-1e83-4de8-b935-af1ae4d7ea6e",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Rosewood Social",
+    "category": "Food",
+    "status": "COMPLETE",
+    "description": "",
+    "address": "San Juan Capistrano",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:31.523Z",
+    "updated_at": "2026-10-31T04:59:54.550Z"
   }
 },
 {
@@ -9690,35 +9346,17 @@
   "pk": "4cb9bd54-120c-4afb-8f48-faf40c9dea88",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
-    "title": "Friðheimar Greenhouse Tomato Soup & Horse Farm",
+    "title": "Friðheimar Greenhouse",
     "category": "Food",
-    "status": "CONFIRMED",
-    "description": "Freshly baked bread buffet and unlimited tomato soup served directly inside a geothermal greenhouse.",
+    "status": "IDEA",
+    "description": "",
     "address": "Friðheimar, 801 Reykholt, Iceland",
     "link": null,
     "guest_name": null,
     "recommended_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:47.838Z",
-    "updated_at": "2026-10-31T20:31:47.838Z"
-  }
-},
-{
-  "model": "core.rec",
-  "pk": "4ceccb58-cf4f-47b1-892a-d3a5cb8e3145",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Tromsø Arctic Cathedral midnight organ concert",
-    "category": "Activity",
-    "status": "IDEA",
-    "description": "Special candlelit acoustics concert inside the striking triangular stained-glass modernist church.",
-    "address": "Hans Nilsens veg 41, 9020 Tromsdalen, Norway",
-    "link": null,
-    "guest_name": null,
-    "recommended_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.655Z",
-    "updated_at": "2026-10-31T20:31:20.655Z"
+    "updated_at": "2026-11-01T21:39:12.217Z"
   }
 },
 {
@@ -9741,24 +9379,6 @@
 },
 {
   "model": "core.rec",
-  "pk": "532b6ef8-f8c3-43ce-a31d-64de10e6f647",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Bryggen historic Hanseatic wooden wharf stroll",
-    "category": "Spot",
-    "status": "CONFIRMED",
-    "description": "UNESCO World Heritage site consisting of preserved timber trading quarters along the Vågen harbor.",
-    "address": "Bryggen, 5003 Bergen, Norway",
-    "link": null,
-    "guest_name": null,
-    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.382Z",
-    "updated_at": "2026-10-31T20:31:20.382Z"
-  }
-},
-{
-  "model": "core.rec",
   "pk": "5450342e-9ba9-41b7-bb20-6654209a3e92",
   "fields": {
     "trip": "8ecdcbc4-83e9-4fbe-93dc-8bbed6a429eb",
@@ -9773,6 +9393,24 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:21.486Z",
     "updated_at": "2026-10-31T20:31:48.534Z"
+  }
+},
+{
+  "model": "core.rec",
+  "pk": "54d15ade-69f7-4a1d-85b2-f1262627b707",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Finca",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "31888 Paseo Adelanto #120, San Juan Capistrano, CA 92675",
+    "link": "https://finca-sjc.com/dinner-menu/",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-30T18:04:47.898Z",
+    "updated_at": "2026-10-31T01:27:53.834Z"
   }
 },
 {
@@ -9885,20 +9523,56 @@
 },
 {
   "model": "core.rec",
+  "pk": "71fdb995-d152-4688-8afb-15fb7e8b0393",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Hook & Anchor",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:02.039Z",
+    "updated_at": "2026-10-31T01:23:02.039Z"
+  }
+},
+{
+  "model": "core.rec",
   "pk": "76e5b7f4-0734-4fca-8222-b42be28b8193",
   "fields": {
     "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
     "title": "Bæjarins Beztu Pylsur famous hot dog stand",
     "category": "Food",
-    "status": "CONFIRMED",
+    "status": "IDEA",
     "description": "Order \"eina með öllu\" (one with everything: ketchup, sweet mustard, fried onions, raw onions, remoulade).",
     "address": "Tryggvagata 1, 101 Reykjavik, Iceland",
     "link": "https://bbp.is",
     "guest_name": null,
     "recommended_by": "4ac53c49-a53d-4d14-89cc-98b53592aa3d",
-    "updated_by": null,
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "created_at": "2026-10-31T20:31:19.021Z",
-    "updated_at": "2026-10-31T20:31:48.008Z"
+    "updated_at": "2026-11-01T21:39:51.243Z"
+  }
+},
+{
+  "model": "core.rec",
+  "pk": "77dbb256-fd4c-4066-907b-a4fdc02d01ed",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Craft House",
+    "category": "Food",
+    "status": "COMPLETE",
+    "description": "",
+    "address": "Dana Point",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:48.458Z",
+    "updated_at": "2026-10-31T04:59:49.350Z"
   }
 },
 {
@@ -10029,6 +9703,24 @@
 },
 {
   "model": "core.rec",
+  "pk": "a73ed2a5-7bba-46ce-b341-173a3094d4b4",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Coastal Kitchen",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:22:29.935Z",
+    "updated_at": "2026-10-31T01:25:00.773Z"
+  }
+},
+{
+  "model": "core.rec",
   "pk": "b34d2bd1-09fc-4546-a761-0f8635ec52dc",
   "fields": {
     "trip": "07de19e4-47dc-4a97-b0b3-f4031841de59",
@@ -10065,20 +9757,20 @@
 },
 {
   "model": "core.rec",
-  "pk": "b8ea8566-9594-459c-89a3-79cab471bc3c",
+  "pk": "b6d2966c-4a4a-4011-8ab0-60a4cccedd2f",
   "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Hurtigruten exterior deck wind gear preparation",
-    "category": "Tip",
-    "status": "CONFIRMED",
-    "description": "Bring windproof Gore-Tex outer shell, thermal base layers, and fleece balaclava for observation decks when crossing the Arctic Circle.",
-    "address": null,
-    "link": null,
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Flights & Iron",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "376 Camino de Estrella, San Clemente CA",
+    "link": "https://www.flightsandirons.com/menus",
     "guest_name": null,
-    "recommended_by": "23e476f6-42b3-4d4c-a875-820aa0b8ef1b",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.469Z",
-    "updated_at": "2026-10-31T20:31:20.469Z"
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:24:07.140Z",
+    "updated_at": "2026-10-31T01:31:31.025Z"
   }
 },
 {
@@ -10097,6 +9789,24 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:27.254Z",
     "updated_at": "2026-10-31T20:31:51.805Z"
+  }
+},
+{
+  "model": "core.rec",
+  "pk": "d0518580-9ab1-447f-a3d8-5c093aaab36d",
+  "fields": {
+    "trip": "02989e8a-098a-46fa-8be7-213cbea8732a",
+    "title": "Wind & Sea",
+    "category": "Food",
+    "status": "IDEA",
+    "description": "",
+    "address": "Dana Point",
+    "link": "",
+    "guest_name": null,
+    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-10-31T01:23:13.085Z",
+    "updated_at": "2026-10-31T01:23:13.085Z"
   }
 },
 {
@@ -10133,24 +9843,6 @@
     "updated_by": null,
     "created_at": "2026-10-31T20:31:25.844Z",
     "updated_at": "2026-10-31T20:31:25.844Z"
-  }
-},
-{
-  "model": "core.rec",
-  "pk": "ee05f59a-bf8d-4e17-9e30-d212bbaa20f0",
-  "fields": {
-    "trip": "1ec1d123-832d-409b-851e-badf5f2d5930",
-    "title": "Fisketorget Bergen Fish Market seafood chowder",
-    "category": "Food",
-    "status": "IDEA",
-    "description": "Historic open-air harbor fish market serving traditional creamy Bergen fish soup with fresh cod and shrimp.",
-    "address": "Strandkaien 3, 5012 Bergen, Norway",
-    "link": null,
-    "guest_name": null,
-    "recommended_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
-    "updated_by": null,
-    "created_at": "2026-10-31T20:31:20.561Z",
-    "updated_at": "2026-10-31T20:31:48.174Z"
   }
 },
 {
@@ -10322,6 +10014,44 @@
     "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
     "record_hash": "0dede9642eccc9f259b5e4857ff75f92d5d101d7bc463e680f9adc662e19572b",
     "timestamp": "2026-10-30T17:33:41.047Z"
+  }
+},
+{
+  "model": "core.securityauditlog",
+  "pk": "369b1998-0eb3-47c9-88c6-f02196da9073",
+  "fields": {
+    "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
+    "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "action": "MEMBER_REMOVED",
+    "resource_type": "MEMBER",
+    "resource_id": "ea51d897-ce00-4f24-96f1-59b50a68f208",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "metadata": {
+      "removed_user_handle": "jordanl"
+    },
+    "previous_hash": "0dede9642eccc9f259b5e4857ff75f92d5d101d7bc463e680f9adc662e19572b",
+    "record_hash": "52207de0fcdfd25a0cb8687b721c6d0ae35057b3d4117bdf6cbb687ab1831656",
+    "timestamp": "2026-11-01T21:35:54.557Z"
+  }
+},
+{
+  "model": "core.securityauditlog",
+  "pk": "564f594a-6ea3-4dcd-a120-047b92425e3b",
+  "fields": {
+    "trip": "7e6a32ac-25a5-467f-9f72-52e907096e98",
+    "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "action": "MEMBER_REMOVED",
+    "resource_type": "MEMBER",
+    "resource_id": "2108f6eb-f98f-432d-93a2-5706d66b441b",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+    "metadata": {
+      "removed_user_handle": "samt"
+    },
+    "previous_hash": "52207de0fcdfd25a0cb8687b721c6d0ae35057b3d4117bdf6cbb687ab1831656",
+    "record_hash": "ec7418d78c33f88c78675973689593e55e1e40b46d9b80a3085e3e8d900a6352",
+    "timestamp": "2026-11-01T21:35:57.979Z"
   }
 }
 ]

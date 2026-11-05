@@ -1,96 +1,131 @@
-## TripSpace Metadata
-* **TripSpace Title**
-* **Location**
-* **Time Granularity**
-## Options should be drop down, with default as start and end date
-* **Dates**: 
-* **Status**:
-* **Owner (`created_by`)**: 
-* **Trippers (`trip_members`)**:
-* **Description**: 
+# Trip Item Attributes & Input Guidelines — Sonderring
 
+> **Document Status**: Canonical Reference  
+> **Nomenclature Conformance**: [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md)  
+> **Related Specifications**: [`docs/livingUserStoriesAndAcceptanceCriteria.md`](file:///Users/leilagleich/Desktop/sonderring/docs/livingUserStoriesAndAcceptanceCriteria.md) · [`docs/DATA_MODEL.md`](file:///Users/leilagleich/Desktop/sonderring/docs/DATA_MODEL.md) · [`docs/PAGE_OUTLINE.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PAGE_OUTLINE.md)
 
+---
 
-## ITEM INPUTS!
-## Every item should have a name*, status*, type, link, notes, then in the expand for more options, Confirmation code (or booking reference, as appropriate) and upload documents. That being said, different items will have different inputs for the initial inputs and expanded more options
+## 1. TripSpace Metadata
 
-## Move #####
-* Name*
-* Status*
-* Type
-# Options are: Planes, trains, car
-* Origin
-* Destination
-* Link
-* Notes
+- **TripSpace Title**: Required display name (e.g., *Iceland 26*, *Malticilia 26*).
+- **Location**: Destination city, region, or country.
+- **Time Granularity**: Dropdown selection (Default: `EXACT_RANGE`; options: `EXACT_RANGE`, `MONTH`, `SEASON`, `YEAR`, `APPROXIMATE`, `DAY_COUNT`, `IDEA`).
+- **Dates**: Start date and end date for exact ranges.
+- **Status**: Current readiness (`UPCOMING`, `CURRENT`, `PAST`).
+- **Owner (`created_by`)**: User profile of creator.
+- **Trippers (`trip_members`)**: List of participating members and roles (`OWNER`, `EDITOR`, `VIEWER`).
+- **Description**: Text overview of the trip.
 
-# Expand for "More Options"
-# For planes and trains there should be a departure date and time 
-* Departure Date
-* Company (if applicable)
-* Price
-## Float
-* Confirmation Code
-* Upload Documents
+---
 
+## 2. Universal Item Input Rules
 
+### 2.1. Status-First Question Flow
+When adding or editing any item across all four dimensions, the modal presents **Status Selection as Step 1**:
+- Prompts user to select: **Idea** (`IDEA`), **Confirmed** (`CONFIRMED`), or **Complete** (`COMPLETE`).
+- Transitions to Step 2 with the appropriate input form tailored to that status.
 
-## Stay #####
-* Name*
-* Status*
-* Type
-# For now, options are only: Hotel, Home, Apartment, Room, Bed
-* Location
-* Link
-* Notes
+### 2.2. Universal Base Inputs
+Every item across all dimensions displays these initial primary inputs:
+- **Name\*** (Required string)
+- **Status\*** (Preset by Step 1)
+- **Type** (Dimension-specific dropdown)
+- **Web Link** (Optional URL)
+- **Notes / Description** (Text area)
+- **Expandable "More Options" Toggle**: Contains secondary details, encrypted confirmation codes / booking references, and document uploads.
 
-# Expand for "More Options"
-* Stay Length
-## Integer input, and next to it options are Day(s), Week(s), Month(s)
-* Start Date
-* End Date
-* Price
-## Float
-* Confirmation Code
-* Upload Documents
+### 2.3. Selective Schema Token Formatting (Markdown Best Practice)
+To clearly distinguish controlled database enum choices and system identifiers from open-ended human prose:
+- **Controlled Database Enums**: Wrap in backticks with uppercase representation (e.g., `Status: `CONFIRMED``, `Status: `IDEA``, `Time Granularity: `EXACT_RANGE``, `Status: `PAST``).
+- **Alphanumeric Identifiers**: Wrap in backticks (e.g., `Flight: `DL 2661``, `Origin: `LAX``, `Destination: `AVL``, `Confirmation/Reference: `3208541836``).
+- **Human Prose / Non-Constrained Fields**: Plaintext (Names, Dates, Times, Locations, Prices, Notes, Descriptions).
 
+---
 
+## 3. Dimension-Specific Item Inputs
 
-## Taste #####
-* Name*
-* Status*
-* Type
-## For now, options are only: Food, Drink
-* Location
-* Link
-* Notes
+### 3.1. Move Dimension Items ✈️
 
-# Expand for "More Options"
-* ##If food##
-* Cuisine
-## For now, options are only: American, African, Asian, Contemporary, European, Fusion, Indian, Mediterranean, Mexican, South American
-* ##If Drink##
-* Category 
-## Options are Beer, Cocktails, Wine, Tea & Coffee, Juice and Smoothies, Other
+#### Primary Inputs (Step 2 Initial View):
+- **Name\*** (Title, required)
+- **Status\*** (Hidden input from Step 1)
+- **Type** (Dropdown: `Planes`, `Trains`, `Car`)
+- **Origin** (Text input)
+- **Destination** (Text input)
+- **Link** (Booking / check-in URL)
+- **Notes** (Text area)
 
-## for both types, under cuisine or category
-* Price - buttons ($, $$, $$$, $$$$)
-* Date (only required if confirmed, otherwise optional)
-* Booking Reference
-* Upload Documents
+#### Expand for "More Options":
+- **Departure Date** (Date input; mandatory if status is `CONFIRMED`)
+- **Departure Time** (Time input; prominently displayed for `Planes` and `Trains`)
+- **Company** (Carrier name, e.g., *Delta Airlines*, *Hertz*)
+- **Price** (Decimal / Float input)
+- **Confirmation/Reference** (Text input; encrypted with AES-256-GCM)
+- **Upload Documents** (File attachment: tickets, boarding passes)
 
+---
 
+### 3.2. Stay Dimension Items 🏨
 
-## Plays #####
-* Name*
-* Status*
-* Type
-## For now, options are only Outdoors, Tours, Events, Sightseeing, Other
-* Location
-* Link
-* Notes
+#### Primary Inputs (Step 2 Initial View):
+- **Name\*** (Title, required)
+- **Status\*** (Hidden input from Step 1)
+- **Type** (Dropdown: `Hotel`, `Home`, `Apartment`, `Room`, `Bed`)
+- **Location** (Address text input)
+- **Link** (Booking URL)
+- **Notes** (Text area for general house rules)
 
-# Expand for "More Options"
-* Price - buttons (Free, $, $$, $$$, $$$$)
-* Confirmation Code
-* Upload Documents
+#### Expand for "More Options":
+- **Stay Length** (Integer input, e.g., `3`) paired with Unit Selector (`Day(s)`, `Week(s)`, `Month(s)`)
+- **Start Date** (Check-in date; mandatory if status is `CONFIRMED`)
+- **End Date** (Check-out date; mandatory if status is `CONFIRMED`, must occur after Start Date)
+> *Note on Times*: Stays do not use Check-in Time or Check-out Time fields; property policies live in `Notes` if needed.
+- **Price** (Decimal / Float input)
+- **Confirmation/Reference** (Text input; encrypted with AES-256-GCM)
+- **Upload Documents** (Hotel vouchers, lease agreements)
+
+---
+
+### 3.3. Taste Dimension Items 🍽️
+
+#### Primary Inputs (Step 2 Initial View):
+- **Name\*** (Title, required)
+- **Status\*** (Hidden input from Step 1)
+- **Type** (Dropdown: `Food`, `Drink`)
+- **Location** (Address / venue text input)
+- **Link** (Menu or reservation URL)
+- **Notes** (Text area)
+
+#### Dynamic Categorization & Expand for "More Options":
+- **If Type is Food**:
+  - **Cuisine**: Dropdown (`American`, `African`, `Asian`, `Contemporary`, `European`, `Fusion`, `Indian`, `Mediterranean`, `Mexican`, `South American`)
+- **If Type is Drink**:
+  - **Category**: Dropdown (`Beer`, `Cocktails`, `Wine`, `Tea & Coffee`, `Juice and Smoothies`, `Other`)
+- **For Both Types**:
+  - **Price**: Button selector (`$`, `$$`, `$$$`, `$$$$`)
+  - **Date**: Date input (Mandatory if `CONFIRMED`, optional if `IDEA`)
+  - **Booking Reference**: Text input (Encrypted with AES-256-GCM)
+  - **Upload Documents** (Menu PDFs, booking receipts)
+
+> **Core Invariant**: Taste items **do not possess an end date or end time**.
+
+---
+
+### 3.4. Play Dimension Items 🎭
+
+#### Primary Inputs (Step 2 Initial View):
+- **Name\*** (Title, required)
+- **Status\*** (Hidden input from Step 1)
+- **Type** (Dropdown: `Outdoors`, `Tours`, `Events`, `Sightseeing`, `Other`)
+- **Location** (Address / venue text input)
+- **Link** (Guide or booking URL)
+- **Notes** (Text area)
+
+#### Expand for "More Options":
+- **Price**: Button selector (`Free`, `$`, `$$`, `$$$`, `$$$$`)
+- **Date**: Date input (Mandatory if `CONFIRMED`, optional if `IDEA`)
+- **Time**: Time input (Optional)
+- **Confirmation Code**: Text input (Encrypted with AES-256-GCM)
+- **Upload Documents** (Event tickets, tour itineraries)
+- **Tour Duration**: For Play items categorized as a **Tour**, users have the option to specify `length` / duration.
