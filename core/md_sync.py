@@ -1,7 +1,7 @@
 """
 Markdown File Synchronizer for Sonderring Trips.
 Ensures that any creation, edit, status toggle, or deletion in the live web app
-permanently synchronizes to the corresponding markdown file in /Trips/.
+permanently synchronizes to the corresponding markdown file in docs/seed-trips/.
 Organized into four canonical elements in exact order: Move, Stay, Taste, Play.
 """
 
@@ -11,26 +11,35 @@ from pathlib import Path
 from django.conf import settings
 
 TRIP_FILENAME_MAP = {
-    'Malticilia 26': 'Malticilia-26.md',
-    'Iceland Ring Road Expedition': 'Iceland-Ring-Road.md',
-    'Iceland': 'Iceland-Ring-Road.md',
+    'Malticilia 26': '26-09-Malticilia.md',
+    "Malticilia '26": '26-09-Malticilia.md',
+    'Iceland Ring Road Expedition': '26-10-Iceland.md',
+    'Iceland': '26-10-Iceland.md',
+    "Iceland '26": '26-10-Iceland.md',
+    "Joshua Tree Jan '22": '22-01-JT.md',
+    "Joshua Tree Oct '21": '21-10-JT.md',
+    'NYE 21-22': '21-12-NYE.md',
+    "NYE '21-'22": '21-12-NYE.md',
+    'New York City (NYE 21-22)': '21-12-NYE.md',
+    "The Flame July '21": '21-07-Flame.md',
+    'The Flame': '21-07-Flame.md',
+    "Utah/Vegas '21": '21-07-Flame.md',
+    "Asheville Dec '21": '21-12-Asheville.md',
+    'Hawaii': '26-08-Hawaii.md',
+    "Hawaii '26": '26-08-Hawaii.md',
+    'Halloween Staycation 26': '26-10-Halloween-Staycation.md',
+    "Halloween Staycation '26": '26-10-Halloween-Staycation.md',
+    # Legacy fallbacks
     'Norway Fjords Coastal Voyage': 'Norway-Fjords.md',
-    "Joshua Tree Jan '22": 'Joshua-Tree-Jan-22.md',
-    "Joshua Tree Oct '21": 'Joshua-Tree-Oct-21.md',
-    'NYE 21-22': 'New-York-City-NYE-21-22.md',
-    'New York City (NYE 21-22)': 'New-York-City-NYE-21-22.md',
     "California Sept. '21": 'California-Coast-Sept-21.md',
-    "Utah/Vegas '21": 'Utah-Las-Vegas-21.md',
     "Colorado '21": 'Colorado-Rockies-21.md',
-    "Asheville Dec '21": 'Asheville-Dec-21.md',
-    'Hawaii': 'Hawaii-Islands.md',
 }
 
 _is_syncing = False
 
 
 def get_trips_directory() -> Path:
-    trips_dir = settings.BASE_DIR.parent / 'Trips'
+    trips_dir = settings.BASE_DIR / 'docs' / 'seed-trips'
     trips_dir.mkdir(parents=True, exist_ok=True)
     return trips_dir
 
@@ -432,7 +441,7 @@ def sync_trip_to_markdown(trip):
 
 
 def update_readme_catalog():
-    """Refreshes the markdown table of contents in Trips/README.md based on current trips in the DB."""
+    """Refreshes the markdown table of contents in docs/seed-trips/README.md based on current trips in the DB."""
     from .models import Trip
     trips_dir = get_trips_directory()
     readme_path = trips_dir / 'README.md'
@@ -446,9 +455,9 @@ def update_readme_catalog():
     
     table_content = "\n".join(rows)
     
-    readme_text = f"""# Sonderring Canonical Trips Archive (`Trips/`)
+    readme_text = f"""# Sonderring Canonical Trips Archive (`docs/seed-trips/`)
 
-This directory contains local markdown representations of the canonical trips developed for **Sonderring**, mirroring the planning archives on Google Drive and matching the active database models in `Sonderringv0`.
+This directory contains local markdown representations of the canonical trips developed for **Sonderring**, completely self-contained within the Git repository and matching the active database models.
 
 ---
 
