@@ -14,7 +14,7 @@
 > • [`docs/TASKS.md`](file:///Users/leilagleich/Desktop/sonderring/docs/TASKS.md) (Engineering & Feature Tasks)  
 > • [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md) (Domain Nomenclature)  
 > • [`README.md`](file:///Users/leilagleich/Desktop/sonderring/README.md)  
-> • [`Trips/README.md`](file:///Users/leilagleich/Desktop/Trips/README.md)  
+> • [`docs/seed-trips/README.md`](file:///Users/leilagleich/Desktop/sonderring/docs/seed-trips/README.md) (Canonical Seed Trips Archive)  
 
 ---
 
@@ -287,8 +287,8 @@
 
 ### US-SYNC-01: Markdown File and Fixture Parity
 **As a** developer or offline traveler,  
-**I want** trip markdown files in `Trips/*.md` to mirror the database state in real-time,  
-**So that** changes in either the web interface or text files stay completely synchronized.
+**I want** trip markdown files in `docs/seed-trips/*.md` to mirror the database state in real-time and remain 100% self-contained within the Git repository,  
+**So that** changes in either the web interface or text files stay completely synchronized without any dependencies outside the repository.
 
 #### Acceptance Criteria
 - **AC-SYNC-01.1**: Every markdown file follows the strict section ordering:
@@ -298,6 +298,8 @@
   4. `## Taste` (`### Confirmed`, `### Potential`, `### Complete`)
   5. `## Play` (`### Confirmed`, `### Potential`, `### Complete`)
 - **AC-SYNC-01.2**: Database saves automatically emit markdown updates, and file updates trigger synchronization hooks.
+- **AC-SYNC-01.3**: Canonical seed trips are stored in `docs/seed-trips/*.md` adopting the uniform `yy-mm-[trip name].md` naming convention (e.g., `21-12-Asheville.md`, `26-08-Hawaii.md`).
+- **AC-SYNC-01.4**: Ingestion of canonical markdown files is executed via `python manage.py import_seed_trips`, parsing metadata, members, and all items into relational Django models with zero external filesystem dependencies.
 
 ### US-SYNC-02: User Data Preservation and Live Seed Synchronization
 **As a** user and travel planner,  

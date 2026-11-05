@@ -24,6 +24,7 @@ Urgency levels: **`Low`** | **`Medium`** | **`High`**
 | **TASK-003** | Support Check-in and Check-out Time Attributes for Stay Items | Stay | Low | `To Do` | `fundamental-documentation/stay-time-attributes-architecture.md`, `tripItemAttributesReference.md`, `PAGE_OUTLINE.md`, `MARKDOWN_SYNC_SPEC.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-01 |
 | **TASK-004** | Inline Dropdown for Item Creation Status Selection | UI / Item Creation | Medium | `To Do` | `PAGE_OUTLINE.md`, `tripItemAttributesReference.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-02 |
 | **TASK-005** | Clickable Status Pill & Removal of Arrow Buttons for Item Status Changes | UI / Item Cards | Medium | `To Do` | `PAGE_OUTLINE.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-02 |
+| **TASK-006** | Self-Contained Canonical Seed Trips Ingestion & Decoupling | Core / Data & Sync | High | `Complete` | `MARKDOWN_SYNC_SPEC.md`, `DATA_MODEL.md`, `AGENTS.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-05 |
 
 ---
 
@@ -143,3 +144,26 @@ Urgency levels: **`Low`** | **`Medium`** | **`High`**
   2. **Interactive Status Pill**: Make the status pill/badge (e.g., `Idea`, `Confirmed`) directly clickable with hover affordance (pointer cursor, subtle highlight).
   3. **Dropdown / Direct Toggle**: Clicking the status pill reveals a compact popover/dropdown allowing the traveler to switch statuses instantly (`Idea` $\leftrightarrow$ `Confirmed` $\leftrightarrow$ `Complete`).
   4. **Optimistic UI & API Update**: Trigger an asynchronous PATCH request to update item status and fluidly re-render or relocate the card across status sections without a full page refresh.
+
+### TASK-006: Self-Contained Canonical Seed Trips Ingestion & Decoupling
+* **ID**: `TASK-006`
+* **Area / Dimension**: `Core / Data & Sync`
+* **Status**: `Complete`
+* **Urgency**: `High`
+* **Date Added**: 2026-11-05
+* **Date Completed**: 2026-11-05
+* **Documents to Update Upon Completion**:
+  - [`docs/MARKDOWN_SYNC_SPEC.md`](MARKDOWN_SYNC_SPEC.md) (Self-contained `docs/seed-trips/` paths and `yy-mm-[trip name].md` naming)
+  - [`docs/DATA_MODEL.md`](DATA_MODEL.md) (Verification of canonical relational models)
+  - [`AGENTS.md`](../AGENTS.md) (Zero external folder dependency, authentic 9 seed trips)
+  - [`docs/livingUserStoriesAndAcceptanceCriteria.md`](livingUserStoriesAndAcceptanceCriteria.md) (US-SYNC-01 updated criteria)
+* **Context**:
+  Previously, markdown synchronization had an external coupling to `settings.BASE_DIR.parent / 'Trips'`, violating repo self-containment. Additionally, the initial synthetic database contained outdated/non-existent trips rather than the 9 verified canonical trips from sonderring.com.
+* **Objective**:
+  Completely decouple the codebase from any directory outside the Git repository, provide an idempotent markdown ingestion management command, and seed the database with the verified authentic 9 trips.
+* **Scope & Implementation Delivered**:
+  1. **Decoupled Sync**: Updated `core/md_sync.py` so `get_trips_directory()` targets `docs/seed-trips/` inside the repository with canonical `yy-mm-[trip name].md` naming.
+  2. **Management Importer**: Implemented `python manage.py import_seed_trips` with support for `--clear` and `--dir`, parsing metadata, trippers, and all items into relational models.
+  3. **Zero Fabrication**: Verified all 9 trips against ground truth with all Taste and Play items strictly normalized to `Status: IDEA`.
+  4. **Fixture & Baseline Parity**: Exported updated database state to `core/fixtures/seed_data.json` and unified `core/seed_initial.py`.
+  5. **Sync Protection**: Added `disable_markdown_sync` context manager and deterministic tripper ordering to protect seed documents from test corruption.
