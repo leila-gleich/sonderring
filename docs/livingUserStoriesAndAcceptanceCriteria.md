@@ -11,6 +11,7 @@
 > • [`docs/API_SPECIFICATION.md`](file:///Users/leilagleich/Desktop/sonderring/docs/API_SPECIFICATION.md) (REST API Contract)  
 > • [`docs/MARKDOWN_SYNC_SPEC.md`](file:///Users/leilagleich/Desktop/sonderring/docs/MARKDOWN_SYNC_SPEC.md) (Markdown Sync Spec)  
 > • [`docs/tripItemAttributesReference.md`](file:///Users/leilagleich/Desktop/sonderring/docs/tripItemAttributesReference.md)  
+> • [`docs/TASKS.md`](file:///Users/leilagleich/Desktop/sonderring/docs/TASKS.md) (Engineering & Feature Tasks)  
 > • [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md) (Domain Nomenclature)  
 > • [`README.md`](file:///Users/leilagleich/Desktop/sonderring/README.md)  
 > • [`Trips/README.md`](file:///Users/leilagleich/Desktop/Trips/README.md)  
@@ -22,6 +23,7 @@
 1. **Continuous Synchronization**: Whenever changes, additions, or deprecations are made to specifications, form guidelines, schema models, or reference documents (such as `docs/tripItemAttributesReference.md` or `AGENTS.md`), this document **must immediately be updated** to maintain parity.
 2. **Nomenclature Compliance**: All stories, acceptance criteria, and technical references must adhere strictly to the [TripSpace Nomenclature Architecture](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md#L1-L101) (TripSpace $\rightarrow$ Dimension $\rightarrow$ Item $\rightarrow$ Category, Input vs. Attribute, Readiness States: `IDEA`, `CONFIRMED`, `COMPLETE`).
 3. **Traceability**: Every story must link back to its originating specification requirement and verify both frontend (Item Input) and backend (Item Attribute) behavioral criteria.
+4. **Foundational Pillars Enforcement**: All user stories and criteria must enforce **Authenticity** (zero fabricated data), **Conciseness** (functional, fluff-free descriptions), **Standardization** (uniform fields across dimensions), and **Transparency** (explicit provenance and backlog tracking in [`docs/TASKS.md`](TASKS.md)).
 
 ---
 
@@ -133,7 +135,7 @@
   - Submit button indicates idea capture (e.g., "Save Transit Idea", "Save Stay Idea", "Save Taste Idea", "Save Activity Idea").
 - **AC-FLOW-02.2**: **`CONFIRMED` State**:
   - For **Move**, **Taste**, and **Play**: A single `date` is **mandatory**; time is optional. Required indicator (`*`) is displayed.
-  - For **Stay**: Both `check_in` (Start Date) and `check_out` (End Date) are **mandatory**; times are optional.
+  - For **Stay**: Both `check_in` (Start Date) and `check_out` (End Date) are **mandatory**; time attributes are omitted (policies live in `Notes`).
   - Submit button indicates confirmation (e.g., "Save Confirmed Stay", "Save Confirmed Transit").
 - **AC-FLOW-02.3**: **`COMPLETE` State**:
   - Archived past item; dates remain valid.
@@ -195,10 +197,10 @@
   - **Start Date** (`check_in`, date input; required if status is `CONFIRMED`).
   - **End Date** (`check_out`, date input; required if status is `CONFIRMED`).
   - **Price** (`total_price`, float/decimal input, e.g., `450.00`).
-  - **Confirmation Code** (`confirmation_code`, text input; encrypted at rest).
+  - **Confirmation/Reference** (`confirmation_code`, text input; encrypted at rest).
   - **Upload Documents** (`documents`, file input).
 - **AC-STAY-01.3**: Chronological validation ensures `check_out` cannot precede `check_in`.
-- **AC-STAY-01.4**: Check-in time (`check_in_time`) and check-out time (`check_out_time`) are optional.
+- **AC-STAY-01.4**: Check-in and check-out times are omitted from model attributes and UI forms; check-in/out policies live in `Notes` if needed.
 
 ---
 

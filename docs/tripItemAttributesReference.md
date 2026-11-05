@@ -35,6 +35,12 @@ Every item across all dimensions displays these initial primary inputs:
 - **Notes / Description** (Text area)
 - **Expandable "More Options" Toggle**: Contains secondary details, encrypted confirmation codes / booking references, and document uploads.
 
+### 2.3. Selective Schema Token Formatting (Markdown Best Practice)
+To clearly distinguish controlled database enum choices and system identifiers from open-ended human prose:
+- **Controlled Database Enums**: Wrap in backticks with uppercase representation (e.g., `Status: `CONFIRMED``, `Status: `IDEA``, `Time Granularity: `EXACT_RANGE``, `Status: `PAST``).
+- **Alphanumeric Identifiers**: Wrap in backticks (e.g., `Flight: `DL 2661``, `Origin: `LAX``, `Destination: `AVL``, `Confirmation/Reference: `3208541836``).
+- **Human Prose / Non-Constrained Fields**: Plaintext (Names, Dates, Times, Locations, Prices, Notes, Descriptions).
+
 ---
 
 ## 3. Dimension-Specific Item Inputs
@@ -55,7 +61,7 @@ Every item across all dimensions displays these initial primary inputs:
 - **Departure Time** (Time input; prominently displayed for `Planes` and `Trains`)
 - **Company** (Carrier name, e.g., *Delta Airlines*, *Hertz*)
 - **Price** (Decimal / Float input)
-- **Confirmation Code** (Text input; encrypted with AES-256-GCM)
+- **Confirmation/Reference** (Text input; encrypted with AES-256-GCM)
 - **Upload Documents** (File attachment: tickets, boarding passes)
 
 ---
@@ -74,8 +80,9 @@ Every item across all dimensions displays these initial primary inputs:
 - **Stay Length** (Integer input, e.g., `3`) paired with Unit Selector (`Day(s)`, `Week(s)`, `Month(s)`)
 - **Start Date** (Check-in date; mandatory if status is `CONFIRMED`)
 - **End Date** (Check-out date; mandatory if status is `CONFIRMED`, must occur after Start Date)
+> *Note on Times*: Stays do not use Check-in Time or Check-out Time fields; property policies live in `Notes` if needed.
 - **Price** (Decimal / Float input)
-- **Confirmation Code** (Text input; encrypted with AES-256-GCM)
+- **Confirmation/Reference** (Text input; encrypted with AES-256-GCM)
 - **Upload Documents** (Hotel vouchers, lease agreements)
 
 ---

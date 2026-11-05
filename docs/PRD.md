@@ -18,6 +18,13 @@ Travel planning is fragmented across chaotic spreadsheets, unstructured group ch
 
 Sonderring bridges early brainstorming with confirmed logistics while enforcing zero-knowledge security standards: high-value booking references and access credentials are encrypted at the application layer before reaching persistence.
 
+### 1.3. Foundational Product Pillars
+The design, implementation, and maintenance of Sonderring rest on four core priorities:
+1. **Authenticity**: Absolute fidelity to real-world travel facts. Zero tolerance for fabricated itinerary items, placeholder hallucinations, or assumed reservations. If information is unconfirmed or absent, it is left minimal or flagged openly.
+2. **Conciseness**: Maximum signal, minimum noise. Elimination of marketing hyperbole and descriptive filler in favor of short, functional notes (e.g., *"Mountain parkway with good views"*).
+3. **Standardization**: Strict, consistent domain naming and structure across dimensions (Move, Stay, Taste, Play), item statuses (`Status: Confirmed` vs. `Status: Idea`), universal fields (`Location`, `Confirmation/Reference`), and seed archives (`yy-mm-[trip name].md`).
+4. **Transparency**: Explicit traceability of data origins, clear boundaries between exploratory thoughts and booked commitments, and public tracking of architectural tasks in [`docs/TASKS.md`](TASKS.md).
+
 ---
 
 ## 2. Domain Terminology & System Boundaries
