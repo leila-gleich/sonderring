@@ -9,6 +9,7 @@
 * **Owner (`created_by`)**: `@leila` (Leila Gleich)
 * **Trippers (`trip_members`)**:
   * `@leila` — Owner
+  * `@tiffany` — Editor
 * **Description**: Go to Asheville
 
 ---
