@@ -8,10 +8,7 @@
 * **Status**: `PAST` (Past)
 * **Owner (`created_by`)**: `@leila` (Leila Gleich)
 * **Trippers (`trip_members`)**:
-  * `@lindsey` — Editor
-  * `@tiffany` — Editor
   * `@leila` — Owner
-  * `@tara` — Editor
 * **Description**: Go to Flame
 
 ---

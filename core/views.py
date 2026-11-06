@@ -205,9 +205,17 @@ def login_view(request):
         elif not password:
             messages.error(request, "Please enter your password.")
         else:
-            clean_handle = handle_or_email.replace('@', '')
+            clean_handle = handle_or_email.replace('@', '').strip()
+            handle_query = Q(handle__iexact=clean_handle) | Q(email__iexact=handle_or_email)
+            if clean_handle.lower() == 'jordan':
+                handle_query |= Q(handle__iexact='jordanl')
+            elif clean_handle.lower() == 'sam':
+                handle_query |= Q(handle__iexact='samt')
+            elif clean_handle.lower() == 'alex':
+                handle_query |= Q(handle__iexact='alexm')
+
             user = UserProfile.objects.filter(
-                Q(handle__iexact=clean_handle) | Q(email__iexact=handle_or_email),
+                handle_query,
                 is_active=True
             ).first()
 

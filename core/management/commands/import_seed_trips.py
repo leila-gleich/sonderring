@@ -18,39 +18,63 @@ MONTH_NAMES = {
     'october': 10, 'nov': 11, 'november': 11, 'dec': 12, 'december': 12
 }
 
-KNOWN_USERS = {
-    'leila': {'email': 'leila@sonderring.com', 'full_name': 'Leila Gleich', 'phone': '+1-310-555-0192'},
-    'tiffany': {'email': 'tiffany@sonderring.com', 'full_name': 'Tiffany', 'phone': '+1-513-555-0120'},
-    'liz': {'email': 'liz@sonderring.com', 'full_name': 'Liz', 'phone': '+1-619-555-0182'},
-    'catherine': {'email': 'catherine@sonderring.com', 'full_name': 'Catherine', 'phone': '+1-760-555-0143'},
-    'edo': {'email': 'edo@sonderring.com', 'full_name': 'Edo', 'phone': '+1-310-555-0158'},
-    'lindsey': {'email': 'lindsey@sonderring.com', 'full_name': 'Lindsey', 'phone': '+1-702-555-0191'},
-    'tara': {'email': 'tara@sonderring.com', 'full_name': 'Tara', 'phone': '+1-702-555-0177'},
-    'dad': {'email': 'dad@sonderring.com', 'full_name': 'Dad', 'phone': '+1-808-555-0134'},
-    'samt': {'email': 'sam@sonderring.com', 'full_name': 'Sam Taylor', 'phone': '+1-415-555-0144'},
-    'alexm': {'email': 'alex@sonderring.com', 'full_name': 'Alex Morgan', 'phone': '+1-212-555-0188'},
-    'jordanl': {'email': 'jordan@sonderring.com', 'full_name': 'Jordan Lee', 'phone': '+1-646-555-0163'},
+CANONICAL_USERS = {
+    'leila': {'email': 'leila@sonderring.com', 'full_name': 'Leila Gleich', 'phone': '+1-310-555-0192', 'handle': 'leila'},
+    'samt': {'email': 'sam@sonderring.com', 'full_name': 'Sam Taylor', 'phone': '+1-415-555-0144', 'handle': 'samt'},
+    'alexm': {'email': 'alex@sonderring.com', 'full_name': 'Alex Morgan', 'phone': '+1-212-555-0188', 'handle': 'alexm'},
+    'jordanl': {'email': 'jordan@sonderring.com', 'full_name': 'Jordan Lee', 'phone': '+1-646-555-0163', 'handle': 'jordanl'},
+}
+
+HANDLE_ALIAS_MAP = {
+    'leila': 'leila',
+    'sam': 'samt',
+    'samt': 'samt',
+    'alex': 'alexm',
+    'alexm': 'alexm',
+    'jordan': 'jordanl',
+    'jordanl': 'jordanl',
 }
 
 
-def get_or_create_user(handle: str, full_name: str = None) -> UserProfile:
-    handle = handle.lower().lstrip('@')
-    info = KNOWN_USERS.get(handle, {})
-    email = info.get('email', f"{handle}@sonderring.com")
-    name = full_name or info.get('full_name', handle.capitalize())
-    phone = info.get('phone', None)
-    user, created = UserProfile.objects.get_or_create(
-        email=email,
-        defaults={
-            'handle': handle,
-            'full_name': name,
-            'phone_number': phone,
-        }
-    )
-    if not user.has_usable_password():
-        user.set_password('Sonderring2026!')
+def ensure_canonical_users(stdout=None):
+    """
+    Enforces that only the 4 canonical travelers exist in the database:
+    Leila Gleich (@leila), Sam Taylor (@samt), Alex Morgan (@alexm), and Jordan Lee (@jordanl).
+    Deletes any unauthorized or rogue accounts (e.g. gleila91, sonderring).
+    """
+    def log(msg):
+        if stdout and hasattr(stdout, "write"):
+            stdout.write(str(msg) + "\n")
+
+    canonical_emails = {info['email'].lower() for info in CANONICAL_USERS.values()}
+    # Delete any users not in canonical list
+    rogue_users = UserProfile.objects.exclude(email__in=canonical_emails)
+    if rogue_users.exists():
+        for r_u in rogue_users:
+            log(f"Removing unauthorized user: @{r_u.handle} ({r_u.email})")
+            r_u.delete()
+
+    users = {}
+    for key, info in CANONICAL_USERS.items():
+        user, _ = UserProfile.objects.get_or_create(
+            email=info['email'],
+            defaults={
+                'handle': info['handle'],
+                'full_name': info['full_name'],
+                'phone_number': info['phone'],
+                'is_active': True,
+            }
+        )
+        if user.handle != info['handle'] or user.full_name != info['full_name']:
+            user.handle = info['handle']
+            user.full_name = info['full_name']
+        if not user.has_usable_password():
+            user.set_password('Sonderring2026!')
+        user.is_active = True
         user.save()
-    return user
+        users[info['handle']] = user
+
+    return users
 
 
 def clean_val(val: str) -> str:
@@ -177,9 +201,8 @@ def parse_trip_dates(dates_str):
 
 def parse_md_file(filepath: Path):
     with open(filepath, 'r', encoding='utf-8') as f:
-        text = f.read()
+        lines = f.readlines()
 
-    lines = text.splitlines()
     doc = {
         'title': '',
         'metadata': {},
@@ -193,35 +216,37 @@ def parse_md_file(filepath: Path):
     current_status = 'CONFIRMED'
     current_item = None
 
-    for line in lines:
+    for raw_line in lines:
+        line = raw_line.rstrip('\r\n')
         stripped = line.strip()
         if not stripped:
             continue
-        
+
         if stripped.startswith('# ') and not doc['title']:
             doc['title'] = stripped[2:].strip()
             continue
 
-        if stripped.lower().startswith('## trip metadata') or stripped.lower().startswith('## trip metadata'):
+        sec_lower = stripped.lower()
+        if sec_lower.startswith('## trip metadata'):
             current_section = 'metadata'
             current_item = None
             continue
-        elif stripped.lower().startswith('## move'):
+        elif sec_lower.startswith('## move'):
             current_section = 'move'
             current_status = 'CONFIRMED'
             current_item = None
             continue
-        elif stripped.lower().startswith('## stay'):
+        elif sec_lower.startswith('## stay'):
             current_section = 'stay'
             current_status = 'CONFIRMED'
             current_item = None
             continue
-        elif stripped.lower().startswith('## taste'):
+        elif sec_lower.startswith('## taste'):
             current_section = 'taste'
             current_status = 'IDEA'
             current_item = None
             continue
-        elif stripped.lower().startswith('## play'):
+        elif sec_lower.startswith('## play'):
             current_section = 'play'
             current_status = 'IDEA'
             current_item = None
@@ -246,56 +271,66 @@ def parse_md_file(filepath: Path):
                 continue
 
             # Subsection headers (### Confirmed / ### Potential / ### Complete)
-            if stripped.lower().startswith('### confirmed'):
+            if sec_lower.startswith('### confirmed'):
                 current_status = 'CONFIRMED'
                 current_item = None
                 continue
-            elif stripped.lower().startswith('### potential'):
+            elif sec_lower.startswith('### potential'):
                 current_status = 'IDEA'
                 current_item = None
                 continue
-            elif stripped.lower().startswith('### complete'):
+            elif sec_lower.startswith('### complete'):
                 current_status = 'COMPLETE'
                 current_item = None
                 continue
 
-            # Item header: * Name: Flight or * **Flight**
-            item_match = re.match(r'^\*\s+(?:Name:\s+|\*\*)([^*]+)(?:\*\*)?$', stripped)
-            if item_match and not stripped.startswith('  '):
-                name = item_match.group(1).strip()
-                current_item = {'name': name, 'Status': current_status}
+            is_sub_bullet = line.startswith('  ') or line.startswith('\t')
+
+            # Item header: unindented bullet
+            if not is_sub_bullet and stripped.startswith('*'):
+                m_bold = re.match(r'^\*\s+\*\*([^*]+)\*\*', stripped)
+                if m_bold:
+                    item_name = m_bold.group(1).strip()
+                else:
+                    item_name = re.sub(r'^\*\s+(?:Name:\s+)?', '', stripped).strip()
+
+                current_item = {'name': item_name, 'Status': current_status}
                 doc[current_section].append(current_item)
                 continue
-            
-            # Item property: * Key: Value or * **Key**: Value
-            prop_match = re.match(r'^\*\s+(?:\*\*)?([^*:]+)(?:\*\*)?:\s*(.*)$', stripped)
-            if prop_match and current_item is not None:
-                prop_key = prop_match.group(1).strip()
-                prop_val = clean_val(prop_match.group(2))
 
-                # Normalize synonymous field names
-                if prop_key in ('Origin Address', 'Origin'):
-                    current_item['Origin'] = prop_val
-                elif prop_key in ('Destination Address', 'Destination'):
-                    current_item['Destination'] = prop_val
-                elif prop_key in ('Address / Venue', 'Address', 'Location', 'Venue'):
-                    current_item['Location'] = prop_val
-                elif prop_key in ('Confirmation Code', 'Confirmation/Reference', 'Booking Reference'):
-                    code_clean = re.sub(r'\(.*?\)', '', prop_val).strip(' `')
-                    current_item['Confirmation/Reference'] = code_clean
-                elif prop_key in ('Price Range', 'Price Tier'):
-                    current_item['Price'] = prop_val
-                elif prop_key == 'Dates' and current_section == 'stay':
-                    parts = re.split(r'[-–—]', prop_val)
-                    if len(parts) == 2:
-                        current_item['Start Date'] = parts[0].strip()
-                        current_item['End Date'] = parts[1].strip()
-                elif prop_key == 'Departure' and current_section == 'move':
-                    current_item['Departure'] = prop_val
-                elif prop_key == 'Schedule' and current_section in ('taste', 'play'):
-                    current_item['Schedule'] = prop_val
-                else:
-                    current_item[prop_key] = prop_val
+            # Item property: indented bullet
+            if is_sub_bullet and current_item is not None:
+                prop_match = re.match(r'^\*\s+(?:\*\*)?([^*:]+)(?:\*\*)?:\s*(.*)$', stripped)
+                if prop_match:
+                    prop_key = prop_match.group(1).strip()
+                    prop_val = clean_val(prop_match.group(2))
+
+                    # Normalize synonymous property keys
+                    if prop_key in ('Origin Address', 'Origin'):
+                        current_item['Origin'] = prop_val
+                    elif prop_key in ('Destination Address', 'Destination'):
+                        current_item['Destination'] = prop_val
+                    elif prop_key in ('Address / Venue', 'Address', 'Location', 'Venue'):
+                        current_item['Location'] = prop_val
+                    elif prop_key in ('Confirmation Code', 'Confirmation/Reference', 'Booking Reference'):
+                        code_clean = re.sub(r'\(.*?\)', '', prop_val).strip(' `')
+                        current_item['Confirmation/Reference'] = code_clean
+                    elif prop_key in ('Price Range', 'Price Tier'):
+                        current_item['Price'] = prop_val
+                    elif prop_key == 'Dates' and current_section == 'stay':
+                        parts = re.split(r'[-–—]', prop_val)
+                        if len(parts) >= 2:
+                            current_item['Start Date'] = parts[0].strip()
+                            current_item['End Date'] = parts[1].strip()
+                        current_item['Dates'] = prop_val
+                    elif prop_key == 'Departure' and current_section == 'move':
+                        current_item['Departure'] = prop_val
+                    elif prop_key == 'Arrival' and current_section == 'move':
+                        current_item['Arrival'] = prop_val
+                    elif prop_key == 'Schedule' and current_section in ('taste', 'play'):
+                        current_item['Schedule'] = prop_val
+                    else:
+                        current_item[prop_key] = prop_val
 
     return doc
 
@@ -328,6 +363,10 @@ class Command(BaseCommand):
                 self.stderr.write(self.style.ERROR(f"Directory {trips_dir} does not exist."))
                 return
 
+            # Ensure only the 4 canonical users exist
+            users = ensure_canonical_users(stdout=self.stdout)
+            leila_user = users['leila']
+
             if options.get('clear'):
                 self.stdout.write("Clearing existing trips from database...")
                 Trip.objects.all().delete()
@@ -335,7 +374,7 @@ class Command(BaseCommand):
             imported_trips = []
 
             for md_file in sorted(trips_dir.glob('*.md')):
-                if md_file.name == 'README.md':
+                if md_file.name in ('README.md', 'Staycation-26.md'):
                     continue
 
                 self.stdout.write(f"Parsing {md_file.name}...")
@@ -351,16 +390,7 @@ class Command(BaseCommand):
                 dates_str = meta.get('Dates', '')
                 s_date, e_date, yr, s_m, e_m = parse_trip_dates(dates_str)
 
-                owner_raw = meta.get('Owner', '@leila')
-                owner_handle = 'leila'
-                owner_name = 'Leila Gleich'
-                m_owner = re.match(r'`?@([a-zA-Z0-9_]+)`?(?:\s*\((.*)\))?', owner_raw)
-                if m_owner:
-                    owner_handle = m_owner.group(1)
-                    if m_owner.group(2):
-                        owner_name = m_owner.group(2)
-                owner = get_or_create_user(owner_handle, owner_name)
-
+                # All seed trips are strictly associated with user @leila as creator/owner
                 trip, created = Trip.objects.get_or_create(
                     title=title,
                     defaults={
@@ -373,7 +403,7 @@ class Command(BaseCommand):
                         'year': yr,
                         'start_month': s_m,
                         'end_month': e_m,
-                        'created_by': owner,
+                        'created_by': leila_user,
                     }
                 )
                 if not created:
@@ -386,73 +416,101 @@ class Command(BaseCommand):
                     trip.year = yr
                     trip.start_month = s_m
                     trip.end_month = e_m
-                    trip.created_by = owner
+                    trip.created_by = leila_user
                     trip.save()
 
-                # Trip Members
-                TripMember.objects.get_or_create(trip=trip, user=owner, defaults={'role': 'OWNER'})
+                # Trip Members: @leila is always OWNER
+                TripMember.objects.get_or_create(trip=trip, user=leila_user, defaults={'role': 'OWNER'})
+
+                # Add other canonical trippers (sam, alex, jordan) if mentioned
                 for t_line in meta.get('trippers', []):
                     m_trip = re.match(r'`?@([a-zA-Z0-9_]+)`?\s*—\s*(.*)', t_line)
                     if m_trip:
-                        m_handle = m_trip.group(1)
-                        m_role_str = m_trip.group(2).strip().upper()
-                        m_user = get_or_create_user(m_handle)
-                        role = 'EDITOR'
-                        if 'OWNER' in m_role_str:
-                            role = 'OWNER'
-                        elif 'VIEWER' in m_role_str:
-                            role = 'VIEWER'
-                        TripMember.objects.get_or_create(trip=trip, user=m_user, defaults={'role': role})
+                        raw_handle = m_trip.group(1).lower()
+                        role_str = m_trip.group(2).strip().upper()
+                        canonical_handle = HANDLE_ALIAS_MAP.get(raw_handle)
+                        if canonical_handle and canonical_handle in users and canonical_handle != 'leila':
+                            role = 'VIEWER' if 'VIEWER' in role_str else 'EDITOR'
+                            TripMember.objects.get_or_create(
+                                trip=trip,
+                                user=users[canonical_handle],
+                                defaults={'role': role}
+                            )
 
-                # Clear existing items for this trip
+                # Clear existing items for this trip before repopulating
                 trip.moves.all().delete()
                 trip.stays.all().delete()
                 trip.tastes.all().delete()
                 trip.plays.all().delete()
 
-                # 1. Moves
+                # ----------------------------------------------------
+                # 1. MOVES
+                # ----------------------------------------------------
                 for m_item in doc['move']:
                     m_title = m_item.get('name', 'Move Item')
                     m_status = normalize_status(m_item.get('Status', 'CONFIRMED'), default='CONFIRMED')
-                    m_date_str = m_item.get('Date') or m_item.get('Departure', '')
-                    d = parse_date(m_date_str)
-                    t_dept = parse_time(m_item.get('Departure Time') or m_item.get('Departure', ''))
-                    t_arr = parse_time(m_item.get('Arrival Time') or m_item.get('Arrival', ''))
+
+                    # Mode mapping
+                    raw_mode = clean_val(m_item.get('Mode', ''))
+                    if raw_mode in dict(Move.MODE_CHOICES):
+                        mode = raw_mode
+                    elif 'car' in raw_mode.lower() or 'rental' in raw_mode.lower():
+                        mode = 'Car'
+                    elif 'train' in raw_mode.lower() or 'rail' in raw_mode.lower():
+                        mode = 'Trains'
+                    elif 'ferry' in raw_mode.lower() or 'boat' in raw_mode.lower():
+                        mode = 'Ferry'
+                    elif 'bus' in raw_mode.lower():
+                        mode = 'Bus'
+                    else:
+                        text_corpus = f"{m_title} {m_item.get('Notes', '')}".lower()
+                        if any(k in text_corpus for k in ['car', 'rental', 'drive', 'hertz']):
+                            mode = 'Car'
+                        elif any(k in text_corpus for k in ['train', 'rail', 'trenitalia']):
+                            mode = 'Trains'
+                        elif any(k in text_corpus for k in ['ferry', 'boat']):
+                            mode = 'Ferry'
+                        else:
+                            mode = 'Planes'
+
+                    # Trip Stage & Direction
+                    stage_raw = clean_val(m_item.get('Trip Stage', 'START_END')).upper()
+                    trip_stage = 'MID_TRIP' if 'MID' in stage_raw else 'START_END'
+
+                    dir_raw = clean_val(m_item.get('Direction', 'ARRIVING')).upper()
+                    direction = 'LEAVING' if ('LEAVING' in dir_raw or 'DEPARTING' in dir_raw) else 'ARRIVING'
+
+                    # Departure & Arrival datetimes
+                    m_dept_str = m_item.get('Departure') or m_item.get('Date', '')
+                    d_dept = parse_date(m_dept_str)
+                    t_dept = parse_time(m_dept_str)
 
                     dept_dt = None
                     has_dept = False
-                    if d and t_dept:
-                        dept_dt = timezone.make_aware(datetime.combine(d, t_dept))
+                    if d_dept and t_dept:
+                        dept_dt = timezone.make_aware(datetime.combine(d_dept, t_dept))
                         has_dept = True
-                    elif d:
-                        dept_dt = timezone.make_aware(datetime.combine(d, time(0, 0)))
+                    elif d_dept:
+                        dept_dt = timezone.make_aware(datetime.combine(d_dept, time(0, 0)))
                         has_dept = False
+
+                    m_arr_str = m_item.get('Arrival', '')
+                    d_arr = parse_date(m_arr_str)
+                    t_arr = parse_time(m_arr_str)
 
                     arr_dt = None
                     has_arr = False
-                    if d and t_arr:
-                        arr_dt = timezone.make_aware(datetime.combine(d, t_arr))
+                    if d_arr and t_arr:
+                        arr_dt = timezone.make_aware(datetime.combine(d_arr, t_arr))
                         has_arr = True
-                    elif d:
-                        arr_dt = timezone.make_aware(datetime.combine(d, time(0, 0)))
+                    elif d_arr:
+                        arr_dt = timezone.make_aware(datetime.combine(d_arr, time(0, 0)))
                         has_arr = False
 
-                    text_corpus = f"{m_title} {m_item.get('Notes', '')} {m_item.get('Flight', '')}".lower()
-                    if any(k in text_corpus for k in ['flight', 'dl ', 'km ', 'ua ', 'as ', 'airline', 'lax', 'avl', 'san', 'dtw', 'koa', 'lih', 'las', 'cvg', 'kef', 'mla', 'cta']):
-                        mode = 'Planes'
-                    elif any(k in text_corpus for k in ['train', 'rail', 'trenitalia']):
-                        mode = 'Trains'
-                    elif any(k in text_corpus for k in ['ferry', 'boat']):
-                        mode = 'Ferry'
-                    elif any(k in text_corpus for k in ['car', 'drive', 'rental', 'hertz', 'road trip']):
-                        mode = 'Car'
-                    else:
-                        mode = 'Planes'
-
-                    company = m_item.get('Flight') or ''
+                    company = m_item.get('Company') or m_item.get('Flight', '')
                     if not company:
                         for comp in ['Delta', 'Alaska Airlines', 'KM Malta', 'United', 'Hertz', 'Trenitalia']:
-                            if comp.lower() in text_corpus:
+                            if comp.lower() in f"{m_title} {m_item.get('Notes', '')}".lower():
                                 company = comp
                                 break
 
@@ -462,6 +520,8 @@ class Command(BaseCommand):
                         status=m_status,
                         mode=mode,
                         company=company,
+                        trip_stage=trip_stage,
+                        direction=direction,
                         origin_address=m_item.get('Origin', ''),
                         destination_address=m_item.get('Destination', ''),
                         departure_time=dept_dt,
@@ -470,34 +530,47 @@ class Command(BaseCommand):
                         has_arrival_time=has_arr,
                         flexibility_notes=m_item.get('Notes', ''),
                         description=m_item.get('Description', ''),
-                        created_by=owner
+                        created_by=leila_user
                     )
                     code = m_item.get('Confirmation/Reference') or m_item.get('Confirmation Code')
                     if code:
                         move.confirmation_code = code
                     move.save()
 
-                # 2. Stays
+                # ----------------------------------------------------
+                # 2. STAYS
+                # ----------------------------------------------------
                 for s_item in doc['stay']:
                     s_title = s_item.get('name', 'Stay Item')
                     s_status = normalize_status(s_item.get('Status', 'CONFIRMED'), default='CONFIRMED')
-                    s_d_str = s_item.get('Start Date', '')
-                    e_d_str = s_item.get('End Date', '')
-                    s_d = parse_date(s_d_str)
-                    e_d = parse_date(e_d_str)
 
-                    check_in = timezone.make_aware(datetime.combine(s_d, time(15, 0))) if s_d else None
-                    check_out = timezone.make_aware(datetime.combine(e_d, time(11, 0))) if e_d else None
-
-                    s_text = f"{s_title} {s_item.get('Notes', '')}".lower()
-                    if any(k in s_text for k in ['hotel', 'resort', 'inn', 'suites', 'lodge']):
-                        place_type = 'Hotel'
-                    elif any(k in s_text for k in ['house', 'retreat', 'home', 'oasis', 'airbnb', 'cabin']):
+                    # Place Type
+                    raw_place = clean_val(s_item.get('Place Type', 'Hotel'))
+                    if raw_place in dict(Stay.PLACE_TYPE_CHOICES):
+                        place_type = raw_place
+                    elif any(k in f"{s_title} {raw_place}".lower() for k in ['home', 'house', 'retreat', 'cabin', 'oasis', 'airbnb']):
                         place_type = 'Home'
-                    elif 'apartment' in s_text:
+                    elif 'apartment' in f"{s_title} {raw_place}".lower():
                         place_type = 'Apartment'
                     else:
                         place_type = 'Hotel'
+
+                    # Check-in and check-out parsing
+                    dates_val = s_item.get('Dates', '')
+                    parts = re.split(r'[-–—]', dates_val) if dates_val else []
+                    s_str = parts[0].strip() if len(parts) >= 1 else s_item.get('Start Date', '')
+                    e_str = parts[1].strip() if len(parts) >= 2 else s_item.get('End Date', '')
+
+                    s_d = parse_date(s_str)
+                    e_d = parse_date(e_str)
+                    s_t = parse_time(s_str)
+                    e_t = parse_time(e_str)
+
+                    has_ci = s_t is not None
+                    has_co = e_t is not None
+
+                    check_in = timezone.make_aware(datetime.combine(s_d, s_t or time(15, 0))) if s_d else None
+                    check_out = timezone.make_aware(datetime.combine(e_d, e_t or time(11, 0))) if e_d else None
 
                     stay = Stay(
                         trip=trip,
@@ -507,29 +580,47 @@ class Command(BaseCommand):
                         address=s_item.get('Location', ''),
                         check_in=check_in,
                         check_out=check_out,
-                        has_check_in_time=False,
-                        has_check_out_time=False,
+                        has_check_in_time=has_ci,
+                        has_check_out_time=has_co,
                         notes=s_item.get('Notes', ''),
                         description=s_item.get('Description', ''),
-                        created_by=owner
+                        created_by=leila_user
                     )
                     code = s_item.get('Confirmation/Reference') or s_item.get('Confirmation Code')
                     if code:
                         stay.confirmation_code = code
+
+                    # Price extraction
                     p_val = s_item.get('Price')
-                    if p_val and re.match(r'^\$?\d+(\.\d+)?$', p_val):
-                        stay.total_price = Decimal(p_val.lstrip('$'))
+                    if p_val:
+                        m_price = re.search(r'\$(\d+(?:\.\d{2})?)', p_val)
+                        if m_price:
+                            stay.total_price = Decimal(m_price.group(1))
+                    elif s_item.get('Notes'):
+                        m_price_note = re.search(r'Total:\s*\$(\d+(?:\.\d{2})?)', s_item['Notes'])
+                        if m_price_note:
+                            stay.total_price = Decimal(m_price_note.group(1))
+
                     stay.save()
 
-                # 3. Tastes (strictly IDEA per canonical directive)
+                # ----------------------------------------------------
+                # 3. TASTES
+                # ----------------------------------------------------
                 for t_item in doc['taste']:
                     t_title = t_item.get('name', 'Taste Item')
-                    t_status = 'IDEA'
-                    t_text = f"{t_title} {t_item.get('Description', '')} {t_item.get('Notes', '')}".lower()
-                    if any(k in t_text for k in ['bar', 'beer', 'brewery', 'cocktail', 'wine', 'cafe', 'coffee']):
+                    t_status = normalize_status(t_item.get('Status', 'IDEA'), default='IDEA')
+
+                    raw_taste_type = clean_val(t_item.get('Taste Type', 'Food'))
+                    if raw_taste_type in dict(Taste.TASTE_TYPE_CHOICES):
+                        taste_type = raw_taste_type
+                    elif any(k in f"{t_title} {t_item.get('Description', '')}".lower() for k in ['bar', 'beer', 'brewery', 'cocktail', 'wine', 'cafe', 'coffee', 'drink']):
                         taste_type = 'Drink'
                     else:
                         taste_type = 'Food'
+
+                    price_r = t_item.get('Price', '$$')
+                    if price_r not in ['$', '$$', '$$$', '$$$$']:
+                        price_r = '$$'
 
                     taste = Taste(
                         trip=trip,
@@ -537,31 +628,36 @@ class Command(BaseCommand):
                         status=t_status,
                         taste_type=taste_type,
                         address=t_item.get('Location', ''),
-                        price_range=t_item.get('Price', '$$'),
+                        price_range=price_r,
                         description=t_item.get('Description', ''),
                         notes=t_item.get('Notes', ''),
-                        created_by=owner
+                        created_by=leila_user
                     )
                     code = t_item.get('Confirmation/Reference') or t_item.get('Confirmation Code')
                     if code:
                         taste.confirmation_code = code
                     taste.save()
 
-                # 4. Plays (strictly IDEA per canonical directive)
+                # ----------------------------------------------------
+                # 4. PLAYS
+                # ----------------------------------------------------
                 for p_item in doc['play']:
                     p_title = p_item.get('name', 'Play Item')
-                    p_status = 'IDEA'
-                    p_text = f"{p_title} {p_item.get('Description', '')} {p_item.get('Notes', '')}".lower()
-                    if any(k in p_text for k in ['tour', 'walk', 'excursion']):
-                        play_type = 'Tours'
-                    elif any(k in p_text for k in ['hike', 'parkway', 'forest', 'canyon', 'beach', 'sunset', 'water', 'boat', 'blue lagoon', 'fontana', 'geothermal']):
-                        play_type = 'Outdoors'
-                    elif any(k in p_text for k in ['concert', 'show', 'flamingosis', 'festival', 'omfg', 'desert hearts', 'party', 'nightlife', 'spin']):
-                        play_type = 'Events'
-                    elif any(k in p_text for k in ['museum', 'exhibit', 'art', 'statue', 'palace', 'catacombs', 'hypogeum', 'bureaucrat']):
-                        play_type = 'Sightseeing'
+                    p_status = normalize_status(p_item.get('Status', 'IDEA'), default='IDEA')
+
+                    raw_play_type = clean_val(p_item.get('Play Type', 'Sightseeing'))
+                    if raw_play_type in dict(Play.PLAY_TYPE_CHOICES):
+                        play_type = raw_play_type
                     else:
-                        play_type = 'Sightseeing'
+                        corpus = f"{p_title} {p_item.get('Description', '')} {p_item.get('Notes', '')}".lower()
+                        if any(k in corpus for k in ['tour', 'walk', 'excursion']):
+                            play_type = 'Tours'
+                        elif any(k in corpus for k in ['hike', 'canyon', 'beach', 'sunset', 'water', 'boat', 'blue lagoon', 'outdoors']):
+                            play_type = 'Outdoors'
+                        elif any(k in corpus for k in ['concert', 'show', 'festival', 'party', 'nightlife', 'event']):
+                            play_type = 'Events'
+                        else:
+                            play_type = 'Sightseeing'
 
                     p_date = parse_date(p_item.get('Date') or p_item.get('Schedule', ''))
                     time_range = p_item.get('Time') or p_item.get('Schedule', '')
@@ -602,7 +698,7 @@ class Command(BaseCommand):
                         has_end_time=has_end,
                         description=p_item.get('Description', ''),
                         notes=p_item.get('Notes', ''),
-                        created_by=owner
+                        created_by=leila_user
                     )
                     code = p_item.get('Confirmation/Reference') or p_item.get('Confirmation Code')
                     if code:
@@ -617,5 +713,5 @@ class Command(BaseCommand):
                 ))
 
             self.stdout.write(self.style.SUCCESS(
-                f"\nSuccessfully imported all {len(imported_trips)} canonical seed trips into the database!"
+                f"\nSuccessfully imported all {len(imported_trips)} canonical seed trips associated with @leila!"
             ))

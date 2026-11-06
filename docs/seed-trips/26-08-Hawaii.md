@@ -9,7 +9,6 @@
 * **Owner (`created_by`)**: `@leila` (Leila Gleich)
 * **Trippers (`trip_members`)**:
   * `@leila` — Owner
-  * `@dad` — Editor
 * **Description**: Go to Hawaii
 
 ---

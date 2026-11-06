@@ -8,9 +8,9 @@
 * **Status**: `PAST` (Past)
 * **Owner (`created_by`)**: `@leila` (Leila Gleich)
 * **Trippers (`trip_members`)**:
-  * `@samt` — Editor
   * `@leila` — Owner
   * `@alexm` — Editor
+  * `@samt` — Editor
 * **Description**: Go to Malticilia
 
 ---

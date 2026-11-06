@@ -8,7 +8,6 @@
 * **Status**: `PAST` (Past)
 * **Owner (`created_by`)**: `@leila` (Leila Gleich)
 * **Trippers (`trip_members`)**:
-  * `@tiffany` — Editor
   * `@leila` — Owner
 * **Description**: Go to Asheville
 

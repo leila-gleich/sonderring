@@ -8,9 +8,9 @@
 * **Status**: `PAST` (Past)
 * **Owner (`created_by`)**: `@leila` (Leila Gleich)
 * **Trippers (`trip_members`)**:
+  * `@leila` — Owner
   * `@jordanl` — Editor
   * `@samt` — Viewer
-  * `@leila` — Owner
 * **Description**: Go to Iceland
 
 ---
