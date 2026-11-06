@@ -2,7 +2,7 @@ import uuid
 import calendar
 import hashlib
 import secrets
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Case, When, Value, IntegerField, F
 from django.db.models.functions import ExtractYear, ExtractMonth, ExtractDay
 from django.utils import timezone

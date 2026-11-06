@@ -7,6 +7,8 @@
 This area is to quickly add short tasks
 * Home shouldn't be the same page as all tripspaces
 * change UX for status and form flow
+* for the chronological itinerary, only include confirmed
+
 ---
 
 ## 📌 Task Status Reference
