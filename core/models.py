@@ -199,6 +199,25 @@ class Trip(models.Model):
             models.Index(fields=['status'], name='idx_trip_status'),
             models.Index(fields=['rec_token'], name='idx_trip_rec_token'),
         ]
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    (models.Q(time_granularity='SEASON_YEAR') & models.Q(season__isnull=False)) |
+                    (models.Q(time_granularity='EXACT_RANGE') & models.Q(start_date__isnull=False) & models.Q(end_date__isnull=False) & models.Q(start_date__lte=models.F('end_date'))) |
+                    (models.Q(time_granularity='MONTH') & models.Q(start_month__isnull=False) & (models.Q(end_month__isnull=True) | models.Q(start_month__lte=models.F('end_month')))) |
+                    models.Q(time_granularity='YEAR')
+                ),
+                name='chk_trip_time_granularity'
+            ),
+            models.CheckConstraint(
+                check=models.Q(start_month__isnull=True) | models.Q(start_month__gte=1, start_month__lte=12),
+                name='chk_trip_start_month'
+            ),
+            models.CheckConstraint(
+                check=models.Q(end_month__isnull=True) | models.Q(end_month__gte=1, end_month__lte=12),
+                name='chk_trip_end_month'
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.rec_token:
@@ -436,6 +455,16 @@ class Stay(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'check_in'], name='idx_stay_trip_status_checkin'),
         ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(check_out__isnull=True) | models.Q(check_in__isnull=True) | models.Q(check_out__gte=models.F('check_in')),
+                name='chk_stay_dates'
+            ),
+            models.CheckConstraint(
+                check=models.Q(total_price__isnull=True) | models.Q(total_price__gte=0),
+                name='chk_stay_price'
+            ),
+        ]
 
     @property
     def location(self):
@@ -577,6 +606,16 @@ class Move(models.Model):
         verbose_name_plural = 'Moves'
         indexes = [
             models.Index(fields=['trip', 'status', 'departure_time'], name='idx_move_trip_status_dept'),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(arrival_time__isnull=True) | models.Q(departure_time__isnull=True) | models.Q(arrival_time__gte=models.F('departure_time')),
+                name='chk_move_times'
+            ),
+            models.CheckConstraint(
+                check=models.Q(price__isnull=True) | models.Q(price__gte=0),
+                name='chk_move_price'
+            ),
         ]
 
     @property
@@ -759,6 +798,16 @@ class Taste(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'start_time'], name='idx_taste_trip_status_start'),
         ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(end_time__isnull=True) | models.Q(start_time__isnull=True) | models.Q(end_time__gte=models.F('start_time')),
+                name='chk_taste_times'
+            ),
+            models.CheckConstraint(
+                check=models.Q(price__isnull=True) | models.Q(price__gte=0),
+                name='chk_taste_price'
+            ),
+        ]
 
     @property
     def location(self):
@@ -907,6 +956,16 @@ class Play(models.Model):
         indexes = [
             models.Index(fields=['trip', 'status', 'start_time'], name='idx_play_trip_status_start'),
         ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(end_time__isnull=True) | models.Q(start_time__isnull=True) | models.Q(end_time__gte=models.F('start_time')),
+                name='chk_play_times'
+            ),
+            models.CheckConstraint(
+                check=models.Q(price__isnull=True) | models.Q(price__gte=0),
+                name='chk_play_price'
+            ),
+        ]
 
     @property
     def location(self):
@@ -983,6 +1042,18 @@ class Attachment(models.Model):
         verbose_name_plural = 'Attachments (Vault)'
         indexes = [
             models.Index(fields=['trip', 'created_at'], name='idx_att_trip_created'),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    (models.Q(stay__isnull=False) & models.Q(move__isnull=True) & models.Q(taste__isnull=True) & models.Q(play__isnull=True)) |
+                    (models.Q(move__isnull=False) & models.Q(stay__isnull=True) & models.Q(taste__isnull=True) & models.Q(play__isnull=True)) |
+                    (models.Q(taste__isnull=False) & models.Q(stay__isnull=True) & models.Q(move__isnull=True) & models.Q(play__isnull=True)) |
+                    (models.Q(play__isnull=False) & models.Q(stay__isnull=True) & models.Q(move__isnull=True) & models.Q(taste__isnull=True)) |
+                    (models.Q(stay__isnull=True) & models.Q(move__isnull=True) & models.Q(taste__isnull=True) & models.Q(play__isnull=True))
+                ),
+                name='chk_attachment_single_target'
+            ),
         ]
 
     def generate_signed_token(self) -> str:
