@@ -172,6 +172,28 @@
 },
 {
   "model": "core.trip",
+  "pk": "45604bb3-e763-474c-b5b8-f6397400789f",
+  "fields": {
+    "title": "San Diego '26",
+    "description": "Trip to Oceanside & see dad in La Jolla",
+    "location": "San Diego & Ocean Side",
+    "status": "UPCOMING",
+    "time_granularity": "EXACT_RANGE",
+    "season": null,
+    "year": 2026,
+    "start_date": "2026-11-21",
+    "end_date": "2026-11-23",
+    "start_month": null,
+    "end_month": null,
+    "created_by": "8e9964d5-f118-4e4f-bed3-dcb2f9916391",
+    "updated_by": null,
+    "rec_token": "qD6HapVfc0n4qUYzPxlvZQ",
+    "created_at": "2026-11-06T00:56:25.018Z",
+    "updated_at": "2026-11-06T00:56:25.018Z"
+  }
+},
+{
+  "model": "core.trip",
   "pk": "514b8280-7dfb-449c-9a8b-e0683f26b4dd",
   "fields": {
     "title": "The Flame July '21",
@@ -298,6 +320,16 @@
     "user": "8e9964d5-f118-4e4f-bed3-dcb2f9916391",
     "role": "OWNER",
     "joined_at": "2026-11-06T00:32:31.681Z"
+  }
+},
+{
+  "model": "core.tripmember",
+  "pk": "43de15ad-3d25-4a72-a6e0-3993e2f8432d",
+  "fields": {
+    "trip": "45604bb3-e763-474c-b5b8-f6397400789f",
+    "user": "8e9964d5-f118-4e4f-bed3-dcb2f9916391",
+    "role": "OWNER",
+    "joined_at": "2026-11-06T00:56:25.047Z"
   }
 },
 {
@@ -678,6 +710,36 @@
     "updated_by": null,
     "created_at": "2026-11-06T00:32:32.036Z",
     "updated_at": "2026-11-06T00:32:32.036Z"
+  }
+},
+{
+  "model": "core.stay",
+  "pk": "41999404-cf28-45b1-b9e0-7c9431867e1c",
+  "fields": {
+    "trip": "45604bb3-e763-474c-b5b8-f6397400789f",
+    "title": "Mission Pacific Beach Resort",
+    "status": "CONFIRMED",
+    "place_type": "Hotel",
+    "stay_length": null,
+    "stay_length_unit": "Day(s)",
+    "num_beds": null,
+    "num_rooms": null,
+    "num_guests": null,
+    "description": null,
+    "address": "201 N. Myers Street, Oceanside, California, 92054",
+    "check_in": "2026-11-21T00:00:00Z",
+    "check_out": "2026-11-23T00:00:00Z",
+    "has_check_in_time": false,
+    "has_check_out_time": false,
+    "total_price": null,
+    "currency": "USD",
+    "booking_link": "",
+    "_encrypted_confirmation_code": "v1:yl7Ope2nefwF7LKFe1NBHcLa8f5E5Uu0OET/hPGMeyAmR9SAoU2DEiQt",
+    "notes": "$100 property stay and breakfast included",
+    "created_by": "8e9964d5-f118-4e4f-bed3-dcb2f9916391",
+    "updated_by": "8e9964d5-f118-4e4f-bed3-dcb2f9916391",
+    "created_at": "2026-11-06T00:59:45.560Z",
+    "updated_at": "2026-11-06T00:59:45.560Z"
   }
 },
 {
@@ -1842,6 +1904,38 @@
     "updated_by": null,
     "created_at": "2026-11-06T00:32:31.864Z",
     "updated_at": "2026-11-06T00:32:31.864Z"
+  }
+},
+{
+  "model": "core.move",
+  "pk": "4d466bdb-9a0a-4258-9065-2ab023989eef",
+  "fields": {
+    "trip": "45604bb3-e763-474c-b5b8-f6397400789f",
+    "title": "Drive to Oceanside",
+    "mode": "Car",
+    "company": null,
+    "trip_stage": "START_END",
+    "direction": "ARRIVING",
+    "status": "CONFIRMED",
+    "passenger_name": "",
+    "description": null,
+    "origin_address": "13955 Tahiti Way",
+    "destination_address": "Hotel",
+    "departure_time": "2026-11-21T00:00:00Z",
+    "arrival_time": null,
+    "has_departure_time": false,
+    "has_arrival_time": false,
+    "date_confidence": "CONFIRMED",
+    "time_confidence": "CONFIRMED",
+    "flexibility_notes": "",
+    "price": null,
+    "currency": "USD",
+    "booking_link": "https://maps.app.goo.gl/b1h7tCUXSH75Pxrt7",
+    "_encrypted_confirmation_code": null,
+    "created_by": "8e9964d5-f118-4e4f-bed3-dcb2f9916391",
+    "updated_by": "8e9964d5-f118-4e4f-bed3-dcb2f9916391",
+    "created_at": "2026-11-06T01:06:39.038Z",
+    "updated_at": "2026-11-06T01:08:11.090Z"
   }
 },
 {
@@ -6274,6 +6368,35 @@
     "updated_by": null,
     "created_at": "2026-11-06T00:32:31.865Z",
     "updated_at": "2026-11-06T00:32:31.865Z"
+  }
+},
+{
+  "model": "core.nav",
+  "pk": "4d466bdb-9a0a-4258-9065-2ab023989eef",
+  "fields": {
+    "trip": "45604bb3-e763-474c-b5b8-f6397400789f",
+    "title": "Drive to Oceanside",
+    "mode": "Car",
+    "trip_stage": "START_END",
+    "direction": "ARRIVING",
+    "status": "CONFIRMED",
+    "passenger_name": "",
+    "description": null,
+    "origin_address": "13955 Tahiti Way",
+    "destination_address": "Hotel",
+    "departure_time": "2026-11-21T00:00:00Z",
+    "arrival_time": null,
+    "date_confidence": "CONFIRMED",
+    "time_confidence": "CONFIRMED",
+    "flexibility_notes": "",
+    "price": null,
+    "currency": "USD",
+    "booking_link": "https://maps.app.goo.gl/b1h7tCUXSH75Pxrt7",
+    "_encrypted_confirmation_code": null,
+    "created_by": "8e9964d5-f118-4e4f-bed3-dcb2f9916391",
+    "updated_by": "8e9964d5-f118-4e4f-bed3-dcb2f9916391",
+    "created_at": "2026-11-06T01:06:39.070Z",
+    "updated_at": "2026-11-06T01:08:11.115Z"
   }
 },
 {

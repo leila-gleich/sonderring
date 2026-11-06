@@ -3,6 +3,10 @@
 > **Document Status**: Canonical Backlog  
 > **Traceability**: Linked to [`docs/PRD.md`](PRD.md), [`docs/DATA_MODEL.md`](DATA_MODEL.md), [`docs/livingUserStoriesAndAcceptanceCriteria.md`](livingUserStoriesAndAcceptanceCriteria.md), and [`AGENTS.md`](../AGENTS.md).
 
+## Quick Tasks
+This area is to quickly add short tasks
+* Home shouldn't be the same page as all tripspaces
+* change UX for status and form flow
 ---
 
 ## 📌 Task Status Reference
@@ -167,3 +171,25 @@ Urgency levels: **`Low`** | **`Medium`** | **`High`**
   3. **Zero Fabrication**: Verified all 9 trips against ground truth with all Taste and Play items strictly normalized to `Status: IDEA`.
   4. **Fixture & Baseline Parity**: Exported updated database state to `core/fixtures/seed_data.json` and unified `core/seed_initial.py`.
   5. **Sync Protection**: Added `disable_markdown_sync` context manager and deterministic tripper ordering to protect seed documents from test corruption.
+
+### TASK-007: Change Trip View
+* **ID**: `TASK-007`
+* **Fix add trip text** If user has past trips, the button for new trip should just say "Add a TripSpace"
+* When editing a trip, you shouldn't have the status first, it should just go to edit. 
+* You need to be able to click the location and have it open on google maps in a new window
+
+### TASK-008: Change Item Form
+* **ID**: `TASK-008`
+* **Change UI for the form when adding an item** 
+* Default should be show more options, not show fewer options. 
+* The time should be by hour only (only for stay checkin and checkout)
+* For idea start and end are in fewer options, but for confirmed it should be in the main few
+* Maybe add cancellation rules?
+* For move, stay, and play have the length be duration
+* For move you should be able to add like driving directions
+
+### TASK-009: Item View Styling
+* **ID**: `TASK-009`
+* **Change View for Dimensions in tripspace**
+* the item grid should span the webpage to fit it
+* You should be able to click it and have a modal with all of the info
