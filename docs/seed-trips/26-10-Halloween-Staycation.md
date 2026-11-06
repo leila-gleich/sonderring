@@ -5,7 +5,7 @@
 * **Location**: Orange County, CA
 * **Time Granularity**: `EXACT_RANGE`
 * **Dates**: Oct 30 – Nov 02, 2026
-* **Status**: `CURRENT` (Current)
+* **Status**: `PAST` (Past)
 * **Owner (`created_by`)**: `@leila` (Leila Gleich)
 * **Trippers (`trip_members`)**:
   * `@leila` — Owner
