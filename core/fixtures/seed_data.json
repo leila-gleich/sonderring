@@ -210,10 +210,17 @@
     "start_month": 10,
     "end_month": 11,
     "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+<<<<<<< HEAD
     "updated_by": null,
     "rec_token": "gM3aNiXOnYKtZuen_TmmKQ",
     "created_at": "2026-11-05T19:28:35.913Z",
     "updated_at": "2026-11-05T19:28:35.913Z"
+=======
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "rec_token": "gM3aNiXOnYKtZuen_TmmKQ",
+    "created_at": "2026-11-05T19:28:35.913Z",
+    "updated_at": "2026-11-06T21:37:35.799Z"
+>>>>>>> main
   }
 },
 {
@@ -240,6 +247,31 @@
 },
 {
   "model": "core.trip",
+<<<<<<< HEAD
+=======
+  "pk": "5b0518c7-e17c-42f9-a14e-e8f0c9133fe0",
+  "fields": {
+    "title": "Pre-TG Trip",
+    "description": "Trip to Pacific Mission Beach and La Jolla",
+    "location": "San Diego",
+    "status": "UPCOMING",
+    "time_granularity": "EXACT_RANGE",
+    "season": null,
+    "year": 2026,
+    "start_date": "2026-11-21",
+    "end_date": "2026-11-23",
+    "start_month": null,
+    "end_month": null,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": null,
+    "rec_token": "uQP2A-BIjJfxpkgWofyTsA",
+    "created_at": "2026-11-06T21:41:14.776Z",
+    "updated_at": "2026-11-06T21:41:14.776Z"
+  }
+},
+{
+  "model": "core.trip",
+>>>>>>> main
   "pk": "7a33d3a0-40b1-4b7c-b5f6-350ebf6af9fc",
   "fields": {
     "title": "Hawaii '26",
@@ -434,6 +466,19 @@
 },
 {
   "model": "core.tripmember",
+<<<<<<< HEAD
+=======
+  "pk": "35f86d24-115f-44a2-9555-5dfb79c2b604",
+  "fields": {
+    "trip": "5b0518c7-e17c-42f9-a14e-e8f0c9133fe0",
+    "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "role": "OWNER",
+    "joined_at": "2026-11-06T21:41:14.834Z"
+  }
+},
+{
+  "model": "core.tripmember",
+>>>>>>> main
   "pk": "37932ebe-1edb-45d0-981f-ce5e2baec324",
   "fields": {
     "trip": "b4e805ac-6bc7-48e2-89d1-c46763771aae",
@@ -1664,6 +1709,41 @@
 },
 {
   "model": "core.move",
+<<<<<<< HEAD
+=======
+  "pk": "0c9d0f0b-b60d-4df4-9ff8-b3517feb38fe",
+  "fields": {
+    "trip": "5b0518c7-e17c-42f9-a14e-e8f0c9133fe0",
+    "title": "Drive to Hotel",
+    "mode": "Planes",
+    "company": null,
+    "trip_stage": "START_END",
+    "direction": "ARRIVING",
+    "status": "CONFIRMED",
+    "passenger_name": "",
+    "description": null,
+    "origin_address": "13955 Tahiti Way",
+    "destination_address": "201 North Myers Street, Oceanside, CA 92054, USA",
+    "departure_time": "2026-11-21T00:00:00Z",
+    "arrival_time": null,
+    "has_departure_time": false,
+    "has_arrival_time": false,
+    "date_confidence": "CONFIRMED",
+    "time_confidence": "CONFIRMED",
+    "flexibility_notes": "",
+    "price": null,
+    "currency": "USD",
+    "booking_link": "https://maps.app.goo.gl/xTC4savjnzJLJHJh9",
+    "_encrypted_confirmation_code": "v1:8SxBFpMfSYwHGnwvoJ0X2ZKRY2BZNzvCdqCbJvyYxJ//Eg==",
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "created_at": "2026-11-06T21:46:32.590Z",
+    "updated_at": "2026-11-06T21:50:15.750Z"
+  }
+},
+{
+  "model": "core.move",
+>>>>>>> main
   "pk": "135123a0-d090-4167-9c18-79caed4107dc",
   "fields": {
     "trip": "7a33d3a0-40b1-4b7c-b5f6-350ebf6af9fc",
@@ -6132,6 +6212,28 @@
 },
 {
   "model": "core.securityauditlog",
+<<<<<<< HEAD
+=======
+  "pk": "29b24321-8b96-446a-b764-1eac179762d5",
+  "fields": {
+    "trip": "5b0518c7-e17c-42f9-a14e-e8f0c9133fe0",
+    "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "action": "CONFIRMATION_CODE_REVEALED",
+    "resource_type": "MOVE",
+    "resource_id": "0c9d0f0b-b60d-4df4-9ff8-b3517feb38fe",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "metadata": {
+      "item_title": "Drive to Hotel"
+    },
+    "previous_hash": "70a65046414e7a0701f36e6c8ded2649b79b41c2102e16606bf6e5aa40341561",
+    "record_hash": "6c5262779a0a9b58819f4e9aa341a5f4d8e1b7872e1a825c919a2fb530e08e13",
+    "timestamp": "2026-11-06T21:49:43.088Z"
+  }
+},
+{
+  "model": "core.securityauditlog",
+>>>>>>> main
   "pk": "31f66e58-3bbc-4cde-bfef-ff3c8badef08",
   "fields": {
     "trip": null,
@@ -6147,6 +6249,28 @@
     "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
     "record_hash": "0dede9642eccc9f259b5e4857ff75f92d5d101d7bc463e680f9adc662e19572b",
     "timestamp": "2026-10-30T17:33:41.047Z"
+<<<<<<< HEAD
+=======
+  }
+},
+{
+  "model": "core.securityauditlog",
+  "pk": "6e67b00c-3694-485e-8b32-515d2a4bfacc",
+  "fields": {
+    "trip": "5b0518c7-e17c-42f9-a14e-e8f0c9133fe0",
+    "user": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "action": "CONFIRMATION_CODE_REVEALED",
+    "resource_type": "MOVE",
+    "resource_id": "0c9d0f0b-b60d-4df4-9ff8-b3517feb38fe",
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "metadata": {
+      "item_title": "Drive to Hotel"
+    },
+    "previous_hash": "0dede9642eccc9f259b5e4857ff75f92d5d101d7bc463e680f9adc662e19572b",
+    "record_hash": "70a65046414e7a0701f36e6c8ded2649b79b41c2102e16606bf6e5aa40341561",
+    "timestamp": "2026-11-06T21:49:10.601Z"
+>>>>>>> main
   }
 }
 ]
