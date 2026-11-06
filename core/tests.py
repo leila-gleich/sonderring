@@ -3,7 +3,7 @@ from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.template.context import BaseContext
-from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Move, Taste, Play, Nav, Do, Rec, Attachment, SecurityAuditLog, order_current_and_upcoming_trips
+from core.models import UserProfile, OAuthIdentity, Trip, TripMember, Stay, Move, Taste, Play, Attachment, SecurityAuditLog, order_current_and_upcoming_trips
 
 # Patch BaseContext.__copy__ for Python 3.14 compatibility with Django 4.2 test runner
 def _patched_copy(self):
@@ -407,17 +407,17 @@ class TripAndElementStatusTests(TestCase):
         self.assertNotIn(self.trip, resp.context['past_trips'])
 
     def test_trip_element_status_cycle_idea_confirmed_complete(self):
-        """Verify Stay, Nav, Do, and Rec elements cycle through IDEA -> CONFIRMED -> COMPLETE -> IDEA."""
+        """Verify Stay, Move, Play, and Taste elements cycle through IDEA -> CONFIRMED -> COMPLETE -> IDEA."""
         session = self.client.session
         session['user_id'] = str(self.owner.id)
         session.save()
 
         stay = Stay.objects.create(trip=self.trip, title='Villa Etna', status='IDEA', total_price=500, created_by=self.owner)
-        nav = Nav.objects.create(trip=self.trip, title='Catania Ferry', mode='Ferry', status='IDEA', price=80, created_by=self.owner)
-        do_item = Do.objects.create(trip=self.trip, title='Mt Etna Hike', status='IDEA', price=120, created_by=self.owner)
-        rec = Rec.objects.create(trip=self.trip, title='Cannoli Spot', category='Food', status='IDEA', recommended_by=self.owner)
+        move = Move.objects.create(trip=self.trip, title='Catania Ferry', mode='Ferry', status='IDEA', price=80, created_by=self.owner)
+        play = Play.objects.create(trip=self.trip, title='Mt Etna Hike', status='IDEA', price=120, created_by=self.owner)
+        taste = Taste.objects.create(trip=self.trip, title='Cannoli Spot', taste_type='Restaurant', status='IDEA', recommended_by=self.owner)
 
-        for item_type, item in [('stay', stay), ('nav', nav), ('do', do_item), ('rec', rec)]:
+        for item_type, item in [('stay', stay), ('move', move), ('play', play), ('taste', taste), ('nav', move), ('do', play), ('rec', taste)]:
             url = reverse('core:toggle_status', args=[item_type, item.id])
 
             # 1. IDEA -> CONFIRMED
@@ -527,13 +527,13 @@ class AccessControlAndRBACTests(TestCase):
         self.assertFalse(Stay.objects.filter(trip=self.trip, title='Unauthorized Stay').exists())
 
         self.client.post(reverse('core:add_nav', args=[self.trip.id]), {'title': 'Unauthorized Nav', 'mode': 'Flight'})
-        self.assertFalse(Nav.objects.filter(trip=self.trip, title='Unauthorized Nav').exists())
+        self.assertFalse(Move.objects.filter(trip=self.trip, title='Unauthorized Nav').exists())
 
         self.client.post(reverse('core:add_do', args=[self.trip.id]), {'title': 'Unauthorized Do'})
-        self.assertFalse(Do.objects.filter(trip=self.trip, title='Unauthorized Do').exists())
+        self.assertFalse(Play.objects.filter(trip=self.trip, title='Unauthorized Do').exists())
 
         self.client.post(reverse('core:add_rec', args=[self.trip.id]), {'title': 'Unauthorized Rec'})
-        self.assertFalse(Rec.objects.filter(trip=self.trip, title='Unauthorized Rec').exists())
+        self.assertFalse(Taste.objects.filter(trip=self.trip, title='Unauthorized Rec').exists())
 
     def test_viewer_cannot_edit_delete_or_toggle_others_item(self):
         """Viewers cannot edit, delete, or toggle status of items created by others."""
@@ -663,7 +663,7 @@ class CryptographicAndPIITests(TestCase):
             notes='Keypad code: 1234# · WiFi: SecretNet',
             created_by=self.user
         )
-        nav = Nav.objects.create(
+        move = Move.objects.create(
             trip=self.trip_1,
             title='Swiss Air LX15',
             mode='Flight',
@@ -675,11 +675,11 @@ class CryptographicAndPIITests(TestCase):
         # Model attribute access transparently decrypts
         self.user.refresh_from_db()
         stay.refresh_from_db()
-        nav.refresh_from_db()
+        move.refresh_from_db()
         self.assertEqual(self.user.phone_number, '+1-555-867-5309')
         self.assertEqual(stay.notes, 'Keypad code: 1234# · WiFi: SecretNet')
-        self.assertEqual(nav.passenger_name, 'Crypto User Passport #9911')
-        self.assertEqual(nav.flexibility_notes, 'Frequent Flyer: LX-009182')
+        self.assertEqual(move.passenger_name, 'Crypto User Passport #9911')
+        self.assertEqual(move.flexibility_notes, 'Frequent Flyer: LX-009182')
 
         # Raw SQL inspection verifies values on disk are AES-256-GCM ciphertexts ('v1:...')
         with connection.cursor() as cursor:
@@ -696,6 +696,11 @@ class CryptographicAndPIITests(TestCase):
             raw_notes = cursor.fetchone()[0]
             self.assertTrue(raw_notes.startswith('v1:'))
             self.assertNotIn('1234#', raw_notes)
+
+            cursor.execute("SELECT passenger_name FROM moves WHERE title = %s", ['Swiss Air LX15'])
+            raw_passenger = cursor.fetchone()[0]
+            self.assertTrue(raw_passenger.startswith('v1:'))
+            self.assertNotIn('Crypto User', raw_passenger)
 
     @override_settings(DEBUG=False, ENFORCE_PRODUCTION_KEYS=True)
     def test_production_blocks_insecure_default_encryption_key(self):
@@ -1003,16 +1008,16 @@ class PublicRecommendationTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn('submitted=1', resp.url)
 
-        # Verify Rec created in DB
-        rec = Rec.objects.filter(trip=self.trip, title='Trattoria da Nino').first()
-        self.assertIsNotNone(rec)
-        self.assertEqual(rec.guest_name, 'Marco (Sicily Local)')
-        self.assertEqual(rec.status, 'IDEA')
-        self.assertEqual(rec.category, 'Food')
-        self.assertIsNone(rec.recommended_by)
+        # Verify Taste created in DB
+        taste = Taste.objects.filter(trip=self.trip, title='Trattoria da Nino').first()
+        self.assertIsNotNone(taste)
+        self.assertEqual(taste.guest_name, 'Marco (Sicily Local)')
+        self.assertEqual(taste.status, 'IDEA')
+        self.assertEqual(taste.taste_type, 'Restaurant')
+        self.assertIsNone(taste.recommended_by)
 
     def test_public_recommend_honeypot_rejects_bot(self):
-        """Verify bot filling out honeypot does not create a Rec."""
+        """Verify bot filling out honeypot does not create a Taste or Play."""
         url = reverse('core:public_recommend', args=[self.trip.rec_token])
         post_data = {
             'guest_name': 'Spambot',
@@ -1022,7 +1027,7 @@ class PublicRecommendationTests(TestCase):
         }
         resp = self.client.post(url, post_data)
         self.assertEqual(resp.status_code, 302)
-        self.assertFalse(Rec.objects.filter(title='Buy Cheap Watches').exists())
+        self.assertFalse(Taste.objects.filter(title='Buy Cheap Watches').exists())
 
     def test_workspace_displays_rec_invite_link_and_move_stay_taste_play_tabs(self):
         """Verify workspace top section contains copyable recommendation invite link and Move, Stay, Taste, Play tabs."""
@@ -1206,7 +1211,7 @@ class TripWorkspaceAddElementAndDisplayTests(TestCase):
 
     def test_blank_optional_inputs_do_not_render_placeholders(self):
         """Unfilled optional inputs must NOT show placeholder/fallback text (TBD, Free, etc.)."""
-        from core.models import Stay, Nav, Do, Rec
+        from core.models import Stay, Move, Play, Taste
         # Create Stay with only required fields (no address, no check_in, no check_out, no price, no beds)
         Stay.objects.create(
             trip=self.trip,
@@ -1214,16 +1219,16 @@ class TripWorkspaceAddElementAndDisplayTests(TestCase):
             status='CONFIRMED',
             created_by=self.owner
         )
-        # Create Nav with only required fields (no origin, no destination, no departure_time, no arrival_time, no price)
-        Nav.objects.create(
+        # Create Move with only required fields (no origin, no destination, no departure_time, no arrival_time, no price)
+        Move.objects.create(
             trip=self.trip,
-            title='Minimal Nav Flight',
+            title='Minimal Move Flight',
             mode='Flight',
             status='CONFIRMED',
             created_by=self.owner
         )
-        # Create Do with only required fields (no price, no start_time, no end_time, no address)
-        Do.objects.create(
+        # Create Play with only required fields (no price, no start_time, no end_time, no address)
+        Play.objects.create(
             trip=self.trip,
             title='Minimal Activity',
             status='IDEA',
@@ -1247,7 +1252,7 @@ class TripWorkspaceAddElementAndDisplayTests(TestCase):
 
     def test_filled_optional_inputs_render_properly(self):
         """Filled optional inputs render their actual values."""
-        from core.models import Stay, Nav, Do
+        from core.models import Stay, Move, Play
         from django.utils import timezone
         import datetime
 
@@ -1260,7 +1265,7 @@ class TripWorkspaceAddElementAndDisplayTests(TestCase):
             check_in=now,
             created_by=self.owner
         )
-        Nav.objects.create(
+        Move.objects.create(
             trip=self.trip,
             title='Icelandair Flight FI 614',
             mode='Flight',
@@ -1270,7 +1275,7 @@ class TripWorkspaceAddElementAndDisplayTests(TestCase):
             departure_time=now + datetime.timedelta(days=1),
             created_by=self.owner
         )
-        Do.objects.create(
+        Play.objects.create(
             trip=self.trip,
             title='Blue Lagoon Spa Experience',
             price=125.00,
@@ -1707,7 +1712,7 @@ class DateRangeValidationAndOptionalStayTimesTests(TestCase):
         self.assertIn('KeyCard.png', filenames)
 
     def test_nav_rejects_arrival_before_departure(self):
-        """Nav rejects arrival_time earlier than departure_time."""
+        """Move rejects arrival_time earlier than departure_time."""
         resp = self.client.post(reverse('core:add_nav', args=[self.trip.id]), {
             'title': 'Backward Flight',
             'mode': 'Flight',
@@ -1715,36 +1720,36 @@ class DateRangeValidationAndOptionalStayTimesTests(TestCase):
             'arrival_time': '2026-11-02T10:00',
         }, follow=True)
         self.assertContains(resp, 'Arrival date/time cannot be before departure date/time.')
-        self.assertFalse(Nav.objects.filter(title='Backward Flight').exists())
+        self.assertFalse(Move.objects.filter(title='Backward Flight').exists())
 
     def test_nav_accepts_valid_arrival_after_departure(self):
-        """Nav accepts arrival_time >= departure_time."""
+        """Move accepts arrival_time >= departure_time."""
         resp = self.client.post(reverse('core:add_nav', args=[self.trip.id]), {
             'title': 'Forward Flight',
             'mode': 'Flight',
             'departure_time': '2026-11-02T10:00',
             'arrival_time': '2026-11-02T14:00',
         }, follow=True)
-        self.assertTrue(Nav.objects.filter(title='Forward Flight').exists())
+        self.assertTrue(Move.objects.filter(title='Forward Flight').exists())
 
     def test_do_rejects_end_time_before_start_time(self):
-        """Do rejects end_time earlier than start_time."""
+        """Play rejects end_time earlier than start_time."""
         resp = self.client.post(reverse('core:add_do', args=[self.trip.id]), {
             'title': 'Rewind Tour',
             'start_time': '2026-11-03T15:00',
             'end_time': '2026-11-03T12:00',
         }, follow=True)
         self.assertContains(resp, 'End date/time cannot be before start date/time.')
-        self.assertFalse(Do.objects.filter(title='Rewind Tour').exists())
+        self.assertFalse(Play.objects.filter(title='Rewind Tour').exists())
 
     def test_do_accepts_valid_end_time_after_start_time(self):
-        """Do accepts end_time >= start_time."""
+        """Play accepts end_time >= start_time."""
         resp = self.client.post(reverse('core:add_do', args=[self.trip.id]), {
             'title': 'Forward Tour',
             'start_time': '2026-11-03T12:00',
             'end_time': '2026-11-03T15:00',
         }, follow=True)
-        self.assertTrue(Do.objects.filter(title='Forward Tour').exists())
+        self.assertTrue(Play.objects.filter(title='Forward Tour').exists())
 
     def test_workspace_renders_stay_dates_and_optional_times_correctly(self):
         """Workspace renders date-only stays without phantom times, and renders times when set."""
@@ -2035,7 +2040,7 @@ class MoveStayTastePlayWorkflowTests(TestCase):
 
     def test_move_crud_and_status_toggle(self):
         """Test adding, editing, toggling status, and deleting a Move."""
-        from core.models import Move, Nav
+        from core.models import Move
         # Add Move
         resp = self.client.post(reverse('core:add_move', args=[self.trip.id]), {
             'title': 'Flight from OSL to BOO',
@@ -2056,10 +2061,6 @@ class MoveStayTastePlayWorkflowTests(TestCase):
         self.assertEqual(move.status, 'IDEA')
         self.assertEqual(float(move.price), 145.00)
         self.assertEqual(move.confirmation_code, 'NOR-FLY-778')
-
-        # Mirroring check to legacy Nav
-        nav = Nav.objects.filter(trip=self.trip, title='Flight from OSL to BOO').first()
-        self.assertIsNotNone(nav)
 
         # Toggle status to CONFIRMED
         toggle_resp = self.client.post(reverse('core:toggle_status', args=['move', move.id]), {

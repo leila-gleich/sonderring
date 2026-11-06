@@ -17,6 +17,7 @@ agenv/
 
 # Static files
 staticfiles/
+media/
 
 # OS-specific
 .DS_Store

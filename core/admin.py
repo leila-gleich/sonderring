@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserProfile, Trip, TripMember, Stay, Nav, Do, Attachment, OAuthIdentity, SecurityAuditLog
+from .models import UserProfile, Trip, TripMember, Stay, Move, Taste, Play, Attachment, OAuthIdentity, SecurityAuditLog
 
 
 class OAuthIdentityInline(admin.TabularInline):
@@ -34,13 +34,18 @@ class StayInline(admin.StackedInline):
     extra = 0
 
 
-class NavInline(admin.StackedInline):
-    model = Nav
+class MoveInline(admin.StackedInline):
+    model = Move
     extra = 0
 
 
-class DoInline(admin.StackedInline):
-    model = Do
+class TasteInline(admin.StackedInline):
+    model = Taste
+    extra = 0
+
+
+class PlayInline(admin.StackedInline):
+    model = Play
     extra = 0
 
 
@@ -49,7 +54,7 @@ class TripAdmin(admin.ModelAdmin):
     list_display = ('title', 'location', 'status', 'time_granularity', 'season', 'year', 'created_by', 'created_at')
     list_filter = ('status', 'time_granularity', 'season', 'year')
     search_fields = ('title', 'location', 'description')
-    inlines = [TripMemberInline, StayInline, NavInline, DoInline]
+    inlines = [TripMemberInline, MoveInline, StayInline, TasteInline, PlayInline]
 
 
 @admin.register(TripMember)
@@ -66,17 +71,24 @@ class StayAdmin(admin.ModelAdmin):
     search_fields = ('title', 'address', 'description')
 
 
-@admin.register(Nav)
-class NavAdmin(admin.ModelAdmin):
+@admin.register(Move)
+class MoveAdmin(admin.ModelAdmin):
     list_display = ('title', 'trip', 'mode', 'status', 'departure_time', 'arrival_time', 'price')
     list_filter = ('mode', 'status', 'trip')
     search_fields = ('title', 'origin_address', 'destination_address')
 
 
-@admin.register(Do)
-class DoAdmin(admin.ModelAdmin):
-    list_display = ('title', 'trip', 'activity_type', 'status', 'start_time', 'end_time', 'price')
-    list_filter = ('status', 'activity_type', 'trip')
+@admin.register(Taste)
+class TasteAdmin(admin.ModelAdmin):
+    list_display = ('title', 'trip', 'taste_type', 'status', 'start_time', 'end_time', 'price')
+    list_filter = ('status', 'taste_type', 'trip')
+    search_fields = ('title', 'description', 'address')
+
+
+@admin.register(Play)
+class PlayAdmin(admin.ModelAdmin):
+    list_display = ('title', 'trip', 'play_type', 'status', 'start_time', 'end_time', 'price')
+    list_filter = ('status', 'play_type', 'trip')
     search_fields = ('title', 'description', 'address')
 
 

@@ -20,7 +20,7 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Trip, Stay, Move, Taste, Play, Nav, Do, Rec, UserProfile, TripMember, Attachment, OAuthIdentity, SecurityAuditLog, order_current_and_upcoming_trips
+from .models import Trip, Stay, Move, Taste, Play, UserProfile, TripMember, Attachment, OAuthIdentity, SecurityAuditLog, order_current_and_upcoming_trips
 
 
 def get_client_ip(request):
@@ -1840,9 +1840,6 @@ def promote_rec_view(request, trip_id, rec_id):
     if not item:
         item = Play.objects.filter(id=rec_id, trip=trip).first()
         target_tab = 'play'
-    if not item:
-        item = Rec.objects.filter(id=rec_id, trip=trip).first()
-        target_tab = 'taste'
 
     if item:
         item.status = 'CONFIRMED'
@@ -2025,12 +2022,10 @@ def upload_attachment_view(request, trip_id):
         attachment.stay = Stay.objects.filter(id=stay_id, trip=trip).first()
     if move_id:
         attachment.move = Move.objects.filter(id=move_id, trip=trip).first()
-        attachment.nav = Nav.objects.filter(id=move_id, trip=trip).first()
     if taste_id:
         attachment.taste = Taste.objects.filter(id=taste_id, trip=trip).first()
     if play_id:
         attachment.play = Play.objects.filter(id=play_id, trip=trip).first()
-        attachment.do = Do.objects.filter(id=play_id, trip=trip).first()
 
     attachment.save()
     log_security_event(
@@ -2260,9 +2255,9 @@ def toggle_item_status_view(request, item_type, item_id):
         'stay': Stay,
         'taste': Taste,
         'play': Play,
-        'nav': Nav,
-        'do': Do,
-        'rec': Rec,
+        'nav': Move,
+        'do': Play,
+        'rec': Taste,
     }
     model = model_map.get(item_type.lower())
     if not model:
@@ -2312,8 +2307,8 @@ def reveal_confirmation_code_view(request, item_type, item_id):
         'stay': Stay,
         'taste': Taste,
         'play': Play,
-        'nav': Nav,
-        'do': Do,
+        'nav': Move,
+        'do': Play,
     }
     model = model_map.get(item_type.lower())
     if not model:
