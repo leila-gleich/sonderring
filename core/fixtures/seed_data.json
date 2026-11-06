@@ -148,6 +148,7 @@
     "pk": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
     "fields": {
       "email": "leila@sonderring.com",
+<<<<<<< HEAD
       "handle": "leila",
       "full_name": "Leila Gleich",
       "password": "pbkdf2_sha256$600000$zvNkVxZL5Tt4Exni5tGpAL$CWjyI7fDiDueBevvHIv8be5xPn7TVJ7LHDmM+bX9rIs=",
@@ -211,6 +212,53 @@
       "end_month": 11,
       "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
 <<<<<<< HEAD
+=======
+      "picture": "https://api.dicebear.com/7.x/initials/svg?seed=leila@sonderring.com",
+      "email_verified": true
+    },
+    "created_at": "2026-10-30T17:34:16.850Z",
+    "updated_at": "2026-10-30T17:34:16.850Z"
+  }
+},
+{
+  "model": "core.trip",
+  "pk": "38466501-c71e-4c6f-b243-1b6714bcbf05",
+  "fields": {
+    "title": "Halloween Staycation '26",
+    "description": "Go to Halloween Staycation",
+    "location": "Orange County, CA",
+    "status": "PAST",
+    "time_granularity": "EXACT_RANGE",
+    "season": null,
+    "year": 2026,
+    "start_date": "2026-10-30",
+    "end_date": "2026-11-02",
+    "start_month": 10,
+    "end_month": 11,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "updated_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+    "rec_token": "gM3aNiXOnYKtZuen_TmmKQ",
+    "created_at": "2026-11-05T19:28:35.913Z",
+    "updated_at": "2026-11-06T22:06:29.353Z"
+  }
+},
+{
+  "model": "core.trip",
+  "pk": "4ec44ec2-fd21-4ce2-b8b0-1995ea4e72ef",
+  "fields": {
+    "title": "Asheville Dec '21",
+    "description": "Go to Asheville",
+    "location": "Asheville, NC",
+    "status": "PAST",
+    "time_granularity": "EXACT_RANGE",
+    "season": null,
+    "year": 2021,
+    "start_date": "2021-12-07",
+    "end_date": "2021-12-11",
+    "start_month": 12,
+    "end_month": 12,
+    "created_by": "ad87bd08-b81a-4a9e-b850-50280fc9ea4e",
+>>>>>>> main
     "updated_by": null,
       "rec_token": "gM3aNiXOnYKtZuen_TmmKQ",
       "created_at": "2026-11-05T19:28:35.913Z",
