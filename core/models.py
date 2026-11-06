@@ -1128,6 +1128,12 @@ class SecurityAuditLog(models.Model):
             models.Index(fields=['user', 'timestamp'], name='idx_audit_user_ts'),
             models.Index(fields=['action', 'timestamp'], name='idx_audit_action_ts'),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['record_hash'],
+                name='uq_security_audit_record_hash'
+            ),
+        ]
 
     def compute_hash(self) -> str:
         ts_iso = self.timestamp.isoformat() if self.timestamp else ''
@@ -1141,9 +1147,18 @@ class SecurityAuditLog(models.Model):
         if not self.timestamp:
             self.timestamp = timezone.now()
         if not self.record_hash:
-            last_log = SecurityAuditLog.objects.order_by('-timestamp', '-id').first()
-            self.previous_hash = last_log.record_hash if last_log and last_log.record_hash else ('0' * 64)
-            self.record_hash = self.compute_hash()
+            with transaction.atomic():
+                last_log = (
+                    SecurityAuditLog.objects.select_for_update()
+                    .order_by('-timestamp', '-id')
+                    .first()
+                )
+                self.previous_hash = (
+                    last_log.record_hash if last_log and last_log.record_hash else ('0' * 64)
+                )
+                self.record_hash = self.compute_hash()
+                super().save(*args, **kwargs)
+                return
         super().save(*args, **kwargs)
 
     @classmethod
