@@ -3,6 +3,12 @@
 from django.db import migrations, models
 
 
+def cleanup_legacy_move_times(apps, schema_editor):
+    Move = apps.get_model('core', 'Move')
+    Move.objects.filter(has_arrival_time=False).update(arrival_time=None)
+    Move.objects.filter(arrival_time__lt=models.F('departure_time')).update(arrival_time=None)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,6 +16,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(cleanup_legacy_move_times, reverse_code=migrations.RunPython.noop),
         migrations.AddConstraint(
             model_name='attachment',
             constraint=models.CheckConstraint(check=models.Q(models.Q(('stay__isnull', False), ('move__isnull', True), ('taste__isnull', True), ('play__isnull', True)), models.Q(('move__isnull', False), ('stay__isnull', True), ('taste__isnull', True), ('play__isnull', True)), models.Q(('taste__isnull', False), ('stay__isnull', True), ('move__isnull', True), ('play__isnull', True)), models.Q(('play__isnull', False), ('stay__isnull', True), ('move__isnull', True), ('taste__isnull', True)), models.Q(('stay__isnull', True), ('move__isnull', True), ('taste__isnull', True), ('play__isnull', True)), _connector='OR'), name='chk_attachment_single_target'),
