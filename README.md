@@ -10,16 +10,18 @@ The repository includes a comprehensive, programming language–agnostic documen
 
 | Document | Purpose | File Link |
 | :--- | :--- | :--- |
-| **Domain Nomenclature** | Official definitions for TripSpaces, Dimensions, Items, Categories, and Inputs vs. Attributes. | [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md) |
-| **Product Requirements (PRD)** | Vision, personas, functional requirements, and non-functional requirements. | [`docs/PRD.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PRD.md) |
-| **MVP Scope & Roadmap** | Strict Phase 1 (MVP in-scope) boundaries vs. Phase 2 and Phase 3 roadmaps. | [`docs/MVP.md`](file:///Users/leilagleich/Desktop/sonderring/docs/MVP.md) |
-| **Cybersecurity Architecture** | Application-level AES-256-GCM envelope encryption, Document Vault, RBAC, and STRIDE threat model. | [`docs/CYBERSECURITY.md`](file:///Users/leilagleich/Desktop/sonderring/docs/CYBERSECURITY.md) |
-| **Site Architecture & Flows** | Sitemap, screen inventory, status-first modal flows, and responsive breakpoints. | [`docs/PAGE_OUTLINE.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PAGE_OUTLINE.md) |
-| **Canonical Data Model** | Entity-relationship diagrams, attribute definitions, state machines, and constraints. | [`docs/DATA_MODEL.md`](file:///Users/leilagleich/Desktop/sonderring/docs/DATA_MODEL.md) |
-| **API Contract Specification** | RESTful HTTP/JSON endpoints, request/response payloads, and error envelopes. | [`docs/API_SPECIFICATION.md`](file:///Users/leilagleich/Desktop/sonderring/docs/API_SPECIFICATION.md) |
-| **Markdown Sync Specification** | Canonical grammar, section ordering, and bidirectional sync protocols with `Trips/*.md`. | [`docs/MARKDOWN_SYNC_SPEC.md`](file:///Users/leilagleich/Desktop/sonderring/docs/MARKDOWN_SYNC_SPEC.md) |
-| **Living User Stories & AC** | Active user stories and testable acceptance criteria synchronized with specifications. | [`docs/livingUserStoriesAndAcceptanceCriteria.md`](file:///Users/leilagleich/Desktop/sonderring/docs/livingUserStoriesAndAcceptanceCriteria.md) |
-| **Item Attributes Reference** | Field and form input guidelines across all four dimensions. | [`docs/tripItemAttributesReference.md`](file:///Users/leilagleich/Desktop/sonderring/docs/tripItemAttributesReference.md) |
+| **Domain Nomenclature** | Official definitions for TripSpaces, Dimensions, Items, Categories, and Inputs vs. Attributes. | [`AGENTS.md`](AGENTS.md) |
+| **Product Requirements (PRD)** | Vision, personas, functional requirements, and non-functional requirements. | [`docs/PRD.md`](docs/PRD.md) |
+| **MVP Scope & Roadmap** | Strict Phase 1 (MVP in-scope) boundaries vs. Phase 2 and Phase 3 roadmaps. | [`docs/MVP.md`](docs/MVP.md) |
+| **Cybersecurity Architecture** | Application-level AES-256-GCM envelope encryption, Document Vault, RBAC, and STRIDE threat model. | [`docs/CYBERSECURITY.md`](docs/CYBERSECURITY.md) |
+| **Site Architecture & Flows** | Sitemap, screen inventory, status-first modal flows, and responsive breakpoints. | [`docs/PAGE_OUTLINE.md`](docs/PAGE_OUTLINE.md) |
+| **Canonical Data Model** | Entity-relationship diagrams, attribute definitions, state machines, and constraints. | [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) |
+| **API Contract Specification** | RESTful HTTP/JSON endpoints, request/response payloads, and error envelopes. | [`docs/API_SPECIFICATION.md`](docs/API_SPECIFICATION.md) |
+| **Markdown Sync Specification** | Canonical grammar, section ordering, and bidirectional sync protocols with `docs/seed-trips/`. | [`docs/MARKDOWN_SYNC_SPEC.md`](docs/MARKDOWN_SYNC_SPEC.md) |
+| **Living User Stories & AC** | Active user stories and testable acceptance criteria synchronized with specifications. | [`docs/livingUserStoriesAndAcceptanceCriteria.md`](docs/livingUserStoriesAndAcceptanceCriteria.md) |
+| **Item Attributes Reference** | Field and form input guidelines across all four dimensions. | [`docs/tripItemAttributesReference.md`](docs/tripItemAttributesReference.md) |
+| **Tasks & Engineering Backlog** | Active sprint tasks, urgency rankings, and status register. | [`docs/TASKS.md`](docs/TASKS.md) |
+| **Version Control & Changelog** | Git workflow, Conventional Commits, migration history (0001–0021), and SemVer changelog. | [`docs/version-control.md`](docs/version-control.md) |
 
 ---
 
