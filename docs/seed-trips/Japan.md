@@ -5,7 +5,7 @@
 * **Location**: Japan
 * **Time Granularity**: `EXACT_RANGE`
 * **Dates**: Nov 13 – 26, 2026
-* **Status**: `UPCOMING` (Upcoming)
+* **Status**: `CURRENT` (Current)
 * **Owner (`created_by`)**: `@leila` (Leila Gleich)
 * **Trippers (`trip_members`)**:
   * `@leila` — Owner

@@ -15,8 +15,9 @@ This directory contains local markdown representations of the canonical trips de
 | 5 | **Joshua Tree Jan '22** | Twentynine Palms, CA | `PAST` (Past) | Jan 10 – 13, 2022 (`EXACT_RANGE`) | [`22-01-JT.md`](22-01-JT.md) |
 | 6 | **Hawaii '26** | Big Island & Kauai, HI | `PAST` (Past) | Aug 02 – 10, 2026 (`EXACT_RANGE`) | [`26-08-Hawaii.md`](26-08-Hawaii.md) |
 | 7 | **Malticilia '26** | Malta & Sicily (Taormina, Syracuse) | `PAST` (Past) | Sep 06 – 17, 2026 (`EXACT_RANGE`) | [`26-09-Malticilia.md`](26-09-Malticilia.md) |
-| 8 | **Halloween Staycation '26** | Orange County, CA | `CURRENT` (Current) | Oct 30 – Nov 02, 2026 (`EXACT_RANGE`) | [`26-10-Halloween-Staycation.md`](26-10-Halloween-Staycation.md) |
+| 8 | **Halloween Staycation '26** | Orange County, CA | `PAST` (Past) | Oct 30 – Nov 02, 2026 (`EXACT_RANGE`) | [`26-10-Halloween-Staycation.md`](26-10-Halloween-Staycation.md) |
 | 9 | **Iceland '26** | Golden Circle & Reykjavik, Iceland | `PAST` (Past) | Oct 13 – 22, 2026 (`EXACT_RANGE`) | [`26-10-Iceland.md`](26-10-Iceland.md) |
+| 10 | **Japan** | Japan | `UPCOMING` (Upcoming) | Nov 13 – 26, 2026 (`EXACT_RANGE`) | [`Japan.md`](Japan.md) |
 
 ---
 
