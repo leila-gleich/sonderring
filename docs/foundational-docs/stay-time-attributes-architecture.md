@@ -18,7 +18,7 @@ The current constraint in [`AGENTS.md`](../../AGENTS.md) and [`tripItemAttribute
 ## 2. Current State Architectural Audit
 
 ### 2.1. Relational Database Layer (`core/models.py`)
-In the Django model definition for `Stay` ([`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py#L413-L416)):
+In the Django model definition for `Stay` ([`core/models.py`](../../core/models.py)):
 
 ```python
 class Stay(models.Model):

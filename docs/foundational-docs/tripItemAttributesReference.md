@@ -1,8 +1,8 @@
 # Trip Item Attributes & Input Guidelines — Sonderring
 
 > **Document Status**: Canonical Reference  
-> **Nomenclature Conformance**: [`AGENTS.md`](file:///Users/leilagleich/Desktop/sonderring/AGENTS.md)  
-> **Related Specifications**: [`docs/livingUserStoriesAndAcceptanceCriteria.md`](file:///Users/leilagleich/Desktop/sonderring/docs/livingUserStoriesAndAcceptanceCriteria.md) · [`docs/DATA_MODEL.md`](file:///Users/leilagleich/Desktop/sonderring/docs/DATA_MODEL.md) · [`docs/PAGE_OUTLINE.md`](file:///Users/leilagleich/Desktop/sonderring/docs/PAGE_OUTLINE.md)
+> **Nomenclature Conformance**: [`AGENTS.md`](../AGENTS.md)  
+> **Related Specifications**: [`livingUserStoriesAndAcceptanceCriteria.md`](livingUserStoriesAndAcceptanceCriteria.md) · [`DATA_MODEL.md`](DATA_MODEL.md) · [`PAGE_OUTLINE.md`](PAGE_OUTLINE.md)
 
 ---
 

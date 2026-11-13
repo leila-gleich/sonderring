@@ -1,10 +1,10 @@
 # Architecture & Refactoring Summary: Card Templates & Dimension Modals
 
 > **Document Status**: Canonical Reference & Refactor Log  
-> **Repository Root**: `/Users/leilagleich/Desktop/sonderring`  
+> **Repository Root**: `Sonderringv0`  
 > **Associated Tag**: `archive/refactor_card_templates` (Commit: `7fb960d`)  
 > **Target Branch**: `working-dev`  
-> **Related Documentation**: [`docs/tripItemAttributesReference.md`](file:///Users/leilagleich/Desktop/sonderring/docs/tripItemAttributesReference.md) · [`docs/DATA_MODEL.md`](file:///Users/leilagleich/Desktop/sonderring/docs/DATA_MODEL.md) · [`docs/livingUserStoriesAndAcceptanceCriteria.md`](file:///Users/leilagleich/Desktop/sonderring/docs/livingUserStoriesAndAcceptanceCriteria.md)
+> **Related Documentation**: [`tripItemAttributesReference.md`](tripItemAttributesReference.md) · [`DATA_MODEL.md`](DATA_MODEL.md) · [`livingUserStoriesAndAcceptanceCriteria.md`](livingUserStoriesAndAcceptanceCriteria.md)
 
 ---
 
@@ -43,7 +43,7 @@ In Django and modern web architectures, a **template partial** is a self-contain
 - **Purged Obsolete Templates**: Deleted legacy `templates/partials/nav_card.html`. The project historically used "Nav" before standardizing on the four canonical dimensions: **Move**, **Stay**, **Taste**, and **Play**.
 - **Removed Legacy Database Tables**: Archived and permanently pruned legacy database tables (`navs`, `dos`, `recs`) and ensured all database references strictly target the 4 canonical models: `Move`, `Stay`, `Taste`, and `Play`.
 
-### 2.2. Data Model & Database Enhancements ([`core/models.py`](file:///Users/leilagleich/Desktop/sonderring/core/models.py))
+### 2.2. Data Model & Database Enhancements ([`core/models.py`](../core/models.py))
 - **`Move` Model**:
   - Added `company` (carrier string, e.g., *Delta Airlines*, *SNCF*, *Hertz*).
   - Constrained transport modes strictly to `Planes`, `Trains`, `Car`.
@@ -68,7 +68,7 @@ In Django and modern web architectures, a **template partial** is a self-contain
   - **Step 2**: Dynamically unrolls the inputs tailored to that status (e.g., date requirements are enforced for `CONFIRMED` but optional for `IDEA`).
 - **Initial Inputs vs. "More Options" Accordion**: Displayed essential primary inputs immediately (Name, Type, Location/Route, Link, Notes) while tucking secondary details, encrypted confirmation codes, and document attachments behind an expandable "More Options" toggle.
 
-### 2.4. Encrypted Multi-File Vault Uploads ([`core/views.py`](file:///Users/leilagleich/Desktop/sonderring/core/views.py))
+### 2.4. Encrypted Multi-File Vault Uploads ([`core/views.py`](../core/views.py))
 - Updated `add_move_view`, `edit_move_view`, `add_stay_view`, `edit_stay_view`, `add_taste_view`, `edit_taste_view`, `add_play_view`, and `edit_play_view`.
 - Enabled multi-file upload capabilities directly within the modals. Files (flight tickets, boarding passes, hotel vouchers, menu PDFs) are encrypted using AES-256-GCM and stored in the secure Vault linked via `ItemDocument` records.
 
@@ -161,7 +161,7 @@ The refactoring performed so far has successfully unified Sonderring's data mode
    - *Action*: Implemented a 2-step question modal that queries intent (`IDEA`, `CONFIRMED`, `COMPLETE`) before showing input fields.
    - *Benefit*: Reduces cognitive overload; users brainstorming ideas aren't bombarded with required date and booking code fields.
 3. **Canonical Documentation Alignment**:
-   - *Action*: Cross-linked [`docs/tripItemAttributesReference.md`](file:///Users/leilagleich/Desktop/sonderring/docs/tripItemAttributesReference.md) with [`docs/DATA_MODEL.md`](file:///Users/leilagleich/Desktop/sonderring/docs/DATA_MODEL.md) and [`docs/livingUserStoriesAndAcceptanceCriteria.md`](file:///Users/leilagleich/Desktop/sonderring/docs/livingUserStoriesAndAcceptanceCriteria.md).
+   - *Action*: Cross-linked [`tripItemAttributesReference.md`](tripItemAttributesReference.md) with [`DATA_MODEL.md`](DATA_MODEL.md) and [`livingUserStoriesAndAcceptanceCriteria.md`](livingUserStoriesAndAcceptanceCriteria.md).
    - *Benefit*: Ensures full traceability between user stories, acceptance criteria, database constraints, and UI presentation.
 4. **Seed Trip Fixture Modernization**:
    - *Action*: Re-seeded all 11 canonical trips with 411 database records using the normalized schema.
@@ -182,7 +182,7 @@ For future reference or historical rollbacks, keep note of the following Git ref
      git checkout archive/refactor_card_templates
      ```
 2. **Obsolete / Legacy Template**:
-   - `templates/partials/nav_card.html`: Preserved in Git history prior to deletion. The canonical partial to use and replicate is [`templates/partials/move_card.html`](file:///Users/leilagleich/Desktop/sonderring/templates/partials/move_card.html).
+   - `templates/partials/nav_card.html`: Preserved in Git history prior to deletion. The canonical partial to use and replicate is [`templates/partials/move_card.html`](../templates/partials/move_card.html).
 3. **Legacy Database Cleanups**:
    - Migration `6d8a629` removed legacy `navs`, `dos`, and `recs` tables. If legacy schema references are ever needed for historical data recovery, inspect that commit.
 4. **Canonical Seed Trips Directory**:

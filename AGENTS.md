@@ -44,7 +44,7 @@ All AI agents, engineers, and contributors must prioritize four critical pillars
      - For **Move**: Use **`Departure Time`** and **`Arrival Time`** (no direction field).
      - For **Play**: Single **`Date`** with time range (e.g., `Time: 7:30pm – 10:00pm`) when scheduled; price is `Free` (play only), or `$`, `$$`, `$$$`.
      - For **Taste**: Minimalist—no date or time unless bound to a confirmed reservation (`Confirmation/Reference`). Price is `$`, `$$`, `$$$`.
-   - Readiness states: strictly **`Status: `CONFIRMED``** or **`Status: `IDEA``** (never `COMPLETE`).
+   - Readiness states in seed trip files: strictly **`Status: `CONFIRMED``** or **`Status: `IDEA``** (pre-travel planning). In the live application and database model, **`Status: `COMPLETE``** represents concluded/past items preserved in trip history.
    - **Selective Schema Token Formatting**: Use monospace backticks (`` `...` ``) specifically for controlled database enums (e.g., `Status: `CONFIRMED``, `Status: `IDEA``, `Time Granularity: `EXACT_RANGE``, `Status: `PAST``) and alphanumeric codes/identifiers (e.g., `Flight: `DL 2661``, `Confirmation/Reference: `3208541836``, airport IATA codes `LAX`, `AVL`). Keep dates, times, locations, prices, notes, and descriptions in clean plaintext.
 
 4. **Transparency**:
