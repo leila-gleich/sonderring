@@ -8,6 +8,7 @@ This area is to quickly add short tasks
 * Home shouldn't be the same page as all tripspaces
 * change UX for status and form flow
 * for the chronological itinerary, only include confirmed
+* Clean up user list (remove redundant names / attribute leila as superuser)
 
 ---
 
@@ -31,6 +32,10 @@ Urgency levels: **`Low`** | **`Medium`** | **`High`**
 | **TASK-004** | Inline Dropdown for Item Creation Status Selection | UI / Item Creation | Medium | `To Do` | `PAGE_OUTLINE.md`, `tripItemAttributesReference.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-02 |
 | **TASK-005** | Clickable Status Pill & Removal of Arrow Buttons for Item Status Changes | UI / Item Cards | Medium | `To Do` | `PAGE_OUTLINE.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-02 |
 | **TASK-006** | Self-Contained Canonical Seed Trips Ingestion & Decoupling | Core / Data & Sync | High | `Complete` | `MARKDOWN_SYNC_SPEC.md`, `DATA_MODEL.md`, `AGENTS.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-05 |
+| **TASK-007** | Change Trip View UX & Navigation | UI / TripSpace View | Medium | `To Do` | `PAGE_OUTLINE.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-06 |
+| **TASK-008** | Item Form Controls & Hourly Stay Times | UI / Form Controls | Medium | `To Do` | `tripItemAttributesReference.md`, `PAGE_OUTLINE.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-06 |
+| **TASK-009** | Dimension Grid Styling & Full-Width View | UI / Dimension Grid | Medium | `To Do` | `PAGE_OUTLINE.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-06 |
+| **TASK-010** | Clean Up User List & Deduplicate User Profiles | Auth / User Management | Medium | `To Do` | `DATA_MODEL.md`, `PAGE_OUTLINE.md`, `core/models.py`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-15 |
 
 ---
 
@@ -195,3 +200,38 @@ Urgency levels: **`Low`** | **`Medium`** | **`High`**
 * **Change View for Dimensions in tripspace**
 * the item grid should span the webpage to fit it
 * You should be able to click it and have a modal with all of the info
+
+### TASK-010: Clean Up User List & Deduplicate User Profiles
+* **ID**: `TASK-010`
+* **Area / Dimension**: `Auth / User Management`
+* **Status**: `To Do`
+* **Urgency**: `Medium`
+* **Date Added**: 2026-11-15
+* **Documents to Update Upon Completion**:
+  - [`docs/foundational-docs/DATA_MODEL.md`](DATA_MODEL.md) (User Profile schema, superuser / primary admin attributes, handle uniqueness)
+  - [`docs/foundational-docs/PAGE_OUTLINE.md`](PAGE_OUTLINE.md) (Tripper selection, member management, and demo switcher UX)
+  - `core/models.py` / `core/fixtures/seed_data.json` (User models, deduplication migration, and canonical fixture data)
+  - [`docs/foundational-docs/livingUserStoriesAndAcceptanceCriteria.md`](livingUserStoriesAndAcceptanceCriteria.md) (Acceptance criteria for user profile deduplication and canonical attribution)
+* **Context**:
+  The user list across the application (in database fixtures, demo user switcher, and trip member assignment dropdowns) contains redundant names and duplicate profiles. Furthermore, there is ambiguity about how the primary traveler/creator identity is handled across trips.
+* **Objective**:
+  Audit, clean up, and deduplicate the user list so that no redundant names or duplicate accounts exist. Establish a clean and intuitive attribution model where "leila" is unambiguously recognized as the primary user/superuser.
+* **User Notes & Considerations**:
+  - *Redundant Names Removal*: Clean up the user list across the system to eliminate duplicate or redundant traveler names.
+  - *Superuser / Primary User Attribution*: Explore having the system recognize that `@leila` is always "me" (the primary app owner/admin) and attribute actions/ownership to a superuser of sorts.
+  - *Design Questions to Resolve*:
+    - Should `@leila` be flagged with a native `is_superuser` or `is_primary_admin` attribute on `UserProfile`?
+    - How should the demo switcher and session default to `@leila` when logging in or creating trips?
+    - How should seed trip imports map external `@leila` mentions directly to this canonical superuser account without generating orphan profiles?
+* **Scope & Implementation Notes**:
+  1. **User List Audit & Deduplication**:
+     - Inspect `UserProfile` database records, `core/fixtures/seed_data.json`, and `TripMember` associations.
+     - Identify and merge or remove duplicate user profiles and redundant placeholder accounts.
+  2. **Canonical Superuser Recognition**:
+     - Implement a reliable mechanism recognizing `@leila` as the primary user / superuser.
+     - Ensure all newly created or imported TripSpaces attribute ownership directly to this canonical user.
+  3. **UI Dropdowns & Member Picker Sanitation**:
+     - Ensure the Trippers bar, member invitation modals, and demo switchers only list unique, canonical users.
+     - Add guardrails preventing the same user from appearing multiple times in member pickers.
+  4. **Fixture & Migration Maintenance**:
+     - Update `core/fixtures/seed_data.json` and `core/management/commands/seed_data.py` to maintain a clean, deduplicated baseline.
