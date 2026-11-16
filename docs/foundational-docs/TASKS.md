@@ -36,6 +36,7 @@ Urgency levels: **`Low`** | **`Medium`** | **`High`**
 | **TASK-008** | Item Form Controls & Hourly Stay Times | UI / Form Controls | Medium | `To Do` | `tripItemAttributesReference.md`, `PAGE_OUTLINE.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-06 |
 | **TASK-009** | Dimension Grid Styling & Full-Width View | UI / Dimension Grid | Medium | `To Do` | `PAGE_OUTLINE.md`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-06 |
 | **TASK-010** | Clean Up User List & Deduplicate User Profiles | Auth / User Management | Medium | `To Do` | `DATA_MODEL.md`, `PAGE_OUTLINE.md`, `core/models.py`, `livingUserStoriesAndAcceptanceCriteria.md` | 2026-11-15 |
+| **TASK-011** | Audit & Correct Transit Mode and Dimension Classification Heuristics | Data / Seed Ingestion | High | `Complete` | `import_seed_trips.py`, `seed-trips/*.md`, `seed_data.json`, `TASKS.md` | 2026-11-15 |
 
 ---
 
@@ -235,3 +236,23 @@ Urgency levels: **`Low`** | **`Medium`** | **`High`**
      - Add guardrails preventing the same user from appearing multiple times in member pickers.
   4. **Fixture & Migration Maintenance**:
      - Update `core/fixtures/seed_data.json` and `core/management/commands/seed_data.py` to maintain a clean, deduplicated baseline.
+
+---
+
+### TASK-011: Audit & Correct Transit Mode and Dimension Classification Heuristics
+* **ID**: `TASK-011`
+* **Area / Dimension**: `Data / Seed Ingestion`
+* **Status**: `Complete`
+* **Urgency**: `High`
+* **Date Added**: 2026-11-15
+* **Documents to Update Upon Completion**: `core/management/commands/import_seed_trips.py`, `docs/seed-trips/*.md`, `core/fixtures/seed_data.json`
+* **Context**:
+  Move items titled "Drive to Joshua Tree" and other driving legs were erroneously categorized as `Mode: Planes` and given the timeline subtitle `Planes (Arriving to Trip)`.
+* **Root Cause**:
+  In `import_seed_trips.py`, unanchored substring matching on airline flight codes (specifically `'ua '` for United Airlines) matched substrings in words like `"Joshua "`. Additionally, airport code tokens like `'las'`, `'san'`, and `'cta'` matched words like "Las Vegas", "San Diego", and "Catania", misclassifying road and bus transit as `Planes`. Naive substring checks also misclassified food items containing `'bar'` (e.g. barbecue) as `Drink`.
+* **Resolution**:
+  1. Replaced unanchored substring searches with regex word boundaries (`\b`) and title-first ground-truth validation across Move, Taste, and Play dimensions.
+  2. Added parsing for `Booking Link` across Move, Stay, Taste, and Play elements so links are never dropped during markdown sync.
+  3. Corrected misclassified Move legs across `21-10-JT.md`, `22-01-JT.md`, `21-07-Flame.md`, `21-12-NYE.md`, `26-09-Malticilia.md`, and `Pre-TG-Trip.md`.
+  4. Corrected misclassified Taste and Play items across `21-10-JT.md`, `22-01-JT.md`, `21-07-Flame.md`, `21-12-NYE.md`, `26-10-Halloween-Staycation.md`, and `26-10-Iceland.md`.
+  5. Re-seeded and synchronized `core/fixtures/seed_data.json`. Verified all 100 tests pass cleanly.
