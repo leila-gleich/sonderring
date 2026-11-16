@@ -141,7 +141,7 @@
 
 ### Potential
 * **Þingvellir National Park**
-  * **Play Type**: Tours
+  * **Play Type**: Outdoors
   * **Address / Venue**: Thingvellir, 801 Selfoss, Iceland
   * **Date**: Oct 16, 2026
   * **Description**: Walk between the North American and Eurasian continental tectonic plates
@@ -165,7 +165,7 @@
   * **Description**: 3,000-year-old volcanic crater lake with red volcanic slopes
   * **Attribution**: Added by `@leila` · Last edited by `@leila`
 * **Sigurjón Ólafsson Museum & Recycled House**
-  * **Play Type**: Outdoors
+  * **Play Type**: Sightseeing
   * **Address / Venue**: Laugarnestangi 70, 105 Reykjavik, Iceland
   * **Date**: Oct 20, 2026
   * **Description**: Waterfront sculpture museum and artistic recycled house in Lækir area

@@ -28,7 +28,7 @@
   * **Confidence**: Date: `CONFIRMED` · Time: `CONFIRMED`
   * **Attribution**: Added by `@leila` · Last edited by `@leila`
 * **Bus Catania to Taormina**
-  * **Mode**: Planes
+  * **Mode**: Bus
   * **Trip Stage**: `START_END` (Trip Start/End)
   * **Direction**: `ARRIVING`
   * **Origin Address**: CTA

@@ -26,7 +26,7 @@
   * **Confidence**: Date: `CONFIRMED` · Time: `CONFIRMED`
   * **Attribution**: Added by `@leila` · Last edited by `@leila`
 * **Drive to Las Vegas**
-  * **Mode**: Planes
+  * **Mode**: Car
   * **Trip Stage**: `START_END` (Trip Start/End)
   * **Direction**: `ARRIVING`
   * **Origin Address**: St. George, UT
@@ -53,7 +53,7 @@
   * **Confidence**: Date: `CONFIRMED` · Time: `CONFIRMED`
   * **Attribution**: Added by `@leila` · Last edited by `@leila`
 * **Drive to Las Vegas**
-  * **Mode**: Planes
+  * **Mode**: Car
   * **Trip Stage**: `START_END` (Trip Start/End)
   * **Direction**: `ARRIVING`
   * **Origin Address**: St. George, UT
@@ -135,7 +135,7 @@
   * **Description**: Southwestern dinner and patio dining near Zion
   * **Attribution**: Added by `@leila` · Last edited by `@leila`
 * **Oscar's Cafe**
-  * **Taste Type**: Drink
+  * **Taste Type**: Food
   * **Address / Venue**: 948 Zion Park Blvd, Springdale, UT 84767
   * **Price Range**: $$
   * **Description**: Post-hike breakfast spot in Springdale

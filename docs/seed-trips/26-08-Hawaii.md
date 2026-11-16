@@ -148,7 +148,7 @@
 
 ### Potential
 * **Vibe Cafe**
-  * **Taste Type**: Drink
+  * **Taste Type**: Food
   * **Address / Venue**: 750 Kanoelehua Ave, Hilo, HI 96720
   * **Price Range**: $$
   * **Description**: Plant-based breakfast cafe in Hilo

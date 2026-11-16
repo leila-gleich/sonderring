@@ -17,7 +17,7 @@
 
 ### Confirmed
 * **Drive to Hotel**
-  * **Mode**: Planes
+  * **Mode**: Car
   * **Trip Stage**: `START_END` (Trip Start/End)
   * **Direction**: `ARRIVING`
   * **Origin Address**: 13955 Tahiti Way

@@ -41,7 +41,7 @@
 * **Mission Pacific Beach Resort**
   * **Place Type**: Hotel
   * **Address**: 201 N. Myers Street, Oceanside, California, 92054
-  * **Dates**: Nov 21, 2026 – Nov 23, 2026
+  * **Dates**: Nov 21, 2026, 03:00 PM – Nov 23, 2026, 11:00 AM
   * **Confirmation Code**: `150932RA028668` (Encrypted AES-256)
   * **Notes**: $100 property stay and breakfast included
   * **Attribution**: Added by `@leila` · Last edited by `@leila`

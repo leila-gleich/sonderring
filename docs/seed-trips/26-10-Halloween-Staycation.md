@@ -82,7 +82,7 @@
   * **Description**: Fresh seafood, salads, and coastal New American plates
   * **Attribution**: Added by `@leila` · Last edited by `@leila`
 * **Hook & Anchor**
-  * **Taste Type**: Drink
+  * **Taste Type**: Food
   * **Address / Venue**: 34091 La Plaza, Dana Point, CA 92629
   * **Price Range**: $$
   * **Description**: Fresh catch seafood, raw bar oyster selections, and crudos
