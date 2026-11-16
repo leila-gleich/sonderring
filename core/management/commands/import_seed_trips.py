@@ -315,6 +315,8 @@ def parse_md_file(filepath: Path):
                     elif prop_key in ('Confirmation Code', 'Confirmation/Reference', 'Booking Reference'):
                         code_clean = re.sub(r'\(.*?\)', '', prop_val).strip(' `')
                         current_item['Confirmation/Reference'] = code_clean
+                    elif prop_key in ('Booking Link', 'Link', 'Web Link', 'URL'):
+                        current_item['Booking Link'] = prop_val
                     elif prop_key in ('Price Range', 'Price Tier'):
                         current_item['Price'] = prop_val
                     elif prop_key == 'Dates' and current_section == 'stay':
@@ -450,25 +452,40 @@ class Command(BaseCommand):
                     m_title = m_item.get('name', 'Move Item')
                     m_status = normalize_status(m_item.get('Status', 'CONFIRMED'), default='CONFIRMED')
 
-                    # Mode mapping
+                    # Mode mapping with strict word boundaries and title validation
                     raw_mode = clean_val(m_item.get('Mode', ''))
-                    if raw_mode in dict(Move.MODE_CHOICES):
-                        mode = raw_mode
-                    elif 'car' in raw_mode.lower() or 'rental' in raw_mode.lower():
+                    m_lower = m_title.lower()
+
+                    # 1. Ground truth title checks with word boundaries
+                    if re.search(r'\b(?:drive|car|rental|hertz|road trip|jeep)\b', m_lower):
                         mode = 'Car'
-                    elif 'train' in raw_mode.lower() or 'rail' in raw_mode.lower():
+                    elif re.search(r'\b(?:bus|shuttle|coach)\b', m_lower):
+                        mode = 'Bus'
+                    elif re.search(r'\b(?:train|trains|rail|railway|trenitalia)\b', m_lower):
                         mode = 'Trains'
-                    elif 'ferry' in raw_mode.lower() or 'boat' in raw_mode.lower():
+                    elif re.search(r'\b(?:ferry|boat|passenger ferry)\b', m_lower):
                         mode = 'Ferry'
-                    elif 'bus' in raw_mode.lower():
+                    elif re.search(r'\b(?:flight|airline|fly|plane)\b', m_lower):
+                        mode = 'Planes'
+                    elif raw_mode in dict(Move.MODE_CHOICES):
+                        mode = raw_mode
+                    elif re.search(r'\b(?:car|rental)\b', raw_mode.lower()):
+                        mode = 'Car'
+                    elif re.search(r'\b(?:train|rail)\b', raw_mode.lower()):
+                        mode = 'Trains'
+                    elif re.search(r'\b(?:ferry|boat)\b', raw_mode.lower()):
+                        mode = 'Ferry'
+                    elif re.search(r'\b(?:bus)\b', raw_mode.lower()):
                         mode = 'Bus'
                     else:
                         text_corpus = f"{m_title} {m_item.get('Notes', '')}".lower()
-                        if any(k in text_corpus for k in ['car', 'rental', 'drive', 'hertz']):
+                        if re.search(r'\b(?:car|rental|drive|hertz|road trip|jeep)\b', text_corpus):
                             mode = 'Car'
-                        elif any(k in text_corpus for k in ['train', 'rail', 'trenitalia']):
+                        elif re.search(r'\b(?:train|trains|rail|railway|trenitalia)\b', text_corpus):
                             mode = 'Trains'
-                        elif any(k in text_corpus for k in ['ferry', 'boat']):
+                        elif re.search(r'\b(?:bus|shuttle|coach)\b', text_corpus):
+                            mode = 'Bus'
+                        elif re.search(r'\b(?:ferry|boat)\b', text_corpus):
                             mode = 'Ferry'
                         else:
                             mode = 'Planes'
@@ -535,6 +552,14 @@ class Command(BaseCommand):
                     code = m_item.get('Confirmation/Reference') or m_item.get('Confirmation Code')
                     if code:
                         move.confirmation_code = code
+                    b_link = m_item.get('Booking Link') or m_item.get('Link')
+                    if b_link:
+                        move.booking_link = b_link
+                    p_raw = m_item.get('Price')
+                    if p_raw:
+                        m_p = re.search(r'\$(\d+(?:\.\d{2})?)', p_raw)
+                        if m_p:
+                            move.price = Decimal(m_p.group(1))
                     move.save()
 
                 # ----------------------------------------------------
@@ -544,13 +569,13 @@ class Command(BaseCommand):
                     s_title = s_item.get('name', 'Stay Item')
                     s_status = normalize_status(s_item.get('Status', 'CONFIRMED'), default='CONFIRMED')
 
-                    # Place Type
+                    # Place Type with word boundary matching
                     raw_place = clean_val(s_item.get('Place Type', 'Hotel'))
                     if raw_place in dict(Stay.PLACE_TYPE_CHOICES):
                         place_type = raw_place
-                    elif any(k in f"{s_title} {raw_place}".lower() for k in ['home', 'house', 'retreat', 'cabin', 'oasis', 'airbnb']):
+                    elif re.search(r'\b(?:home|house|retreat|cabin|oasis|airbnb)\b', f"{s_title} {raw_place}".lower()):
                         place_type = 'Home'
-                    elif 'apartment' in f"{s_title} {raw_place}".lower():
+                    elif re.search(r'\b(?:apartment|condo)\b', f"{s_title} {raw_place}".lower()):
                         place_type = 'Apartment'
                     else:
                         place_type = 'Hotel'
@@ -589,6 +614,9 @@ class Command(BaseCommand):
                     code = s_item.get('Confirmation/Reference') or s_item.get('Confirmation Code')
                     if code:
                         stay.confirmation_code = code
+                    b_link = s_item.get('Booking Link') or s_item.get('Link')
+                    if b_link:
+                        stay.booking_link = b_link
 
                     # Price extraction
                     p_val = s_item.get('Price')
@@ -611,9 +639,20 @@ class Command(BaseCommand):
                     t_status = normalize_status(t_item.get('Status', 'IDEA'), default='IDEA')
 
                     raw_taste_type = clean_val(t_item.get('Taste Type', 'Food'))
+                    t_lower = t_title.lower()
+                    d_lower = t_item.get('Description', '').lower()
+                    corpus = f"{t_lower} {d_lower}"
+
                     if raw_taste_type in dict(Taste.TASTE_TYPE_CHOICES):
-                        taste_type = raw_taste_type
-                    elif any(k in f"{t_title} {t_item.get('Description', '')}".lower() for k in ['bar', 'beer', 'brewery', 'cocktail', 'wine', 'cafe', 'coffee', 'drink']):
+                        # Guard against naive 'bar' substring match in barbecue, raw bar, etc.
+                        if raw_taste_type == 'Drink' and (
+                            re.search(r'\b(?:pizza|pizzeria|pie|barbecue|bbq|breakfast|bakery|pastizzi|pastizzeria)\b', corpus)
+                            and not re.search(r'\b(?:cocktail bar|wine bar|brewery|beer|dive bar|speakeasy|pub|saloon)\b', corpus)
+                        ):
+                            taste_type = 'Food'
+                        else:
+                            taste_type = raw_taste_type
+                    elif re.search(r'\b(?:cocktail|cocktails|wine|wine bar|brewery|breweries|beer|taproom|speakeasy|dive bar|pub|lounge)\b', corpus):
                         taste_type = 'Drink'
                     else:
                         taste_type = 'Food'
@@ -636,6 +675,9 @@ class Command(BaseCommand):
                     code = t_item.get('Confirmation/Reference') or t_item.get('Confirmation Code')
                     if code:
                         taste.confirmation_code = code
+                    b_link = t_item.get('Booking Link') or t_item.get('Link')
+                    if b_link:
+                        taste.booking_link = b_link
                     taste.save()
 
                 # ----------------------------------------------------
@@ -646,15 +688,27 @@ class Command(BaseCommand):
                     p_status = normalize_status(p_item.get('Status', 'IDEA'), default='IDEA')
 
                     raw_play_type = clean_val(p_item.get('Play Type', 'Sightseeing'))
+                    p_lower = p_title.lower()
+                    d_lower = p_item.get('Description', '').lower()
+                    corpus = f"{p_lower} {d_lower} {p_item.get('Notes', '').lower()}"
+
                     if raw_play_type in dict(Play.PLAY_TYPE_CHOICES):
-                        play_type = raw_play_type
-                    else:
-                        corpus = f"{p_title} {p_item.get('Description', '')} {p_item.get('Notes', '')}".lower()
-                        if any(k in corpus for k in ['tour', 'walk', 'excursion']):
-                            play_type = 'Tours'
-                        elif any(k in corpus for k in ['hike', 'canyon', 'beach', 'sunset', 'water', 'boat', 'blue lagoon', 'outdoors']):
+                        # Guard against 'water' in waterfront turning museums into outdoors,
+                        # or 'walking loop' turning national park nature trails into guided tours
+                        if raw_play_type == 'Outdoors' and re.search(r'\b(?:museum|gallery|planetarium|sculpture)\b', corpus):
+                            play_type = 'Sightseeing'
+                        elif raw_play_type == 'Tours' and re.search(r'\b(?:nature walk|walking loop|nature trail|national park walk)\b', corpus) and not re.search(r'\b(?:guided tour|walking tour)\b', corpus):
                             play_type = 'Outdoors'
-                        elif any(k in corpus for k in ['concert', 'show', 'festival', 'party', 'nightlife', 'event']):
+                        else:
+                            play_type = raw_play_type
+                    else:
+                        if re.search(r'\b(?:museum|gallery|planetarium|sculpture)\b', corpus):
+                            play_type = 'Sightseeing'
+                        elif re.search(r'\b(?:guided tour|walking tour|boat tour|tour|excursion)\b', corpus) and not re.search(r'\b(?:nature trail|walking loop|trail|hike)\b', corpus):
+                            play_type = 'Tours'
+                        elif re.search(r'\b(?:hike|trail|canyon|beach|sunset|outdoors|scrambling|baths|hot springs|lagoon|volcano)\b', corpus):
+                            play_type = 'Outdoors'
+                        elif re.search(r'\b(?:concert|show|festival|party|nightlife|event|rave|club)\b', corpus):
                             play_type = 'Events'
                         else:
                             play_type = 'Sightseeing'
@@ -703,6 +757,9 @@ class Command(BaseCommand):
                     code = p_item.get('Confirmation/Reference') or p_item.get('Confirmation Code')
                     if code:
                         play.confirmation_code = code
+                    b_link = p_item.get('Booking Link') or p_item.get('Link')
+                    if b_link:
+                        play.booking_link = b_link
                     play.save()
 
                 imported_trips.append(trip)
